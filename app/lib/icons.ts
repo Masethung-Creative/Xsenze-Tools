@@ -14,7 +14,9 @@ import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
+import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
+import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
@@ -67,7 +69,9 @@ export const icons: Record<string, string> = {
   'disc-3': iDisc3,
   download: iDownload,
   eye: iEye,
+  'file-audio': iFileAudio,
   'file-music': iFileMusic,
+  film: iFilm,
   'folder-open': iFolderOpen,
   gauge: iGauge,
   headphones: iHeadphones,

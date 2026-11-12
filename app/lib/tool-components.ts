@@ -11,6 +11,8 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
+  'audio-extractor': () =>
+    import('xsenze-tools/components/tools/audio-extractor'),
   'audio-atlas': () => import('xsenze-tools/components/tools/audio-atlas'),
   'waveform-genny': () =>
     import('xsenze-tools/components/tools/waveform-genny'),

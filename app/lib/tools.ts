@@ -86,6 +86,15 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'audio-extractor',
+        name: 'Audio Extractor',
+        description: 'Extract the audio out of a video file',
+        icon: 'music',
+        accepts: VIDEO_ACCEPT,
+        produces: ['audio/wav', 'audio/mp4', 'audio/ogg', 'audio/flac'],
+        keywords: ['extract', 'rip', 'soundtrack', 'mp4', 'video', 'audio'],
+      },
+      {
         id: 'audio-normaliser',
         name: 'Audio Normaliser',
         description: 'Normalise audio loudness',
