@@ -71,6 +71,15 @@ export const toolCategories: ToolCategory[] = [
       'Record, trim, convert and inspect audio and video in your browser.',
     tools: [
       {
+        id: 'audio-normaliser',
+        name: 'Audio Normaliser',
+        description: 'Normalise audio loudness',
+        icon: 'audio-lines',
+        accepts: AUDIO_ACCEPT,
+        produces: ['audio/wav'],
+        keywords: ['loudness', 'lufs', 'volume', 'level', 'gain', 'podcast'],
+      },
+      {
         id: 'audio-trimmer',
         name: 'Audio Trimmer',
         description: 'Cut and fade audio, export as WAV',

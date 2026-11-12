@@ -33,7 +33,7 @@ export interface JobSignature {
     /** Shows Cancel while busy. */
     onCancel?: () => void;
     onSave: () => void;
-    /** Shows Preview beside Download, as iOS. */
+    /** Shows Preview beside Download. */
     onPreview?: () => void;
   };
 }
@@ -77,7 +77,7 @@ export class JobProgress extends Component<{
 }
 
 /**
- * The iOS AVEditJobPanel, as rows for a CanonRows: the export button,
+ * Rows for a CanonRows: the export button,
  * progress with Cancel, then the finished file with Download (a workflow
  * passes it along) in place of Preview and Share.
  */

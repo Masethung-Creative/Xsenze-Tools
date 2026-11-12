@@ -25,6 +25,7 @@ import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPlay from 'lucide-static/icons/play.svg?raw';
+import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
@@ -38,6 +39,7 @@ import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVideo from 'lucide-static/icons/video.svg?raw';
+import iVolume from 'lucide-static/icons/volume.svg?raw';
 import iVolume2 from 'lucide-static/icons/volume-2.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
@@ -70,6 +72,7 @@ export const icons: Record<string, string> = {
   music: iMusic,
   pause: iPause,
   play: iPlay,
+  podcast: iPodcast,
   radio: iRadio,
   repeat: iRepeat,
   scissors: iScissors,
@@ -83,6 +86,7 @@ export const icons: Record<string, string> = {
   'triangle-alert': iTriangleAlert,
   upload: iUpload,
   video: iVideo,
+  volume: iVolume,
   'volume-2': iVolume2,
   x: iX,
   'zoom-in': iZoomIn,

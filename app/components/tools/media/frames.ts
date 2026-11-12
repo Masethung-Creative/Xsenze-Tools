@@ -6,9 +6,9 @@ import {
   type WaveformPeaks,
 } from 'xsenze-tools/lib/audio';
 
-/** Thumbnails per file; a filmstrip shows as many as fit (iOS thumbnailCount). */
+/** Thumbnails per file; a filmstrip shows as many as fit. */
 export const thumbnailCount = 24;
-/** Waveform columns per file (iOS peakBuckets). */
+/** Waveform columns per file. */
 export const peakBuckets = 800;
 const thumbnailHeight = 90;
 
@@ -86,7 +86,7 @@ export async function peaks(
   }
 }
 
-/** Indices of `total` thumbnails, evenly spread, for `count` cells (iOS spread). */
+/** Indices of `total` thumbnails, evenly spread, for `count` cells. */
 export function spread(count: number, total: number): number[] {
   if (count <= 0 || total <= 0) return [];
   return Array.from({ length: count }, (_, index) =>

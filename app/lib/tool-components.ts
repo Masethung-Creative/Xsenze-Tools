@@ -11,6 +11,8 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
+  'audio-normaliser': () =>
+    import('xsenze-tools/components/tools/audio-normaliser'),
   'audio-trimmer': () => import('xsenze-tools/components/tools/audio-trimmer'),
 };
 

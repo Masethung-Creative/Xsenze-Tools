@@ -3,7 +3,7 @@ import { modifier } from 'ember-modifier';
 import type { CanonTransport } from 'delphicanon/components/canon-readout-band';
 
 /**
- * The iOS AVEditPlayback on a media element: Play, Pause, Stop, Loop and
+ * Play, Pause, Stop, Loop and
  * scrub, with the playhead a readout band shows. Stop parks at the start.
  */
 export default class Playback {

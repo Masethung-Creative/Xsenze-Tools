@@ -1,0 +1,23 @@
+.an-picture {
+  position: absolute;
+  inset: 0;
+  background: var(--canon-muted);
+}
+
+.an-wave {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.an-figure {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-end: var(--canon-panel-padding);
+}
+
+.an-player {
+  display: block;
+  inline-size: 100%;
+  block-size: var(--canon-control-height);
+}

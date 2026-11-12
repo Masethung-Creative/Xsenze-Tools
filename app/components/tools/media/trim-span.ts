@@ -1,4 +1,4 @@
-/** Shortest selection in seconds (iOS AVEditTrimEditor.minimumSpan). */
+/** Shortest selection in seconds. */
 export const minimumSpan = 0.01;
 
 const clamp = (value: number, low: number, high: number) =>
@@ -8,9 +8,9 @@ const clamp = (value: number, low: number, high: number) =>
 export const roundMs = (seconds: number) => Math.round(seconds * 1000) / 1000;
 
 /**
- * In and out points kept inside the file and at least `minimumSpan` apart
- * (iOS select). A start past the end stops short of it. An end before the
- * start pulls the start back, as iOS, unless `moved` is 'end': then the end
+ * In and out points kept inside the file and at least `minimumSpan` apart.
+ * A start past the end stops short of it. An end before the
+ * start pulls the start back, unless `moved` is 'end': then the end
  * stops short of the start.
  */
 export function clampSpan(
@@ -26,7 +26,7 @@ export function clampSpan(
   return [roundMs(from), roundMs(to)];
 }
 
-/** Seconds one arrow key moves a handle (iOS onAdjust). */
+/** Seconds one arrow key moves a handle. */
 export const nudgeStep = (duration: number) => Math.max(0.1, duration / 100);
 
 /** Where `seconds` falls along the file, 0 to 1. */

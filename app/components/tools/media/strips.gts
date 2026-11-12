@@ -9,7 +9,7 @@ import { formatTimestamp } from 'xsenze-tools/lib/subtitles';
 import { spread } from 'xsenze-tools/components/tools/media/frames';
 import { share } from 'xsenze-tools/components/tools/media/trim-span';
 
-/** Every A/V band: filmstrip 40 + waveform 56 (iOS AVEditTrackStrips) and the readout row. */
+/** Every A/V band: filmstrip 40 + waveform 56 and the readout row. */
 export const bandHeight = readoutBandHeight(96);
 
 export interface StripsSignature {
@@ -26,7 +26,7 @@ export interface StripsSignature {
     duration: number;
     playhead?: number | null;
     onScrub?: (seconds: number) => void;
-    /** In and out seconds; the frames outside are dimmed (iOS AVEditFilmstrip selection). */
+    /** In and out seconds; the frames outside are dimmed. */
     selection?: [number, number] | null;
     /** No file yet: blank frame cells and a flat waveform. */
     blank?: boolean;
@@ -38,7 +38,7 @@ const step = 1;
 const bigStep = 10;
 
 /**
- * The iOS AVEditTrackStrips: a filmstrip of as many frames as fit, over the
+ * A filmstrip of as many frames as fit, over the
  * audio waveform, under one playhead and one scrub (pointer or arrow keys).
  */
 export default class Strips extends Component<StripsSignature> {

@@ -25,7 +25,7 @@ export interface TrimSignature {
     start: number;
     /** The out point, seconds. */
     end: number;
-    /** Hides the frame and the handles (iOS isEnabled). */
+    /** Hides the frame and the handles. */
     disabled?: boolean;
     /** Seconds an arrow key moves a handle; default a hundredth of the file, at least 0.1. */
     step?: number;
@@ -42,7 +42,7 @@ export interface TrimSignature {
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 
 /**
- * The iOS AVEditTrimEditor: a frame round the selection over any strip, with
+ * A frame round the selection over any strip, with
  * a grip either side of it. Grips drag, take the arrow keys (Shift for ten
  * steps, Home and End for the limits) and are named sliders.
  */

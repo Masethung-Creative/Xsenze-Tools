@@ -3,7 +3,7 @@
   grid-template-rows: 0 minmax(0, 1fr);
 }
 
-/* iOS AudioWaveformView: the cut in primary, the shade dims the rest */
+/* the cut in primary, the shade dims the rest */
 .audio-trimmer .media-wave {
   color: var(--canon-primary);
 }
@@ -13,7 +13,7 @@
   block-size: 100%;
 }
 
-/* iOS showsFadeCurves: the export gain, floor to ceiling inside a frame inset */
+/* fade curves: the export gain, floor to ceiling inside a frame inset */
 .at-curve {
   position: absolute;
   inset-block-start: var(--canon-frame);

@@ -2,10 +2,10 @@ import { modifier } from 'ember-modifier';
 import { audioContext } from 'xsenze-tools/lib/audio';
 import { roundMs } from 'xsenze-tools/components/tools/media/trim-span';
 
-/** Longest fade in seconds (iOS caps the sliders at 10 s). */
+/** Longest fade in seconds (the sliders cap at 10 s). */
 export const longestFade = 10;
 
-/** The sliders' top: the cut's length, at most 10 s (iOS refresh). */
+/** The sliders' top: the cut's length, at most 10 s. */
 export const fadeLimit = (start: number, end: number) =>
   Math.max(0.01, Math.min(longestFade, roundMs(end - start)));
 

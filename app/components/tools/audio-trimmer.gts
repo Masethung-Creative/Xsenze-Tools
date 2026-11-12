@@ -55,7 +55,6 @@ const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 const fixed = (seconds: number) => seconds.toFixed(2);
 const noFrames: string[] = [];
 
-// ios AudioTrimmerViewController
 const editorHeight = 180;
 
 const flag = (name: string) =>
@@ -235,11 +234,11 @@ export default class AudioTrimmer extends Component {
 
   #decoded(buffer: AudioBuffer) {
     this.view.reset(buffer.duration);
-    // iOS: the out point rounds down to the hundredth
+    // the out point rounds down to the hundredth
     this.select(0, Math.floor(buffer.duration * 100) / 100);
-    // iOS -trimFades yes
+    // ?trimFades=yes: preview fades (debug)
     if (flag('trimFades')) this.#fades(1.5, 2.5);
-    // iOS -trimLoop yes
+    // ?trimLoop=yes: preview a loop (debug)
     if (flag('trimLoop')) {
       this.playback.looping = true;
       this.select(1, 1.6);
@@ -296,7 +295,7 @@ export default class AudioTrimmer extends Component {
   zoomOut = () => this.view.zoomOut();
   fit = () => this.view.fit();
 
-  /** iOS job.reset: a new cut or fade drops the result. */
+  /** A new cut or fade drops the result. */
   #invalidate() {
     if (this.busy) this.#token++;
     this.busy = false;
