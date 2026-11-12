@@ -88,6 +88,21 @@ export const toolCategories: ToolCategory[] = [
         produces: ['audio/wav'],
         keywords: ['cut', 'clip', 'fade', 'trim', 'mp3', 'wav'],
       },
+      {
+        id: 'voice-recorder',
+        name: 'Voice Recorder',
+        description: 'Record voice memos in the browser',
+        icon: 'mic',
+        produces: ['audio/webm'],
+        keywords: [
+          'record',
+          'microphone',
+          'mic',
+          'memo',
+          'voice',
+          'dictaphone',
+        ],
+      },
     ],
   },
 ];

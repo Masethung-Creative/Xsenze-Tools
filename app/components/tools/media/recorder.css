@@ -1,0 +1,70 @@
+.media-recorder-strip {
+  position: relative;
+  block-size: 100%;
+}
+
+.media-recorder-wave {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.media-recorder-meter {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: var(--media-recorder-level, 0%);
+  block-size: 4px;
+  background: var(--canon-primary);
+}
+
+.media-recorder-transport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--canon-hairline);
+  min-block-size: var(--canon-primary-height);
+  background: var(--canon-border);
+}
+
+.media-recorder-transport--active {
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+}
+
+.media-recorder-transport .canon-button {
+  block-size: 100%;
+}
+
+/* a 45 degree hatch, 10 px apart, 1.5 px wide */
+.media-recorder-platter {
+  --media-recorder-ink: color-mix(
+    in srgb,
+    var(--canon-muted-foreground) 15%,
+    transparent
+  );
+
+  background-color: var(--canon-card);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--media-recorder-ink) 0 1.06px,
+    transparent 1.06px 7.07px
+  );
+  background-position: var(--media-recorder-offset, 0) 0;
+  background-size: 10px 10px;
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.media-recorder-platter--running {
+  --media-recorder-ink: color-mix(
+    in srgb,
+    var(--canon-muted-foreground) 35%,
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-recorder-platter {
+    background-position: 0 0;
+  }
+}

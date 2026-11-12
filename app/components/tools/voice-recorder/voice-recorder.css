@@ -1,0 +1,56 @@
+/* a play cell, the name over its length and date, then the cells */
+.vr-take {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px 52px;
+  gap: var(--canon-hairline);
+  min-block-size: var(--canon-row-height);
+  background: var(--canon-border);
+}
+
+.vr-take .canon-button {
+  block-size: 100%;
+}
+
+.vr-take--playing .vr-take-play {
+  color: var(--canon-primary);
+}
+
+.vr-take-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  min-inline-size: 0;
+  padding-block: 8px;
+  padding-inline: var(--canon-panel-padding) 8px;
+  background: var(--canon-card);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+  line-height: 1.3;
+}
+
+.vr-take-name,
+.vr-take-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vr-take-name {
+  font-size: var(--canon-text-body);
+  font-weight: var(--canon-weight-medium);
+}
+
+.vr-take-detail {
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-caption);
+}
+
+/* no filmstrip: the waveform takes the whole strip */
+.vr-overview .media-strips--waveform {
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+.vr-player {
+  display: none;
+}

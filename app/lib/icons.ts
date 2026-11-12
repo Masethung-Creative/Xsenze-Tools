@@ -8,6 +8,7 @@ import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
+import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
@@ -55,6 +56,7 @@ export const icons: Record<string, string> = {
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
   'circle-check-big': iCircleCheckBig,
+  'circle-dot': iCircleDot,
   'clipboard-paste': iClipboardPaste,
   dices: iDices,
   'disc-3': iDisc3,
