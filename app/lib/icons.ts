@@ -19,6 +19,9 @@ import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
+import iImage from 'lucide-static/icons/image.svg?raw';
+import iInfo from 'lucide-static/icons/info.svg?raw';
+import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
@@ -36,6 +39,8 @@ import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
+import iTags from 'lucide-static/icons/tags.svg?raw';
+import iText from 'lucide-static/icons/text.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
@@ -67,6 +72,9 @@ export const icons: Record<string, string> = {
   gauge: iGauge,
   headphones: iHeadphones,
   house: iHouse,
+  image: iImage,
+  info: iInfo,
+  inspect: iInspect,
   maximize: iMaximize,
   menu: iMenu,
   mic: iMic,
@@ -84,6 +92,8 @@ export const icons: Record<string, string> = {
   speaker: iSpeaker,
   square: iSquare,
   sun: iSun,
+  tags: iTags,
+  text: iText,
   'trash-2': iTrash2,
   'triangle-alert': iTriangleAlert,
   upload: iUpload,

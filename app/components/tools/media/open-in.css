@@ -1,0 +1,48 @@
+/* the shared "Open in" list, in the kit's cells */
+.media-open .atlas-open {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--canon-hairline);
+  border: 0;
+  background: var(--canon-border);
+}
+
+.media-open .atlas-open a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: var(--canon-card);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+  text-align: center;
+  text-decoration: none;
+}
+
+.media-open .atlas-open a .icon {
+  color: var(--canon-primary);
+}
+
+.media-open .atlas-open a:focus-visible {
+  outline: 2px solid var(--canon-primary);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .media-open .atlas-open a:hover {
+    background: var(--canon-accent-bg);
+    color: var(--canon-foreground);
+  }
+}
+
+.media-open--blank .atlas-open a {
+  color: var(--canon-muted-foreground);
+}
+
+.media-open--blank .atlas-open a .icon {
+  color: inherit;
+}

@@ -1,0 +1,193 @@
+/* audio only: the strips have no frame row */
+.audio-atlas .media-strips--waveform {
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+.audio-atlas .media-wave {
+  color: var(--canon-primary);
+}
+
+.aa-source--failed .canon-row-detail {
+  color: var(--canon-destructive);
+}
+
+.aa-source .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the window in the mono face */
+.aa-view .canon-row-detail {
+  font-family: var(--canon-mono-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.aa-zoom {
+  inline-size: calc(3 * var(--canon-row-height));
+}
+
+.aa-tags-text {
+  display: grid;
+  gap: 2px;
+  padding: 12px 16px;
+  background: var(--canon-card);
+  font-family: var(--canon-font);
+}
+
+.aa-tags-text p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.aa-tags-title {
+  color: var(--canon-foreground);
+  font-size: var(--canon-text-body);
+  font-weight: var(--canon-weight-semibold);
+}
+
+.aa-tags-artist {
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-subheadline);
+}
+
+.aa-tags-album {
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-caption);
+}
+
+/* waveform 120, ruler 24, spectrogram the rest */
+.aa-sheet {
+  position: relative;
+  display: grid;
+  grid-template-rows: 120px 24px minmax(0, 1fr);
+  block-size: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  cursor: pointer;
+}
+
+.aa-sheet--pans {
+  cursor: grab;
+}
+
+.aa-scrub {
+  position: absolute;
+  inset: 0;
+}
+
+.aa-scrub:focus-visible {
+  outline: var(--canon-frame) solid var(--canon-primary);
+  outline-offset: calc(-1 * var(--canon-frame));
+}
+
+.aa-flip:dir(rtl) {
+  scale: -1 1;
+}
+
+.aa-wave {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  color: var(--canon-primary);
+}
+
+.aa-ruler {
+  position: relative;
+  overflow: hidden;
+  background: var(--canon-card);
+}
+
+.aa-tick {
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: var(--canon-hairline);
+  block-size: 4px;
+  background: color-mix(
+    in srgb,
+    var(--canon-muted-foreground) 60%,
+    transparent
+  );
+}
+
+.aa-tick--major {
+  block-size: 9px;
+}
+
+/* beside the tick, 2 px off the ruler's bottom */
+.aa-tick-label {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 4px;
+  color: var(--canon-muted-foreground);
+  font-family: var(--canon-mono-font);
+  font-size: 10px;
+  font-weight: var(--canon-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* the palette's floor, both themes */
+.aa-plate {
+  position: relative;
+  overflow: hidden;
+  background: rgb(12 10 9);
+}
+
+.aa-spectro {
+  position: absolute;
+  inset-block: 0;
+  block-size: 100%;
+}
+
+.aa-hz {
+  position: absolute;
+  inset-inline-start: 8px;
+  translate: 0 -50%;
+  color: rgb(255 255 255 / 85%);
+  font-family: var(--canon-mono-font);
+  font-size: 10px;
+  font-weight: var(--canon-weight-medium);
+  line-height: 1;
+  text-shadow: 0 1px 0 #000;
+}
+
+.aa-loader {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-end: 10px;
+  color: #fff;
+}
+
+/* foreground over the waveform and ruler, white over the plate */
+.aa-head {
+  position: absolute;
+  inset-block: 0;
+  inline-size: var(--canon-frame);
+  margin-inline-start: calc(-1 * var(--canon-frame) / 2);
+  background: linear-gradient(var(--canon-foreground) 0 144px, #fff 144px);
+  pointer-events: none;
+}
+
+.aa-audio {
+  display: none;
+}
+
+.aa-sheet--blank {
+  cursor: default;
+}
+
+.aa-sheet--blank .aa-wave {
+  position: relative;
+}
+
+.aa-sheet--blank .aa-wave::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(50% - var(--canon-hairline) / 2);
+  block-size: var(--canon-hairline);
+  background: currentcolor;
+  content: "";
+  opacity: 0.5;
+}

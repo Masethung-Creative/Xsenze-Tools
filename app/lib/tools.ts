@@ -71,6 +71,21 @@ export const toolCategories: ToolCategory[] = [
       'Record, trim, convert and inspect audio and video in your browser.',
     tools: [
       {
+        id: 'audio-atlas',
+        name: 'Audio Atlas',
+        description: 'Everything about one audio file, on one page',
+        icon: 'file-music',
+        accepts: AUDIO_ACCEPT,
+        keywords: [
+          'info',
+          'metadata',
+          'spectrogram',
+          'loudness',
+          'tags',
+          'inspect',
+        ],
+      },
+      {
         id: 'audio-normaliser',
         name: 'Audio Normaliser',
         description: 'Normalise audio loudness',

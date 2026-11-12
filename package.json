@@ -29,7 +29,7 @@
     "lint:types": "ember-tsc --noEmit",
     "start": "vite",
     "test": "vite build --mode development && ember test --path dist",
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && node scripts/copy-vendor.mjs",
     "gen-brand": "node scripts/gen-brand.mjs",
     "gen-icons": "node scripts/gen-icons.mjs"
   },
@@ -109,6 +109,7 @@
     "ember-truth-helpers": "^5.0.0",
     "lucide-static": "^1.72.0",
     "mediabunny": "^1.65.2",
+    "mediainfo.js": "^0.3.8",
     "sass-embedded": "^1.108.2",
     "tracked-built-ins": "^4.1.2"
   }

@@ -19,3 +19,6 @@
 
 # playwright screenshots
 /.playwright-mcp/
+
+# vendor runtime files copied by scripts/copy-vendor.mjs
+/public/mediainfo/
