@@ -1,0 +1,4 @@
+# keep LF everywhere so prettier/lint pass on Windows checkouts too
+* text=auto eol=lf
+*.png binary
+*.woff2 binary

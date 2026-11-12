@@ -1,0 +1,63 @@
+/* audio only: the strips have no frame row */
+.audio-trimmer .media-strips--waveform {
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+/* iOS AudioWaveformView: the cut in primary, the shade dims the rest */
+.audio-trimmer .media-wave {
+  color: var(--canon-primary);
+}
+
+.at-lane {
+  position: relative;
+  block-size: 100%;
+}
+
+/* iOS showsFadeCurves: the export gain, floor to ceiling inside a frame inset */
+.at-curve {
+  position: absolute;
+  inset-block-start: var(--canon-frame);
+  inset-inline-start: 0;
+  inline-size: 100%;
+  block-size: calc(100% - 2 * var(--canon-frame));
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.at-curve polyline {
+  fill: none;
+  stroke: var(--canon-foreground);
+  stroke-width: var(--canon-frame);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.at-curve:dir(rtl) {
+  scale: -1 1;
+}
+
+/* the kit slider overflows over the title below its 96 px track and readout; stack there */
+.audio-trimmer .at-fade > .canon-row-label {
+  flex-shrink: 0;
+}
+
+.audio-trimmer .at-fade > .canon-row-control {
+  flex-basis: 168px;
+}
+
+/* kit slider lacks disabled */
+.at-fade--off .canon-slider {
+  cursor: default;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.at-source--failed .canon-row-detail {
+  color: var(--canon-destructive);
+}
+
+.at-source .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,21 @@
+# compiled output
+/dist/
+/tmp/
+
+# dependencies
+/node_modules/
+
+# misc
+*.local
+/.pnp*
+/.eslintcache
+/coverage/
+/npm-debug.log*
+/testem.log
+/yarn-error.log
+
+# broccoli-debug
+/DEBUG/
+
+# playwright screenshots
+/.playwright-mcp/

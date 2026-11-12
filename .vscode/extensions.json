@@ -1,0 +1,10 @@
+{
+  // VS Code prompts to install these when the folder is opened
+  "recommendations": [
+    "typed-ember.glint2-vscode",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint",
+    "editorconfig.editorconfig"
+  ]
+}

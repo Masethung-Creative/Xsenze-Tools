@@ -1,0 +1,393 @@
+// Global styles: crayon utilities + reset, then Xsenze theme tokens and
+// shared building blocks. Component styles live next to their .gts file as
+// plain .css and use the CSS variables defined here.
+//
+// Brand: colours + font from the Masethung R portfolio
+// (Space Grotesk; orange #ff3800 on warm stone neutrals).
+// Layout: dense sidebar, top bar, square bordered grids.
+
+@use "crayon-config" as crayon;
+@use "canon";
+
+// ---------- theme tokens ----------
+// html.dark (default) / html.light is set by the inline script in index.html.
+
+:root,
+html.dark {
+  color-scheme: dark;
+
+  // portfolio tokens, verbatim
+  --surface-0: oklch(14.7% 0.004 49.25deg); // #0c0a09 background
+  --surface-1: oklch(21.6% 0.006 56.043deg); // #1c1917 card
+  --surface-2: oklch(26.8% 0.007 34.298deg); // #292524 muted
+  --line: oklch(100% 0 0deg / 10%);
+  --text: oklch(98.5% 0.001 106.423deg); // #fafaf9
+  --text-muted: oklch(70.9% 0.01 56.259deg); // #a6a09b
+  --ring: oklch(55.3% 0.013 58.071deg); // #79716b
+  --accent: oklch(65% 0.259 46.59deg); // #ff3800
+  --accent-text: oklch(65% 0.259 46.59deg);
+  --accent-contrast: oklch(21.6% 0.006 56.043deg);
+  --accent-soft: color-mix(in oklch, var(--accent) 22%, transparent);
+  --shadow-lg: 0 6px 24px oklch(0% 0 0deg / 40%);
+  --backdrop-opacity: 0.07;
+}
+
+// light theme built from the same warm stone + orange family
+html.light {
+  color-scheme: light;
+
+  --surface-0: oklch(98.5% 0.001 106.423deg); // #fafaf9
+  --surface-1: oklch(97% 0.001 106.424deg); // #f5f5f4
+  --surface-2: oklch(92.3% 0.003 48.717deg); // #e7e5e4
+  --line: oklch(86.9% 0.005 56.366deg); // #d6d3d1
+  --text: oklch(14.7% 0.004 49.25deg); // #0c0a09
+  --text-muted: oklch(44.4% 0.011 73.639deg); // #57534e
+  --ring: oklch(55.3% 0.013 58.071deg);
+  --accent: oklch(65% 0.259 46.59deg); // #ff3800 fills
+
+  // darker orange, readable as text on light
+  --accent-text: oklch(55% 0.22 42deg);
+  --accent-contrast: oklch(21.6% 0.006 56.043deg);
+  --accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
+  --shadow-lg: 0 6px 24px oklch(0% 0 0deg / 10%);
+  --backdrop-opacity: 0.09;
+}
+
+:root {
+  --bar-h: 52px;
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+// ---------- base ----------
+
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--accent-text);
+}
+
+::selection {
+  background: color-mix(in oklch, var(--accent) 30%, transparent);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -40px;
+  z-index: 50;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+
+  &:focus {
+    top: 8px;
+  }
+}
+
+.page {
+  padding: 24px 16px 64px;
+}
+
+// ---------- logo (theme-swapped, see components/brand-logo.gts) ----------
+
+.brand-logo {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  img {
+    display: block;
+  }
+}
+
+.brand-logo__light,
+html.light .brand-logo__dark {
+  display: none !important;
+}
+
+html.light .brand-logo__light {
+  display: block !important;
+}
+
+// ---------- icons & buttons ----------
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.square-button {
+  display: grid;
+  place-items: center;
+  width: var(--bar-h);
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+
+  .icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.button,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--text);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+}
+
+.button {
+  padding: 9px 16px;
+  font-size: 14px;
+}
+
+.chip {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+// ---------- home hero ----------
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 16px 32px;
+}
+
+.icon-backdrop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 92px);
+  grid-auto-rows: 46px;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--text);
+  opacity: var(--backdrop-opacity);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 95%);
+
+  .icon {
+    place-self: center;
+  }
+
+  .icon:nth-child(14n + 8),
+  .icon:nth-child(14n + 9),
+  .icon:nth-child(14n + 10),
+  .icon:nth-child(14n + 11),
+  .icon:nth-child(14n + 12),
+  .icon:nth-child(14n + 13),
+  .icon:nth-child(14n + 14) {
+    translate: 46px 0;
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.hero__inner {
+  position: relative;
+  text-align: center;
+}
+
+.hero__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 8px 0 28px;
+
+  .hero__logo img {
+    width: clamp(84px, 14vw, 132px);
+    height: auto;
+  }
+}
+
+.hero__wordmark {
+  font-size: clamp(48px, 9vw, 96px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+
+  span {
+    color: var(--accent);
+  }
+}
+
+.hero__tagline {
+  margin: 28px 0 8px;
+  font-size: 19px;
+}
+
+.hero__fine {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+
+  a {
+    color: inherit;
+  }
+}
+
+// ---------- category strip + cell grid ----------
+
+.category {
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+}
+
+.category__strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 16px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+
+  .icon svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.category__desc {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.cell-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin: 0 -1px -1px 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 20px 16px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease-quart);
+
+  &:hover {
+    background: var(--accent-soft);
+  }
+}
+
+.cell__icon {
+  margin-bottom: 8px;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.cell__name {
+  color: var(--accent-text);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cell__desc {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cell--placeholder {
+  .cell__name {
+    color: var(--text);
+  }
+
+  &:hover {
+    background: none;
+  }
+}
+
+// ---------- prose pages ----------
+
+.prose {
+  max-width: 68ch;
+
+  h2 {
+    margin-top: 8px;
+    font-size: 28px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

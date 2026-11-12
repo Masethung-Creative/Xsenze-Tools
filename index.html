@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Xsenze Tools</title>
+    <meta name="description" content="Free creative tools that run entirely in your browser. No logins, no uploads, no tracking.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0c0a09">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Xsenze Tools">
+    <meta property="og:title" content="Xsenze Tools">
+    <meta property="og:description" content="Free creative tools that run entirely in your browser. No logins, no uploads, no tracking.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta property="og:image" content="/favicon-512.png">
+
+    <script>
+      // set html.dark / html.light before first paint so there is no theme flash
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          // dark is the brand default; light only when the visitor chose it
+          var dark = t !== 'light';
+          document.documentElement.classList.add(dark ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
+    {{content-for "head"}}
+
+    <link integrity="" rel="stylesheet" href="/@embroider/virtual/vendor.css">
+
+    {{content-for "head-footer"}}
+  </head>
+  <body>
+    {{content-for "body"}}
+
+    <script src="/@embroider/virtual/vendor.js"></script>
+    <script type="module">
+      import Application from './app/app';
+      import environment from './app/config/environment';
+
+      Application.create(environment.APP);
+    </script>
+
+    {{content-for "body-footer"}}
+  </body>
+</html>

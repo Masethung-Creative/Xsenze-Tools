@@ -1,0 +1,87 @@
+/* iOS AVEditTrimEditor: 14 px grips, 44 px targets */
+.media-trim {
+  --trim-grip: 14px;
+
+  position: relative;
+  block-size: 100%;
+  background: var(--canon-muted);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.media-trim-track {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--trim-grip);
+}
+
+.media-trim-strip {
+  block-size: 100%;
+}
+
+.media-trim-frame {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--trim-start);
+  inline-size: calc(var(--trim-end) - var(--trim-start));
+  border: var(--canon-frame) solid var(--canon-primary);
+  pointer-events: none;
+}
+
+.media-trim-bar {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--trim-grip);
+  background: var(--canon-primary);
+  color: var(--canon-primary-foreground);
+  pointer-events: none;
+}
+
+.media-trim-bar svg {
+  inline-size: 14px;
+  block-size: 14px;
+  stroke-width: 3;
+}
+
+.media-trim-bar:dir(rtl) svg {
+  scale: -1 1;
+}
+
+.media-trim-bar--start {
+  inset-inline-start: calc(var(--trim-start) - var(--trim-grip));
+}
+
+.media-trim-bar--end {
+  inset-inline-start: var(--trim-end);
+}
+
+.media-trim-grip {
+  position: absolute;
+  inset-block: 0;
+  inline-size: var(--canon-control-height);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+/* the target grows outwards, kept inside the editor */
+.media-trim-grip--start {
+  inset-inline-start: max(
+    calc(var(--trim-start) - var(--canon-control-height)),
+    calc(-1 * var(--trim-grip))
+  );
+}
+
+.media-trim-grip--end {
+  inset-inline-start: min(
+    var(--trim-end),
+    calc(100% + var(--trim-grip) - var(--canon-control-height))
+  );
+}
+
+.media-trim-grip:focus-visible {
+  outline: var(--canon-frame) solid var(--canon-foreground);
+  outline-offset: calc(-1 * var(--canon-frame));
+}

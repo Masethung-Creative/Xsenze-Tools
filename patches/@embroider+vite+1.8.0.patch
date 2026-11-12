@@ -1,0 +1,15 @@
+diff --git a/node_modules/@embroider/vite/dist/src/resolver.js b/node_modules/@embroider/vite/dist/src/resolver.js
+index 6d3d70f..5df9dbe 100644
+--- a/node_modules/@embroider/vite/dist/src/resolver.js
++++ b/node_modules/@embroider/vite/dist/src/resolver.js
+@@ -288,7 +288,8 @@ function buildViteJump(pkg) {
+     writeFileSync(join(tmp, 'package.json'), JSON.stringify({
+         name: 'jump-root',
+     }), { flush: true });
+-    ensureSymlinkSync(pkg.root, join(tmp, 'node_modules', pkg.name));
++    // junction: works on Windows without Developer Mode (dir symlinks need it)
++    ensureSymlinkSync(pkg.root, join(tmp, 'node_modules', pkg.name), process.platform === 'win32' ? 'junction' : undefined);
+     return tmp;
+ }
+ //# sourceMappingURL=resolver.js.map
+\ No newline at end of file

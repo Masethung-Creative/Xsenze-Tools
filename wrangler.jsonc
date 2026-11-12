@@ -1,0 +1,11 @@
+{
+  // Cloudflare Workers static-assets deploy (same host as the reference site).
+  // Deploy later with: npm run build && npx wrangler deploy
+  "name": "xsenze-tools",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // SPA fallback so direct links like /tools/<id> work
+    "not_found_handling": "single-page-application",
+  },
+}

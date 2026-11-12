@@ -1,0 +1,134 @@
+.omnibox {
+  position: relative;
+  width: 100%;
+  max-width: 672px;
+  margin: 0 auto;
+  border: 2px solid var(--accent);
+  background: var(--surface-0);
+  transition: box-shadow 0.2s var(--ease-quart);
+}
+
+.omnibox--drag {
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+
+.omnibox__field input {
+  width: 100%;
+  height: 66px;
+  padding: 0 20px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+  text-align: center;
+}
+
+.omnibox__field input::placeholder {
+  color: var(--text-muted);
+}
+
+.omnibox__actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  background: var(--surface-1);
+}
+
+.omnibox__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.omnibox__action + .omnibox__action {
+  border-left: 1px solid var(--line);
+}
+
+.omnibox__action:hover,
+.omnibox__action:focus-within {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.omnibox__action .icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.omnibox__results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.omnibox__results button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.omnibox__results button:hover,
+.omnibox__results li:first-child button {
+  background: var(--surface-2);
+}
+
+.omnibox__results span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.omnibox__none {
+  padding: 12px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.omnibox__message {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 672px;
+  margin: 12px auto 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.omnibox__message p {
+  margin: 0;
+}
+
+@media (width <= 560px) {
+  .omnibox__field input {
+    font-size: 16px;
+  }
+
+  .omnibox__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .omnibox__action + .omnibox__action {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}

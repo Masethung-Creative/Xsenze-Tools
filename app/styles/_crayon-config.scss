@@ -1,0 +1,23 @@
+// crayon-css (https://crayoncss.com) configuration.
+// @forward with config so app.scss and any partial share one configured copy.
+@forward "crayon-css" with (
+  $font-families: (
+    "sans": (
+      "Space Grotesk Variable",
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif,
+    ),
+    "mono": (
+      ui-monospace,
+      "Cascadia Mono",
+      Menlo,
+      Consolas,
+      monospace,
+    ),
+  ),
+  // the opacity variants add about 1 MB of CSS
+  $use-color-opacity-modifiers: false
+);

@@ -1,0 +1,108 @@
+.media-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--canon-muted);
+  color: var(--canon-muted-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+  cursor: pointer;
+}
+
+/* zero specificity: a tool's own position wins */
+:where(.media-slot:not(.media-slot--row)) {
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* beats a tool's `.x-slot > *` */
+.media-slot > .media-slot-target {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.media-slot > :is(.media-slot-icon, .media-slot-prompt) {
+  pointer-events: none;
+}
+
+.media-slot > .media-slot-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--canon-hairline);
+  margin-block-start: 4px;
+  border: var(--canon-hairline) solid var(--canon-border);
+  background: var(--canon-border);
+}
+
+.media-slot--dashed {
+  border: var(--canon-frame) dashed
+    color-mix(in srgb, var(--canon-muted-foreground) 50%, transparent);
+  background: none;
+}
+
+.media-slot--dashed .media-slot-icon svg {
+  inline-size: var(--media-slot-icon, 44px);
+  block-size: var(--media-slot-icon, 44px);
+}
+
+.media-slot--fills {
+  position: absolute;
+  inset: var(--media-slot-inset, 0);
+  inline-size: auto;
+  block-size: auto;
+}
+
+.media-slot-bar {
+  display: flex;
+  background: var(--canon-muted);
+}
+
+.media-slot-bar > .canon-button {
+  flex: none;
+}
+
+.media-slot--row {
+  flex: 1;
+  min-inline-size: 0;
+  flex-direction: row;
+  gap: 10px;
+
+  /* two-line CanonRow height */
+  block-size: calc(
+    22px + 1.3 * (var(--canon-text-body) + var(--canon-text-caption))
+  );
+}
+
+.media-slot--row .media-slot-icon svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.media-slot--over {
+  background: var(--canon-accent-bg);
+  color: var(--canon-primary);
+}
+
+.media-slot-icon {
+  display: flex;
+  opacity: 0.6;
+}
+
+.media-slot-icon svg {
+  inline-size: 28px;
+  block-size: 28px;
+}
