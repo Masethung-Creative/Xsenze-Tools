@@ -1,0 +1,20 @@
+/* the export, letterboxed in the band */
+.wg-picture {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+.wg-image {
+  display: block;
+  inline-size: min(100cqi, 100cqb * var(--wg-ratio));
+  block-size: auto;
+  outline: var(--canon-hairline) solid var(--canon-border);
+  outline-offset: calc(-1 * var(--canon-hairline));
+}
+
+.wg-source--failed .canon-row-detail {
+  color: var(--canon-destructive);
+}

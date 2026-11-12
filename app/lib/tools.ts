@@ -103,6 +103,15 @@ export const toolCategories: ToolCategory[] = [
           'dictaphone',
         ],
       },
+      {
+        id: 'waveform-genny',
+        name: 'Waveform Generator',
+        description: 'Render audio waveforms as PNG or SVG',
+        icon: 'audio-waveform',
+        accepts: AUDIO_ACCEPT,
+        produces: ['image/png', 'image/svg+xml'],
+        keywords: ['waveform', 'image', 'png', 'svg', 'visual', 'soundwave'],
+      },
     ],
   },
 ];
