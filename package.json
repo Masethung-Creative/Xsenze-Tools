@@ -107,6 +107,7 @@
     "delphicanon": "^0.1.0",
     "dexie": "^4.4.7",
     "ember-truth-helpers": "^5.0.0",
+    "jszip": "^3.10.2",
     "lucide-static": "^1.72.0",
     "mediabunny": "^1.65.2",
     "mediainfo.js": "^0.3.8",

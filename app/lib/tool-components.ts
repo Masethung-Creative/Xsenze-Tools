@@ -11,6 +11,8 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
+  'frame-extractor': () =>
+    import('xsenze-tools/components/tools/frame-extractor'),
   'video-to-gif': () => import('xsenze-tools/components/tools/video-to-gif'),
   'video-atlas': () => import('xsenze-tools/components/tools/video-atlas'),
   'video-trimmer': () => import('xsenze-tools/components/tools/video-trimmer'),

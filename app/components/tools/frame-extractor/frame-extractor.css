@@ -1,0 +1,97 @@
+.fx-lane {
+  position: relative;
+  block-size: 100%;
+}
+
+/* ticks sit under the playhead */
+.fx-lane .media-head {
+  z-index: 1;
+}
+
+.fx-video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.fx-blank {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  fill: var(--canon-muted);
+}
+
+.fx-source .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Stills grid: cells at least 104 px wide, at most
+ * four to a row up to 240 px, so the frames grow with the pane. The card
+ * behind shows where a short last row ends.
+ */
+.fx-stills {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(104px, min((100% - 3 * var(--canon-hairline)) / 4, 240px)), 1fr)
+  );
+  gap: var(--canon-hairline);
+  overflow: hidden;
+  background: var(--canon-card);
+}
+
+.fx-still {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-inline-size: 0;
+  padding: 0 0 6px;
+  border: 0;
+  background: var(--canon-card);
+  box-shadow: 0 0 0 var(--canon-hairline) var(--canon-border);
+  color: var(--canon-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fx-still:focus-visible {
+  outline: var(--canon-frame) solid var(--canon-primary);
+  outline-offset: calc(-1 * var(--canon-frame));
+}
+
+@media (hover: hover) {
+  .fx-still:hover {
+    background: var(--canon-accent-bg);
+  }
+}
+
+.fx-still-picture {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: none;
+  aspect-ratio: var(--fx-aspect, 16 / 9);
+  background: var(--canon-muted);
+  object-fit: contain;
+}
+
+.fx-still-time {
+  overflow: hidden;
+  padding-inline: 4px;
+  font-family: var(--canon-mono-font);
+  font-size: var(--canon-text-footnote);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-sheet {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-inline-size: none;
+  background: var(--canon-muted);
+}

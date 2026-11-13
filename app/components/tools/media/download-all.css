@@ -1,0 +1,14 @@
+.media-download-all {
+  display: flex;
+  gap: var(--canon-hairline);
+  background: var(--canon-border);
+}
+
+.media-download-all > .media-download-all-each {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.media-download-all > .media-download-all-zip {
+  flex: none;
+}

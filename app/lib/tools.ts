@@ -95,6 +95,22 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['extract', 'rip', 'soundtrack', 'mp4', 'video', 'audio'],
       },
       {
+        id: 'frame-extractor',
+        name: 'Frame Extractor',
+        description: 'Grab stills and contact sheets from video',
+        icon: 'image-down',
+        accepts: VIDEO_ACCEPT,
+        produces: ['image/png', 'application/zip'],
+        keywords: [
+          'frame',
+          'still',
+          'screenshot',
+          'thumbnail',
+          'contact sheet',
+          'png',
+        ],
+      },
+      {
         id: 'audio-normaliser',
         name: 'Audio Normaliser',
         description: 'Normalise audio loudness',
