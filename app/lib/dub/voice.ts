@@ -1,4 +1,4 @@
-import type { EngineId, VoiceGender } from 'xsenze-tools/lib/dub/engines';
+import type { EngineId, Preset } from 'xsenze-tools/lib/dub/engines';
 
 /** One spoken line: mono samples at `rate`. */
 export interface Speech {
@@ -21,12 +21,12 @@ function voiceWorker(): Worker {
   return worker;
 }
 
-/** Speak `text` with `engine` in the voice worker; `speed` above 1 is faster. */
+/** Speak `text` with `engine` in a preset voice (one-voice engines ignore it); `speed` above 1 is faster. */
 export function speak(
   engine: EngineId,
   lang: string,
   text: string,
-  voice: VoiceGender,
+  voice: Preset,
   speed = 1,
   onDownload?: (ratio: number) => void,
 ): Promise<Speech> {

@@ -14,6 +14,13 @@ export interface DubLane {
   done: number;
 }
 
+/** One person's lines, in a lane of their own. */
+export interface SpeakerLane {
+  /** S1, S2… */
+  label: string;
+  cues: Cue[];
+}
+
 export interface PictureSignature {
   Args: {
     peaks: WaveformPeaks | null;
@@ -22,6 +29,8 @@ export interface PictureSignature {
     cues: Cue[];
     /** Short label of the source language, e.g. EN. */
     source: string;
+    /** Two or more: a lane per speaker in place of the one source lane. */
+    speakers?: SpeakerLane[];
     lanes: DubLane[];
     playhead?: number | null;
     onScrub?: (seconds: number) => void;
@@ -35,14 +44,19 @@ export interface PictureSignature {
 const noFrames: string[] = [];
 
 /**
- * The file's waveform over its script lane and one lane per dub language;
+ * The file's waveform over its script lane (one per speaker when several speak) and one lane per dub language;
  * a language's blocks light up as its lines are voiced. A figure at the end.
  */
 export default class Picture extends Component<PictureSignature> {
   get timeline(): CueLane[] {
     const cues = this.args.cues;
+    const speakers = this.args.speakers ?? [];
+    const sources: CueLane[] =
+      speakers.length > 1
+        ? speakers.map((s) => ({ cues: s.cues, label: s.label }))
+        : [{ cues, label: this.args.source }];
     return [
-      { cues, label: this.args.source },
+      ...sources,
       ...this.args.lanes.map((lane) => ({
         cues,
         label: lane.label,

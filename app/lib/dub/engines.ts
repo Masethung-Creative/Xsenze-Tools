@@ -8,6 +8,13 @@ export type EngineId = 'supertonic' | 'mms';
 export type EngineChoice = 'auto' | EngineId;
 export type VoiceGender = 'female' | 'male';
 
+/** Supertonic's preset voices: five female, five male. */
+export const FEMALE_PRESETS = ['F1', 'F2', 'F3', 'F4', 'F5'] as const;
+export const MALE_PRESETS = ['M1', 'M2', 'M3', 'M4', 'M5'] as const;
+export const PRESETS = [...FEMALE_PRESETS, ...MALE_PRESETS];
+export type Preset =
+  (typeof FEMALE_PRESETS)[number] | (typeof MALE_PRESETS)[number];
+
 export interface EngineInfo {
   id: EngineId;
   name: string;

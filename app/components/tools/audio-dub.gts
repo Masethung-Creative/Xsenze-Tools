@@ -27,7 +27,9 @@ import LanguageSelect, {
 } from 'xsenze-tools/components/tools/subtitle-translator/language-select';
 import Picture, {
   type DubLane,
+  type SpeakerLane,
 } from 'xsenze-tools/components/tools/audio-dub/picture';
+import Speakers from 'xsenze-tools/components/tools/audio-dub/speakers';
 import {
   channelsOf,
   encodeWav,
@@ -44,7 +46,7 @@ import {
   pickEngine,
   type EngineChoice,
   type EngineId,
-  type VoiceGender,
+  type Preset,
 } from 'xsenze-tools/lib/dub/engines';
 import {
   MAX_SPEED,
@@ -55,6 +57,15 @@ import {
   type PlacedLine,
 } from 'xsenze-tools/lib/dub/mix';
 import { hasVideo, videoWithAudio } from 'xsenze-tools/lib/dub/mux';
+import {
+  assignPresets,
+  diarize,
+  mono16k,
+  speakerLabel,
+  type Speaker,
+  type VoiceMode,
+  type VoiceType,
+} from 'xsenze-tools/lib/dub/speakers';
 import { speak } from 'xsenze-tools/lib/dub/voice';
 import { formatBytes } from 'xsenze-tools/lib/format';
 import {
@@ -94,6 +105,8 @@ interface Job {
   done: number;
   /** Translated lines, by cue index. */
   lines: string[];
+  /** Distinct voices used, for the row. */
+  voices?: Preset[];
   /** The mixed track, kept for the multi-language video. */
   mix?: AudioBuffer;
   /** The download: WAV for audio, MP4 for video. */
@@ -105,13 +118,21 @@ interface Job {
 const MEDIA_ACCEPT = acceptAttr([...AUDIO_ACCEPT, ...VIDEO_ACCEPT]);
 const SUBS_ACCEPT = acceptAttr(SUBTITLE_ACCEPT);
 const BAND_MIN = 150;
-const BAND_MAX = 280;
+const BAND_MAX = 320;
 const LANE_HEIGHT = 22;
 /** Whisper Small: the Auto Subtitle default, a balance of accuracy and size. */
 const WHISPER_MODE = 'reasonable';
 
-const VOICES: VoiceGender[] = ['female', 'male'];
-const VOICE_LABELS = ['Female', 'Male'];
+const VOICES: VoiceMode[] = ['auto', 'female', 'male'];
+const VOICE_LABELS = ['Auto', 'Female', 'Male'];
+const VOICE_NOTES: Record<VoiceMode, string> = {
+  auto: 'Each speaker gets a matching voice of their own: women and children a female voice, men a male one.',
+  female: 'Every speaker gets a female voice, a different one each.',
+  male: 'Every speaker gets a male voice, a different one each.',
+};
+/** 0 is Auto: find how many. */
+const SPEAKER_COUNTS = [0, 1, 2, 3, 4, 5, 6];
+const SPEAKER_LABELS = ['Auto', '1', '2', '3', '4', '5', '6'];
 const BACKGROUNDS: Background[] = ['duck', 'dub'];
 const BACKGROUND_LABELS = ['Keep quietly', 'Dub only'];
 const BACKGROUND_NOTES: Record<Background, string> = {
@@ -139,12 +160,13 @@ const Film = <template><IconSvg @name="film" /></template>;
 const keepPaste = (event: Event) => event.stopPropagation();
 const nameOf = (code: string) => languageOf(code)?.name ?? code;
 
-/** Engine and voice for a finished row; one-voice engines name no gender. */
-const voiceLabel = (engine: EngineId, voice: VoiceGender) => {
+/** Engine and voices for a finished row; one-voice engines name none. */
+const voiceLabel = (engine: EngineId, voices: Preset[]) => {
   const info = engineInfo(engine);
-  return info.voices.length > 1
-    ? `${info.name} · ${voice}`
-    : `${info.name} · single voice`;
+  if (info.voices.length < 2) return `${info.name} · single voice`;
+  return voices.length === 1
+    ? `${info.name} · ${voices[0]}`
+    : `${info.name} · ${voices.length} voices`;
 };
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || 'audio';
@@ -175,22 +197,31 @@ export default class AudioDubTool extends Component {
   @tracked detected = '';
 
   @tracked targets: string[] = ['hi'];
-  @tracked voice: VoiceGender = 'female';
+  @tracked voice: VoiceMode = 'auto';
+  @tracked speakerCount = 0;
+  @tracked speakers: Speaker[] = [];
+  /** Speaker index of each cue. */
+  @tracked assign: number[] = [];
+  /** A script line whose speaker is being picked. */
+  @tracked moving: number | null = null;
+  /** Who is being voiced, for the status line. */
+  @tracked speaking = '';
   @tracked background: Background = 'duck';
   @tracked engine: EngineChoice = 'auto';
 
   @tracked jobs: Job[] = [];
   @tracked busy = false;
-  @tracked phase: 'transcribe' | 'dub' | 'video' | '' = '';
+  @tracked phase: 'transcribe' | 'speakers' | 'dub' | 'video' | '' = '';
   @tracked percent = 0;
   @tracked downloading = false;
   /** Which model is downloading, for the status line. */
-  @tracked downloadWhat: 'speech' | 'translation' | 'voice' = 'voice';
+  @tracked downloadWhat: 'translation' | 'voice' = 'voice';
   @tracked current = '';
   @tracked tab = '';
   @tracked error = '';
   @tracked combined: { blob: Blob; url: string } | null = null;
   #abort: AbortController | null = null;
+  #sample: HTMLAudioElement | null = null;
 
   // ?adSample=<same-origin path> ?adSubs=<srt> ?adTo=hi,de ?adRun=1: preset the tool from the URL
   constructor(owner: Owner, args: object) {
@@ -201,7 +232,9 @@ export default class AudioDubTool extends Component {
       .filter((c) => DUB_LANGUAGES.has(c));
     if (to.length) this.targets = to;
     const voice = query.get('adVoice');
-    if (voice === 'male') this.voice = 'male';
+    if (voice === 'male' || voice === 'female') this.voice = voice;
+    const count = Number(query.get('adSpeakers'));
+    if (SPEAKER_COUNTS.includes(count)) this.speakerCount = count;
     const subs = query.get('adSubs');
     const sample = query.get('adSample');
     if (sample?.startsWith('/') && !sample.startsWith('//'))
@@ -212,6 +245,7 @@ export default class AudioDubTool extends Component {
     super.willDestroy();
     this.#abort?.abort();
     this.#revoke();
+    this.#stopSample();
   }
 
   async #fetchSample(url: string, subs: string | null, run: boolean) {
@@ -266,6 +300,7 @@ export default class AudioDubTool extends Component {
     this.original = null;
     this.peaks = null;
     this.cues = [];
+    this.#forgetSpeakers();
     this.scriptSource = '';
     this.detected = '';
     this.loadError = '';
@@ -304,6 +339,7 @@ export default class AudioDubTool extends Component {
       return;
     }
     this.cues = parseSubtitles(text).sort((a, b) => a.start - b.start);
+    this.#forgetSpeakers();
     this.scriptSource = 'file';
     this.#resetResults();
   }
@@ -315,6 +351,7 @@ export default class AudioDubTool extends Component {
     this.original = null;
     this.peaks = null;
     this.cues = [];
+    this.#forgetSpeakers();
     this.scriptSource = '';
     this.detected = '';
     this.loadError = '';
@@ -322,6 +359,7 @@ export default class AudioDubTool extends Component {
 
   clearScript = () => {
     this.cues = [];
+    this.#forgetSpeakers();
     this.scriptSource = '';
     this.detected = '';
     this.#resetResults();
@@ -361,6 +399,22 @@ export default class AudioDubTool extends Component {
     return VOICES.indexOf(this.voice);
   }
 
+  get voiceNote() {
+    return VOICE_NOTES[this.voice];
+  }
+
+  get speakerCountIndex() {
+    return SPEAKER_COUNTS.indexOf(this.speakerCount);
+  }
+
+  get speakerCountNote() {
+    return this.speakerCount === 0
+      ? 'Finds up to 8 people. If you know how many speak, pick the number: it is more accurate.'
+      : this.speakerCount === 1
+        ? 'One person speaks: every line gets the same voice.'
+        : `Splits the lines between ${this.speakerCount} people.`;
+  }
+
   get backgroundIndex() {
     return BACKGROUNDS.indexOf(this.background);
   }
@@ -381,7 +435,7 @@ export default class AudioDubTool extends Component {
   }
 
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply) and MMS (CC-BY-NC). Translation: NLLB-200 (CC-BY-NC). Free, non-commercial use.';
+    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply) and MMS (CC-BY-NC). Translation: NLLB-200 (CC-BY-NC). Speakers: WavLM (MIT). Free, non-commercial use.';
   }
 
   get canRun() {
@@ -418,7 +472,15 @@ export default class AudioDubTool extends Component {
   };
 
   pickVoice = (index: number) => {
-    this.voice = VOICES[index] ?? 'female';
+    this.voice = VOICES[index] ?? 'auto';
+  };
+
+  pickSpeakerCount = (index: number) => {
+    const count = SPEAKER_COUNTS[index] ?? 0;
+    if (count === this.speakerCount) return;
+    this.speakerCount = count;
+    // the next run finds them again with the new count
+    this.#forgetSpeakers();
   };
 
   pickBackground = (index: number) => {
@@ -435,6 +497,140 @@ export default class AudioDubTool extends Component {
     this.cues = next;
   };
 
+  /* --- speakers --- */
+
+  #forgetSpeakers() {
+    this.speakers = [];
+    this.assign = [];
+    this.moving = null;
+  }
+
+  get found() {
+    return this.speakers.length > 0;
+  }
+
+  get many() {
+    return this.speakers.length > 1;
+  }
+
+  /** The voice each speaker gets now. */
+  get presets(): Preset[] {
+    return assignPresets(this.speakers, this.voice);
+  }
+
+  get speakerLines() {
+    const counts = this.speakers.map(() => 0);
+    for (const s of this.assign) counts[s] = (counts[s] ?? 0) + 1;
+    return counts;
+  }
+
+  /** Every picked language's engine has a single voice. */
+  get singleVoice() {
+    return (
+      this.targets.length > 0 &&
+      this.targets.every((code) => {
+        const engine = pickEngine(code, this.engine);
+        return !engine || engineInfo(engine).voices.length < 2;
+      })
+    );
+  }
+
+  get canFind() {
+    return this.loaded && !this.busy;
+  }
+
+  get movingFrom() {
+    return this.moving === null ? 0 : (this.assign[this.moving] ?? 0);
+  }
+
+  /** The speaker tag over a script line, when more than one person speaks. */
+  tagOf = (index: number) => {
+    if (!this.many) return undefined;
+    const speaker = this.speakers[this.assign[index] ?? 0];
+    return speaker ? speakerLabel(speaker) : undefined;
+  };
+
+  #setSpeaker(index: number, change: Partial<Speaker>) {
+    this.speakers = this.speakers.map((s, i) =>
+      i === index ? { ...s, ...change } : s,
+    );
+  }
+
+  renameSpeaker = (index: number, name: string) =>
+    this.#setSpeaker(index, { name: name.trim() });
+
+  typeSpeaker = (index: number, type: VoiceType) =>
+    this.#setSpeaker(index, { type });
+
+  voiceSpeaker = (index: number, voice: 'auto' | Preset) =>
+    this.#setSpeaker(index, { voice });
+
+  /** Every line of `from` becomes `into`'s; `from` goes. */
+  mergeSpeaker = (from: number, into: number) => {
+    const target = into > from ? into - 1 : into;
+    this.assign = this.assign.map((s) => {
+      if (s === from) return target;
+      return s > from ? s - 1 : s;
+    });
+    this.speakers = this.speakers.filter((_, i) => i !== from);
+  };
+
+  moveLine = (index: number) => (this.moving = index);
+
+  closeMove = () => (this.moving = null);
+
+  setLineSpeaker = (cue: number, speaker: number) => {
+    const next = [...this.assign];
+    next[cue] = speaker;
+    this.assign = next;
+    this.moving = null;
+  };
+
+  #stopSample() {
+    this.#sample?.pause();
+    if (this.#sample) URL.revokeObjectURL(this.#sample.src);
+    this.#sample = null;
+  }
+
+  /** A few seconds of the speaker: their longest line. */
+  playSample = (index: number) => {
+    const original = this.original;
+    if (!original) return;
+    let best: Cue | undefined;
+    this.cues.forEach((cue, i) => {
+      if (this.assign[i] !== index) return;
+      if (!best || cue.end - cue.start > best.end - best.start) best = cue;
+    });
+    if (!best) return;
+    this.#stopSample();
+    this.playback.pause();
+    const rate = original.sampleRate;
+    const from = Math.floor((best.start / 1000) * rate);
+    const to = Math.min(
+      original.length,
+      Math.ceil((best.end / 1000) * rate),
+      from + 6 * rate,
+    );
+    const channels = channelsOf(original).map((c) => c.slice(from, to));
+    const url = URL.createObjectURL(
+      new Blob([encodeWav(channels, rate)], { type: 'audio/wav' }),
+    );
+    const audio = new Audio(url);
+    this.#sample = audio;
+    audio.addEventListener('ended', () => {
+      if (this.#sample === audio) this.#stopSample();
+    });
+    void audio.play().catch(() => this.#stopSample());
+  };
+
+  get speakerLanes(): SpeakerLane[] {
+    if (!this.many) return [];
+    return this.speakers.map((s, k) => ({
+      label: `S${s.id}`,
+      cues: this.cues.filter((_, i) => this.assign[i] === k),
+    }));
+  }
+
   /* --- progress and band --- */
 
   get currentJob() {
@@ -444,6 +640,10 @@ export default class AudioDubTool extends Component {
   get status() {
     if (this.phase === 'transcribe')
       return this.downloading ? 'Downloading speech model…' : 'Transcribing…';
+    if (this.phase === 'speakers')
+      return this.downloading
+        ? 'Downloading speaker model…'
+        : 'Finding who speaks each line…';
     if (this.phase === 'video') return 'Building the video…';
     if (this.downloading)
       return this.downloadWhat === 'translation'
@@ -452,13 +652,19 @@ export default class AudioDubTool extends Component {
     const job = this.currentJob;
     if (!job?.stage) return 'Starting…';
     const name = nameOf(job.code);
-    if (job.stage === 'voice')
-      return `Voicing ${name}… ${job.done} / ${this.cues.length}`;
+    if (job.stage === 'voice') {
+      const who = this.speaking ? ` · ${this.speaking}` : '';
+      return `Voicing ${name}${who}… ${job.done} / ${this.cues.length}`;
+    }
     return `${STAGE_TEXT[job.stage]} ${name}`;
   }
 
   get share() {
-    if (this.downloading || this.phase === 'transcribe')
+    if (
+      this.downloading ||
+      this.phase === 'transcribe' ||
+      this.phase === 'speakers'
+    )
       return this.percent / 100;
     const n = this.cues.length * Math.max(1, this.jobs.length);
     const done = this.jobs.reduce(
@@ -483,17 +689,24 @@ export default class AudioDubTool extends Component {
   }
 
   get bandHeight() {
-    const rows = 2 + this.lanes.length;
+    const rows = 1 + Math.max(1, this.speakerLanes.length) + this.lanes.length;
     return Math.min(BAND_MAX, Math.max(BAND_MIN, 70 + rows * LANE_HEIGHT));
   }
 
   get figure() {
     if (!this.loaded) return '';
-    if (this.busy && (this.downloading || this.phase === 'transcribe'))
+    if (
+      this.busy &&
+      (this.downloading ||
+        this.phase === 'transcribe' ||
+        this.phase === 'speakers')
+    )
       return this.downloading ? String(this.percent) : '';
+    if (this.busy && this.phase === 'video') return '';
     if (this.busy) return String(this.currentJob?.done ?? 0);
     const finished = this.finished.length;
     if (finished) return String(finished);
+    if (this.many) return String(this.speakers.length);
     return this.cues.length ? String(this.cues.length) : '';
   }
 
@@ -503,13 +716,15 @@ export default class AudioDubTool extends Component {
       return `/ ${this.cues.length} ${this.current.toUpperCase().slice(0, 4)}`;
     if (this.finished.length)
       return this.finished.length === 1 ? 'dub' : 'dubs';
+    if (this.many) return 'speakers';
     return this.cues.length === 1 ? 'line' : 'lines';
   }
 
   get pictureLabel() {
     if (!this.loaded) return '';
     const names = this.targets.map(nameOf).join(', ');
-    return `Timeline: ${this.cues.length} lines, ${nameOf(this.sourceCode)} to ${names}`;
+    const who = this.many ? `, ${this.speakers.length} speakers` : '';
+    return `Timeline: ${this.cues.length} lines${who}, ${nameOf(this.sourceCode)} to ${names}`;
   }
 
   /* --- results --- */
@@ -530,7 +745,7 @@ export default class AudioDubTool extends Component {
         job.state === 'running'
           ? `${job.engine ? engineInfo(job.engine).name + ' · ' : ''}${job.stage === 'voice' ? `${job.done} / ${this.cues.length}` : STAGE_TEXT[job.stage ?? 'translate']}`
           : job.state === 'done' && job.engine
-            ? voiceLabel(job.engine, this.voice)
+            ? voiceLabel(job.engine, job.voices ?? [])
             : job.state === 'failed'
               ? (job.error ?? 'Failed')
               : job.state === 'stopped'
@@ -597,6 +812,94 @@ export default class AudioDubTool extends Component {
 
   /* --- the run --- */
 
+  /** The script (transcribed once) and its speakers; false when there is no speech. */
+  async #prepare(file: File, original: AudioBuffer, signal: AbortSignal) {
+    // 1. the script: from a subtitle file, or transcribed once
+    if (!this.cues.length) {
+      this.phase = 'transcribe';
+      const cues = await transcribe(file, {
+        mode: WHISPER_MODE,
+        language: this.from || undefined,
+        onProgress: (p) => {
+          this.downloading = p > 0 && p < 100;
+          this.percent = p;
+        },
+      });
+      if (signal.aborted || this.isDestroying) return false;
+      this.cues = cues;
+      this.scriptSource = 'whisper';
+      this.downloading = false;
+    }
+    if (!this.cues.length) {
+      this.error = 'No speech was found in this file.';
+      return false;
+    }
+    if (!this.from && !this.detected)
+      this.detected = await detectLanguage(
+        this.cues.map((c) => c.text).join(' '),
+      );
+
+    // 2. who speaks each line
+    if (!this.found) {
+      this.phase = 'speakers';
+      this.percent = 0;
+      const cues = this.cues;
+      const result = await diarize(
+        await mono16k(original),
+        cues,
+        this.speakerCount,
+        (stage, ratio) => {
+          this.downloading = stage === 'download' && ratio < 1;
+          this.percent = Math.round(ratio * 100);
+        },
+      );
+      this.downloading = false;
+      if (signal.aborted || this.isDestroying || this.cues !== cues)
+        return false;
+      this.speakers = result.speakers;
+      this.assign = result.assign;
+    }
+    return true;
+  }
+
+  #failText() {
+    if (this.phase === 'transcribe')
+      return 'Transcription failed. Check your connection for the first model download and try again.';
+    if (this.phase === 'speakers')
+      return 'Finding speakers failed. Check your connection for the first model download and try again.';
+    return 'Dubbing failed. Please try again.';
+  }
+
+  #finish() {
+    this.busy = false;
+    this.phase = '';
+    this.current = '';
+    this.speaking = '';
+    this.downloading = false;
+    this.#abort = null;
+  }
+
+  /** Transcribe if needed and find the speakers, to name them before dubbing. */
+  findSpeakers = async () => {
+    if (!this.canFind || !this.file || !this.original) return;
+    const abort = new AbortController();
+    this.#abort = abort;
+    this.busy = true;
+    this.error = '';
+    this.percent = 0;
+    this.#forgetSpeakers();
+    try {
+      await this.#prepare(this.file, this.original, abort.signal);
+    } catch (error) {
+      if (!abort.signal.aborted && !this.isDestroying) {
+        console.error('Finding speakers failed:', error);
+        this.error = this.#failText();
+      }
+    } finally {
+      if (!this.isDestroying) this.#finish();
+    }
+  };
+
   dub = async () => {
     if (!this.canRun || !this.file || !this.original) return;
     const file = this.file;
@@ -609,32 +912,9 @@ export default class AudioDubTool extends Component {
     this.downloading = false;
 
     try {
-      // 1. the script: from a subtitle file, or transcribed once
-      if (!this.cues.length) {
-        this.phase = 'transcribe';
-        const cues = await transcribe(file, {
-          mode: WHISPER_MODE,
-          language: this.from || undefined,
-          onProgress: (p) => {
-            this.downloading = p > 0 && p < 100;
-            this.percent = p;
-          },
-        });
-        if (abort.signal.aborted || this.isDestroying) return;
-        this.cues = cues;
-        this.scriptSource = 'whisper';
-        this.downloading = false;
-      }
-      if (!this.cues.length) {
-        this.error = 'No speech was found in this file.';
-        return;
-      }
-      if (!this.from)
-        this.detected = await detectLanguage(
-          this.cues.map((c) => c.text).join(' '),
-        );
+      if (!(await this.#prepare(file, original, abort.signal))) return;
 
-      // 2. each language in turn
+      // 3. each language in turn
       this.phase = 'dub';
       const targets = this.targets.filter((c) => c !== this.sourceCode);
       this.jobs = targets.map((code) => ({
@@ -650,10 +930,7 @@ export default class AudioDubTool extends Component {
     } catch (error) {
       if (!abort.signal.aborted && !this.isDestroying) {
         console.error('Dubbing failed:', error);
-        this.error =
-          this.phase === 'transcribe'
-            ? 'Transcription failed. Check your connection for the first model download and try again.'
-            : 'Dubbing failed. Please try again.';
+        this.error = this.#failText();
       }
     } finally {
       if (!this.isDestroying) {
@@ -662,11 +939,7 @@ export default class AudioDubTool extends Component {
             ? { ...job, state: 'stopped', stage: undefined }
             : job,
         );
-        this.busy = false;
-        this.phase = '';
-        this.current = '';
-        this.downloading = false;
-        this.#abort = null;
+        this.#finish();
       }
     }
   };
@@ -711,11 +984,19 @@ export default class AudioDubTool extends Component {
 
       // voice each line, fitted to its slot
       const info = engineInfo(engine);
+      const presets = this.presets;
+      const fallback: Preset = this.voice === 'male' ? 'M1' : 'F1';
+      const used = new Set<Preset>();
       const placed: PlacedLine[] = [];
       for (const [i, cue] of cues.entries()) {
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         const text = (texts[i] ?? '').trim();
+        const who = this.assign[i] ?? 0;
+        const voice = presets[who] ?? fallback;
+        const speaker = this.speakers[who];
+        this.speaking = this.many && speaker ? speakerLabel(speaker) : '';
         if (text) {
+          used.add(voice);
           const next = cues[i + 1]?.start ?? (original.duration + 1) * 1000;
           const slot = Math.max(0.3, (next - cue.start) / 1000 - 0.05);
           const onDownload = (r: number) => {
@@ -723,21 +1004,14 @@ export default class AudioDubTool extends Component {
             this.downloading = r < 1;
             this.percent = Math.round(r * 100);
           };
-          let speech = await speak(
-            engine,
-            code,
-            text,
-            this.voice,
-            1,
-            onDownload,
-          );
+          let speech = await speak(engine, code, text, voice, 1, onDownload);
           this.downloading = false;
           const need = seconds(speech) / slot;
           let rate: number | undefined;
           if (need > 1.02) {
             const speed = Math.min(need, MAX_SPEED);
             if (info.speedControl)
-              speech = await speak(engine, code, text, this.voice, speed);
+              speech = await speak(engine, code, text, voice, speed);
             else rate = speed;
           }
           placed.push({ start: cue.start / 1000, speech, rate });
@@ -746,7 +1020,8 @@ export default class AudioDubTool extends Component {
       }
 
       // mix, then the file: MP4 with the new audio for video, WAV for audio
-      this.#update(code, { stage: 'mix' });
+      this.speaking = '';
+      this.#update(code, { stage: 'mix', voices: [...used] });
       const mix = await renderDub(original, placed, this.background);
       let out: Blob;
       if (this.video) {
@@ -809,13 +1084,7 @@ export default class AudioDubTool extends Component {
     } catch {
       // stopped
     } finally {
-      if (!this.isDestroying) {
-        this.busy = false;
-        this.phase = '';
-        this.current = '';
-        this.downloading = false;
-        this.#abort = null;
-      }
+      if (!this.isDestroying) this.#finish();
     }
   };
 
@@ -908,6 +1177,7 @@ export default class AudioDubTool extends Component {
             @duration={{this.duration}}
             @cues={{this.cues}}
             @source={{this.sourceLabel}}
+            @speakers={{this.speakerLanes}}
             @lanes={{this.lanes}}
             @playhead={{this.playback.playhead}}
             @onScrub={{this.playback.scrub}}
@@ -963,6 +1233,22 @@ export default class AudioDubTool extends Component {
             @selected={{this.voiceIndex}}
             @disabled={{this.busy}}
             @onChange={{this.pickVoice}}
+          />
+          <CanonStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
+          <CanonHeading @text="Speakers" />
+          <CanonSegmented
+            class="ad-speaker-count"
+            aria-label="Speakers"
+            @items={{SPEAKER_LABELS}}
+            @columns={{4}}
+            @selected={{this.speakerCountIndex}}
+            @disabled={{this.busy}}
+            @onChange={{this.pickSpeakerCount}}
+          />
+          <CanonStatus
+            @text={{this.speakerCountNote}}
+            @tone="muted"
+            @row={{true}}
           />
           <CanonHeading @text="Background" />
           <CanonSegmented
@@ -1046,15 +1332,36 @@ export default class AudioDubTool extends Component {
         </CanonRows>
 
         {{#if this.file}}
+          <Speakers
+            @speakers={{this.speakers}}
+            @presets={{this.presets}}
+            @lines={{this.speakerLines}}
+            @found={{this.found}}
+            @singleVoice={{this.singleVoice}}
+            @busy={{this.busy}}
+            @canFind={{this.canFind}}
+            @moving={{this.moving}}
+            @movingFrom={{this.movingFrom}}
+            @onFind={{this.findSpeakers}}
+            @onRename={{this.renameSpeaker}}
+            @onType={{this.typeSpeaker}}
+            @onVoice={{this.voiceSpeaker}}
+            @onMerge={{this.mergeSpeaker}}
+            @onSample={{this.playSample}}
+            @onMove={{this.setLineSpeaker}}
+            @onCloseMove={{this.closeMove}}
+          />
           <CanonRows class="ad-script" @framed={{true}}>
             <CanonHeading @text={{this.scriptHeading}} />
             {{#if this.cues.length}}
               <div class="ad-lines">
-                {{#each this.cues as |cue index|}}
+                {{#each this.cues key="@index" as |cue index|}}
                   <CueRow
                     @index={{index}}
                     @cue={{cue}}
                     @editable={{true}}
+                    @note={{this.tagOf index}}
+                    @onNote={{fn this.moveLine index}}
                     @onChange={{fn this.editCue index}}
                   />
                 {{/each}}

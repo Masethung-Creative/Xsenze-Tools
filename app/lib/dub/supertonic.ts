@@ -11,7 +11,7 @@ import {
   fetchCached,
   type FetchProgress,
 } from 'xsenze-tools/lib/dub/fetch-cached';
-import type { VoiceGender } from 'xsenze-tools/lib/dub/engines';
+import type { Preset } from 'xsenze-tools/lib/dub/engines';
 
 type Ort = typeof import('onnxruntime-web');
 type Session = import('onnxruntime-web').InferenceSession;
@@ -19,12 +19,6 @@ type Tensor = import('onnxruntime-web').Tensor;
 
 const BASE =
   'https://huggingface.co/supertone-oss-archive/supertonic-3/resolve/aafc6e32416a594460b32413efc49d7fe4ce6d46';
-
-/** Which preset voice each gender uses. */
-const VOICE_FILE: Record<VoiceGender, string> = {
-  female: 'F1',
-  male: 'M1',
-};
 
 /** Denoising steps: the example's default, a balance of quality and speed. */
 const STEPS = 8;
@@ -47,7 +41,7 @@ interface Loaded {
   textEnc: Session;
   vectorEst: Session;
   vocoder: Session;
-  styles: Map<VoiceGender, { ttl: Tensor; dp: Tensor }>;
+  styles: Map<Preset, { ttl: Tensor; dp: Tensor }>;
 }
 
 let loading: Promise<Loaded> | null = null;
@@ -124,11 +118,11 @@ export function loadSupertonic(
   return loading;
 }
 
-async function styleFor(m: Loaded, gender: VoiceGender) {
-  const cached = m.styles.get(gender);
+async function styleFor(m: Loaded, preset: Preset) {
+  const cached = m.styles.get(preset);
   if (cached) return cached;
   const json = (await (
-    await fetchCached(`${BASE}/voice_styles/${VOICE_FILE[gender]}.json`)
+    await fetchCached(`${BASE}/voice_styles/${preset}.json`)
   ).json()) as StyleJson;
   const tensor = (s: StyleJson['style_ttl']) =>
     new m.ort.Tensor(
@@ -137,7 +131,7 @@ async function styleFor(m: Loaded, gender: VoiceGender) {
       s.dims,
     );
   const style = { ttl: tensor(json.style_ttl), dp: tensor(json.style_dp) };
-  m.styles.set(gender, style);
+  m.styles.set(preset, style);
   return style;
 }
 
@@ -193,13 +187,13 @@ function gaussian(): number {
 export async function speakSupertonic(
   text: string,
   lang: string,
-  gender: VoiceGender,
+  preset: Preset,
   speed: number,
   onProgress: (ratio: number) => void,
 ): Promise<{ audio: Float32Array; rate: number }> {
   const m = await loadSupertonic(onProgress);
   const { ort, cfg } = m;
-  const style = await styleFor(m, gender);
+  const style = await styleFor(m, preset);
 
   const prepared = prepare(text, lang);
   const ids = new BigInt64Array(prepared.length);

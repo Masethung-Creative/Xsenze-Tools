@@ -10,7 +10,7 @@ import ortWasm from '../../../node_modules/@huggingface/transformers/dist/ort-wa
 import {
   MMS_MODELS,
   type EngineId,
-  type VoiceGender,
+  type Preset,
 } from 'xsenze-tools/lib/dub/engines';
 import { speakSupertonic } from 'xsenze-tools/lib/dub/supertonic';
 
@@ -20,7 +20,7 @@ type Incoming = {
   engine: EngineId;
   lang: string;
   text: string;
-  voice: VoiceGender;
+  voice: Preset;
   speed: number;
 };
 

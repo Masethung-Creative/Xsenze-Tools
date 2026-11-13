@@ -49,12 +49,14 @@ import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
+import iMerge from 'lucide-static/icons/merge.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
 import iMicVocal from 'lucide-static/icons/mic-vocal.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
+import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
 import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPodcast from 'lucide-static/icons/podcast.svg?raw';
@@ -78,6 +80,7 @@ import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
+import iUsers from 'lucide-static/icons/users.svg?raw';
 import iVan from 'lucide-static/icons/van.svg?raw';
 import iVideo from 'lucide-static/icons/video.svg?raw';
 import iVolume from 'lucide-static/icons/volume.svg?raw';
@@ -138,12 +141,14 @@ export const icons: Record<string, string> = {
   languages: iLanguages,
   maximize: iMaximize,
   menu: iMenu,
+  merge: iMerge,
   mic: iMic,
   'mic-vocal': iMicVocal,
   'monitor-up': iMonitorUp,
   moon: iMoon,
   music: iMusic,
   pause: iPause,
+  pencil: iPencil,
   'picture-in-picture-2': iPictureInPicture2,
   play: iPlay,
   podcast: iPodcast,
@@ -167,6 +172,7 @@ export const icons: Record<string, string> = {
   'triangle-alert': iTriangleAlert,
   'type-outline': iTypeOutline,
   upload: iUpload,
+  users: iUsers,
   van: iVan,
   video: iVideo,
   volume: iVolume,

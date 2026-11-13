@@ -23,6 +23,8 @@ export interface CueRowSignature {
     onSelect?: () => void;
     /** A muted line above the text, e.g. the original of a translation. */
     note?: string;
+    /** Makes the note a button, e.g. a speaker tag that opens a picker. */
+    onNote?: () => void;
     /** Editable text, but the times stay as they are. */
     lockTimes?: boolean;
     /** Text direction of the text field: rtl for Arabic, Hebrew... */
@@ -134,7 +136,16 @@ export default class CueRow extends Component<CueRowSignature> {
           {{/if}}
         </div>
         {{#if @note}}
-          <div class="cue-row-note">{{@note}}</div>
+          {{#if @onNote}}
+            <button
+              type="button"
+              class="cue-row-note cue-row-note--pressable"
+              aria-haspopup="dialog"
+              {{on "click" @onNote}}
+            >{{@note}}</button>
+          {{else}}
+            <div class="cue-row-note">{{@note}}</div>
+          {{/if}}
         {{/if}}
         {{! a cue may span lines, so a textarea }}
         <textarea
