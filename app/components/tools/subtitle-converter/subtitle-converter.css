@@ -1,0 +1,36 @@
+/* the input is the main pane's editor, and it is code */
+.subtitle-converter .canon-text-area.tt-source {
+  block-size: 360px;
+  font-family: var(--canon-mono-font);
+  font-size: var(--canon-text-footnote);
+}
+
+.sc-file .canon-row-title {
+  overflow-wrap: anywhere;
+}
+
+.sc-stats .canon-row-title {
+  font-variant-numeric: tabular-nums;
+}
+
+/* width 120 */
+.canon-text-cell.sc-language-cell {
+  inline-size: 120px;
+}
+
+/* SubtitleTimeline: label column 44 px, two lanes 10 px apart, 16 px above and below */
+.cue-timeline.sc-timeline {
+  position: absolute;
+  inset: 0;
+  grid-auto-rows: minmax(8px, 1fr);
+  row-gap: 10px;
+  padding: 16px var(--canon-panel-padding);
+}
+
+.sc-timeline .cue-timeline-lane {
+  border-block-end: var(--canon-hairline) solid var(--canon-border);
+}
+
+.sc-timeline .cue-timeline-cue {
+  inset-block: 0 2px;
+}

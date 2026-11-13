@@ -1,0 +1,59 @@
+.cue-timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  box-sizing: border-box;
+  block-size: 100%;
+  user-select: none;
+}
+
+.cue-timeline--labelled {
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+
+.cue-timeline--presses .cue-timeline-lane {
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.cue-timeline-label {
+  align-self: center;
+  color: var(--canon-muted-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+}
+
+.cue-timeline-label--lit {
+  color: var(--canon-primary);
+}
+
+.cue-timeline-lane {
+  position: relative;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--canon-muted-foreground) 45%, transparent);
+}
+
+.cue-timeline-lane--lit {
+  color: var(--canon-primary);
+}
+
+.cue-timeline-cue {
+  position: absolute;
+  inset-block: 0;
+  min-inline-size: 1px;
+  background: currentcolor;
+}
+
+.cue-timeline-cue--active {
+  background: var(--canon-primary);
+}
+
+.cue-timeline-head {
+  position: absolute;
+  inset-block: 0;
+  inline-size: var(--canon-frame);
+  margin-inline-start: calc(-1 * var(--canon-frame) / 2);
+  background: var(--canon-foreground);
+  pointer-events: none;
+}

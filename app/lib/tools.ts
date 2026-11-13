@@ -145,6 +145,23 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'subtitle-converter',
+        name: 'Subtitle Converter',
+        description: 'Convert, shift and rescale SRT and VTT subtitles',
+        icon: 'captions',
+        accepts: SUBTITLE_ACCEPT,
+        produces: ['.srt', '.vtt'],
+        keywords: [
+          'srt',
+          'vtt',
+          'captions',
+          'subtitles',
+          'sync',
+          'offset',
+          'frame rate',
+        ],
+      },
+      {
         id: 'video-atlas',
         name: 'Video Atlas',
         description: 'Everything about one video file',

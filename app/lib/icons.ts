@@ -7,11 +7,13 @@ import iArrowRightToLine from 'lucide-static/icons/arrow-right-to-line.svg?raw';
 import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
 import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
+import iCaptions from 'lucide-static/icons/captions.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
 import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
 import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
+import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
@@ -50,6 +52,7 @@ import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
+import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iTags from 'lucide-static/icons/tags.svg?raw';
 import iText from 'lucide-static/icons/text.svg?raw';
@@ -73,11 +76,13 @@ export const icons: Record<string, string> = {
   'audio-lines': iAudioLines,
   'audio-waveform': iAudioWaveform,
   camera: iCamera,
+  captions: iCaptions,
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
   'circle-check-big': iCircleCheckBig,
   'circle-dot': iCircleDot,
   clapperboard: iClapperboard,
+  clipboard: iClipboard,
   'clipboard-paste': iClipboardPaste,
   copy: iCopy,
   dices: iDices,
@@ -116,6 +121,7 @@ export const icons: Record<string, string> = {
   'sliders-horizontal': iSlidersHorizontal,
   speaker: iSpeaker,
   square: iSquare,
+  subtitles: iSubtitles,
   sun: iSun,
   tags: iTags,
   text: iText,

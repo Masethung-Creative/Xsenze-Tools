@@ -1,0 +1,30 @@
+/* the source is the tool's main field: tall, body size */
+.canon-text-area.tt-source {
+  block-size: 220px;
+  font-size: var(--canon-text-body);
+}
+
+.tt-result-text {
+  display: block;
+  padding: 14px var(--canon-panel-padding);
+  background: var(--canon-card);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-body);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.tt-result-text::selection {
+  background: color-mix(in srgb, var(--canon-primary) 30%, transparent);
+}
+
+.tt-result-text--marked {
+  white-space: normal;
+}
+
+.tt-result-text--marked > * {
+  white-space: pre-wrap;
+}
