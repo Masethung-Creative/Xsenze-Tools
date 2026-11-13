@@ -88,11 +88,12 @@ export const toolCategories: ToolCategory[] = [
       {
         id: 'auto-subtitle',
         name: 'Auto Subtitle',
-        description: 'Generate subtitles from speech, on your device',
+        description:
+          'Generate subtitles, transcripts and lyrics from speech, on your device',
         icon: 'captions',
         beta: true,
         accepts: [...AUDIO_ACCEPT, ...VIDEO_ACCEPT],
-        produces: ['.srt', '.vtt'],
+        produces: ['.srt', '.vtt', '.txt', '.ass', '.lrc'],
         keywords: [
           'transcribe',
           'speech to text',

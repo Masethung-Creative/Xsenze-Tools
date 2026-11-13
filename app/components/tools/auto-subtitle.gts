@@ -26,6 +26,7 @@ import LanguagePick from 'xsenze-tools/components/tools/auto-subtitle/language-p
 import Picture from 'xsenze-tools/components/tools/auto-subtitle/picture';
 import {
   MIME,
+  type ExportFormat,
   altered,
   failure,
   output,
@@ -42,11 +43,7 @@ import {
 } from 'xsenze-tools/lib/audio';
 import { downloadText } from 'xsenze-tools/lib/download';
 import { downloadIcon, passAlong } from 'xsenze-tools/lib/flow-hooks';
-import {
-  parseSubtitles,
-  type Cue,
-  type SubtitleFormat,
-} from 'xsenze-tools/lib/subtitles';
+import { parseSubtitles, type Cue } from 'xsenze-tools/lib/subtitles';
 import { AUDIO_ACCEPT, VIDEO_ACCEPT, acceptAttr } from 'xsenze-tools/lib/tools';
 import { MODELS, transcribe, type Mode } from 'xsenze-tools/lib/transcribe';
 import { bandHeight } from 'xsenze-tools/components/tools/media/strips';
@@ -54,8 +51,8 @@ import './media/media.css';
 import './auto-subtitle/auto-subtitle.css';
 
 const ACCEPT = acceptAttr([...AUDIO_ACCEPT, ...VIDEO_ACCEPT]);
-const FORMATS: SubtitleFormat[] = ['srt', 'vtt'];
-const FORMAT_LABELS = ['SRT', 'VTT'];
+const FORMATS: ExportFormat[] = ['srt', 'vtt', 'txt', 'ass', 'lrc'];
+const FORMAT_LABELS = ['SRT', 'VTT', 'TXT', 'ASS', 'LRC'];
 const MODES: Mode[] = ['fast', 'reasonable', 'accurate'];
 const MODE_LABELS = ['Rough', 'Decent', 'Experimental'];
 
@@ -109,7 +106,7 @@ export default class AutoSubtitleTool extends Component {
   @tracked detail = '';
   @tracked mode: Mode = 'reasonable';
   @tracked language = '';
-  @tracked target: SubtitleFormat = 'srt';
+  @tracked target: ExportFormat = 'srt';
   @tracked busy = false;
   @tracked percent = 0;
   @tracked problem: Failure = '';
