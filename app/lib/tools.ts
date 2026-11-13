@@ -122,6 +122,15 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['mute', 'silent', 'remove audio', 'no sound', 'video'],
       },
       {
+        id: 'video-trimmer',
+        name: 'Video Trimmer',
+        description: 'Cut a video in/out style',
+        icon: 'film',
+        accepts: VIDEO_ACCEPT,
+        produces: ['video/mp4', 'video/webm'],
+        keywords: ['cut', 'clip', 'trim', 'shorten', 'video', 'mp4'],
+      },
+      {
         id: 'voice-recorder',
         name: 'Voice Recorder',
         description: 'Record voice memos in the browser',

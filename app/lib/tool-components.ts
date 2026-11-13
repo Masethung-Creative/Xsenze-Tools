@@ -11,6 +11,7 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
+  'video-trimmer': () => import('xsenze-tools/components/tools/video-trimmer'),
   'video-muter': () => import('xsenze-tools/components/tools/video-muter'),
   'audio-extractor': () =>
     import('xsenze-tools/components/tools/audio-extractor'),
