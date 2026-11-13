@@ -86,6 +86,23 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'auto-subtitle',
+        name: 'Auto Subtitle',
+        description: 'Generate subtitles from speech, on your device',
+        icon: 'captions',
+        beta: true,
+        accepts: [...AUDIO_ACCEPT, ...VIDEO_ACCEPT],
+        produces: ['.srt', '.vtt'],
+        keywords: [
+          'transcribe',
+          'speech to text',
+          'whisper',
+          'captions',
+          'srt',
+          'ai',
+        ],
+      },
+      {
         id: 'audio-extractor',
         name: 'Audio Extractor',
         description: 'Extract the audio out of a video file',

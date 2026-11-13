@@ -31,6 +31,8 @@ import iFlame from 'lucide-static/icons/flame.svg?raw';
 import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
+import iGlobe from 'lucide-static/icons/globe.svg?raw';
+import iGpu from 'lucide-static/icons/gpu.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
@@ -107,6 +109,8 @@ export const icons: Record<string, string> = {
   'folder-open': iFolderOpen,
   frame: iFrame,
   gauge: iGauge,
+  globe: iGlobe,
+  gpu: iGpu,
   'grid-3x3': iGrid3x3,
   headphones: iHeadphones,
   house: iHouse,

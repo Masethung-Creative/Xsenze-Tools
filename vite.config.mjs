@@ -12,4 +12,8 @@ export default defineConfig({
       extensions,
     }),
   ],
+  optimizeDeps: {
+    // a dynamic import is missed by the dependency scan
+    include: ['@huggingface/transformers'],
+  },
 });

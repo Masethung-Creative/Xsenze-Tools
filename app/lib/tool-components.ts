@@ -11,6 +11,7 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
+  'auto-subtitle': () => import('xsenze-tools/components/tools/auto-subtitle'),
   'subtitle-studio': () =>
     import('xsenze-tools/components/tools/subtitle-studio'),
   'subtitle-converter': () =>

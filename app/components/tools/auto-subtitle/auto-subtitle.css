@@ -1,0 +1,105 @@
+/* the waveform over a 26 px cue lane */
+.as-picture {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 26px;
+  block-size: 100%;
+}
+
+/* the picture's accessible name, over the parts it names */
+.as-picture-name {
+  position: absolute;
+  inset: 0;
+}
+
+/* audio only: the strips have no frame row */
+.as-picture .media-strips--waveform {
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+.as-picture .media-wave {
+  padding-block: 6px;
+  box-sizing: border-box;
+  color: color-mix(in srgb, var(--canon-muted-foreground) 45%, transparent);
+}
+
+.as-picture--done .media-wave {
+  color: var(--canon-primary);
+}
+
+/* the midline */
+.as-picture .media-wave::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: var(--canon-hairline);
+  background: var(--canon-border);
+  content: "";
+}
+
+.as-lane {
+  box-sizing: border-box;
+  padding-block: 7px;
+  border-block-start: var(--canon-hairline) solid var(--canon-border);
+}
+
+.as-figure {
+  position: absolute;
+  inset-block-end: 32px;
+  inset-inline-end: var(--canon-panel-padding);
+  pointer-events: none;
+}
+
+.as-file .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.as-busy-cell {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.as-bar {
+  block-size: 3px;
+}
+
+/* fixed: the percentage is of the window */
+.as-models {
+  inline-size: 340px;
+  max-inline-size: calc(100% - 2 * var(--canon-panel-padding));
+}
+
+.as-models-link {
+  color: var(--canon-primary);
+  font-size: var(--canon-text-footnote);
+  text-decoration: none;
+}
+
+.as-models-link:hover {
+  text-decoration: underline;
+}
+
+.as-models-link:focus-visible {
+  outline: 2px solid var(--canon-primary);
+  outline-offset: 2px;
+}
+
+.as-flag {
+  display: block;
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+}
+
+.as-warning-art {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
