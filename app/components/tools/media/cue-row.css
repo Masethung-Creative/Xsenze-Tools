@@ -108,3 +108,13 @@ textarea.cue-row-text:focus-visible {
   outline: 2px solid var(--canon-primary);
   outline-offset: 2px;
 }
+
+/* the original of a translated cue, above its editable text */
+.cue-row-note {
+  color: var(--canon-muted-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-footnote);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

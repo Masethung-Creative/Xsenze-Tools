@@ -116,7 +116,7 @@ export default class AppSidebar extends Component<Signature> {
                       {{on "click" this.navigated}}
                     >
                       <Icon @name={{tool.icon}} />
-                      {{tool.name}}
+                      <span class="sidebar__name">{{tool.name}}</span>
                       {{#if tool.beta}}<span class="badge">beta</span>{{/if}}
                     </LinkTo>
                   </li>

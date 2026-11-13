@@ -12,6 +12,8 @@ Rules:
 - Components are strict-mode `.gts`. Styles: theme tokens/shared blocks in `app/styles/app.scss`,
   component styles as co-located plain `.css` using the CSS variables (do not `@use` crayon in
   component files; it re-emits the whole utility sheet).
+- Transformers.js: always set `env.backends.onnx.wasm.wasmPaths` to the bundled `ort-wasm` URL (the
+  library defaults to a CDN). Run long model work in a Web Worker (see `lib/nllb.worker.ts`).
 - Audio inputs: use `AUDIO_ACCEPT` from `lib/tools.ts` (iOS needs explicit extensions).
 - Before finishing: `npm run lint` and `npm run build` must pass.
 - Do not mention third-party reference sites in repo files, comments or commit messages.
@@ -28,11 +30,10 @@ Design:
 - Tool UIs use the canon UI kit (`delphicanon` package). Its `--canon-*` tokens are mapped to
   our palette in `app/styles/_canon.scss`.
 
-Tools (Audio & Video category, built one at a time, user reviews each):
+Tools (Audio and Video categories, built one at a time, user reviews each):
 
 - `lib/flow-hooks.ts` is a reduced stand-in (no workflows); `deliverPending` feeds the omnibox
   hand-off from `lib/handoff.ts`.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,
-  audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle. Remaining:
-  timecode-calc.
+  audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc (all 16 ported), plus our own subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js).

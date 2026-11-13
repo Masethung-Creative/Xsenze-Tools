@@ -1,0 +1,52 @@
+.tcc-picture {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--canon-panel-padding) 8px;
+  background: var(--canon-card);
+}
+
+.tcc-sum {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.tcc-sum .canon-timecode {
+  line-height: 1.2;
+}
+
+.tcc-operand {
+  opacity: 0.7;
+}
+
+.tcc-row {
+  display: flex;
+  align-items: last baseline;
+  gap: 12px;
+}
+
+.tcc-sign {
+  color: var(--canon-muted-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-title2);
+  font-weight: var(--canon-weight-bold);
+}
+
+.tcc-rule {
+  align-self: stretch;
+  block-size: var(--canon-frame);
+  margin-block-end: 4px;
+  background: var(--canon-primary);
+}
+
+/* first and large: the typed timecodes drive the sum */
+.timecode-calc .canon-text-cell.tcc-field {
+  inline-size: 100%;
+  min-block-size: var(--canon-primary-height);
+  padding-inline: var(--canon-panel-padding);
+  font-size: var(--canon-text-big-number);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--canon-weight-semibold);
+  text-align: end;
+}

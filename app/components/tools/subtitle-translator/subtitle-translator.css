@@ -1,0 +1,93 @@
+/* band: source lane over one lane per target, the figure in its own column */
+.st-picture {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--canon-panel-padding);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-block: 10px;
+  padding-inline: var(--canon-panel-padding);
+}
+
+.st-timeline {
+  align-self: stretch;
+  row-gap: 6px;
+}
+
+/* the figure never covers a cue */
+.st-figure {
+  min-inline-size: 7ch;
+  text-align: end;
+  pointer-events: none;
+}
+
+/* language picker: flags and ticks as Auto Subtitle's */
+.st-flag {
+  display: block;
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+}
+
+.st-tick {
+  display: inline-flex;
+  color: var(--canon-primary);
+}
+
+/* on the highlighted row the tick takes the row's text colour */
+.canon-command-item[data-active] .st-tick {
+  color: var(--canon-primary-foreground);
+}
+
+.st-tick svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.st-language-pick .canon-button-title,
+.st-target .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* busy: loader and percent, as Auto Subtitle's */
+.st-busy-cell {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.st-job-cell {
+  padding-inline: var(--canon-panel-padding);
+}
+
+.st-bar {
+  block-size: 3px;
+}
+
+/* queue rows: waiting and stopped languages read quieter */
+.st-job--waiting .canon-row-title,
+.st-job--stopped .canon-row-title {
+  color: var(--canon-muted-foreground);
+}
+
+.st-job--failed .canon-row-detail {
+  color: var(--canon-destructive, var(--canon-primary));
+}
+
+/* the reviewed cues scroll inside the panel */
+.st-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canon-hairline);
+  max-block-size: 520px;
+  overflow-y: auto;
+  background: var(--canon-border);
+}

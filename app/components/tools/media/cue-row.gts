@@ -21,6 +21,14 @@ export interface CueRowSignature {
     onChange?: (cue: Cue) => void;
     /** A press anywhere in the row, or focus in one of its fields. */
     onSelect?: () => void;
+    /** A muted line above the text, e.g. the original of a translation. */
+    note?: string;
+    /** Editable text, but the times stay as they are. */
+    lockTimes?: boolean;
+    /** Text direction of the text field: rtl for Arabic, Hebrew... */
+    dir?: string;
+    /** Language of the text, for spelling and fonts. */
+    lang?: string;
   };
   /** A div, or a button when display-only with `onSelect`. */
   Element: HTMLElement;
@@ -95,35 +103,45 @@ export default class CueRow extends Component<CueRowSignature> {
       >
         <div class="cue-row-times">
           <span class="cue-row-index">{{this.number}}</span>
-          <input
-            type="text"
-            class="cue-row-time"
-            aria-label="Start"
-            inputmode="decimal"
-            autocomplete="off"
-            spellcheck="false"
-            enterkeyhint="done"
-            {{show this.start}}
-            {{on "blur" this.commitStart}}
-            {{on "keydown" blurOnEnter}}
-          />
-          <input
-            type="text"
-            class="cue-row-time cue-row-time--end"
-            aria-label="End"
-            inputmode="decimal"
-            autocomplete="off"
-            spellcheck="false"
-            enterkeyhint="done"
-            {{show this.end}}
-            {{on "blur" this.commitEnd}}
-            {{on "keydown" blurOnEnter}}
-          />
+          {{#if @lockTimes}}
+            <span class="cue-row-time">{{this.start}}</span>
+            <span class="cue-row-time cue-row-time--end">{{this.end}}</span>
+          {{else}}
+            <input
+              type="text"
+              class="cue-row-time"
+              aria-label="Start"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              enterkeyhint="done"
+              {{show this.start}}
+              {{on "blur" this.commitStart}}
+              {{on "keydown" blurOnEnter}}
+            />
+            <input
+              type="text"
+              class="cue-row-time cue-row-time--end"
+              aria-label="End"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              enterkeyhint="done"
+              {{show this.end}}
+              {{on "blur" this.commitEnd}}
+              {{on "keydown" blurOnEnter}}
+            />
+          {{/if}}
         </div>
+        {{#if @note}}
+          <div class="cue-row-note">{{@note}}</div>
+        {{/if}}
         {{! a cue may span lines, so a textarea }}
         <textarea
           class="cue-row-text"
           aria-label="Text"
+          dir={{@dir}}
+          lang={{@lang}}
           rows={{this.lines}}
           spellcheck="false"
           {{show @cue.text}}

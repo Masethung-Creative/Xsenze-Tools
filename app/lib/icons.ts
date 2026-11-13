@@ -12,6 +12,7 @@ import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
 import iBox from 'lucide-static/icons/box.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
+import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
@@ -19,10 +20,13 @@ import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
 import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
 import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
+import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
+import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
+import iEdit from 'lucide-static/icons/edit.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
@@ -41,6 +45,7 @@ import iImageDown from 'lucide-static/icons/image-down.svg?raw';
 import iImagePlay from 'lucide-static/icons/image-play.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
+import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
@@ -60,6 +65,7 @@ import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
 import iSkipForward from 'lucide-static/icons/skip-forward.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
+import iSpeech from 'lucide-static/icons/speech.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
@@ -67,6 +73,7 @@ import iTags from 'lucide-static/icons/tags.svg?raw';
 import iText from 'lucide-static/icons/text.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
+import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVideo from 'lucide-static/icons/video.svg?raw';
 import iVolume from 'lucide-static/icons/volume.svg?raw';
@@ -90,6 +97,7 @@ export const icons: Record<string, string> = {
   box: iBox,
   camera: iCamera,
   captions: iCaptions,
+  check: iCheck,
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
   'circle-check-big': iCircleCheckBig,
@@ -97,10 +105,13 @@ export const icons: Record<string, string> = {
   clapperboard: iClapperboard,
   clipboard: iClipboard,
   'clipboard-paste': iClipboardPaste,
+  clock: iClock,
   copy: iCopy,
+  delete: iDelete,
   dices: iDices,
   'disc-3': iDisc3,
   download: iDownload,
+  edit: iEdit,
   eye: iEye,
   'file-audio': iFileAudio,
   'file-music': iFileMusic,
@@ -119,6 +130,7 @@ export const icons: Record<string, string> = {
   'image-play': iImagePlay,
   info: iInfo,
   inspect: iInspect,
+  languages: iLanguages,
   maximize: iMaximize,
   menu: iMenu,
   mic: iMic,
@@ -138,6 +150,7 @@ export const icons: Record<string, string> = {
   'skip-forward': iSkipForward,
   'sliders-horizontal': iSlidersHorizontal,
   speaker: iSpeaker,
+  speech: iSpeech,
   square: iSquare,
   subtitles: iSubtitles,
   sun: iSun,
@@ -145,6 +158,7 @@ export const icons: Record<string, string> = {
   text: iText,
   'trash-2': iTrash2,
   'triangle-alert': iTriangleAlert,
+  'type-outline': iTypeOutline,
   upload: iUpload,
   video: iVideo,
   volume: iVolume,

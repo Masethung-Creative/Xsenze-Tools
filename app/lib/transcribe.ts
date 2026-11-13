@@ -1,3 +1,5 @@
+// the ONNX runtime binary, bundled (the package does not export this path)
+import ortWasm from '../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
 import type { Cue } from 'xsenze-tools/lib/subtitles';
 import { isIosWebKit } from 'xsenze-tools/lib/platform';
 
@@ -334,6 +336,12 @@ export async function transcribe(
 
   const { pipeline, env } = await import('@huggingface/transformers');
   env.allowLocalModels = false;
+  // the ONNX runtime binary is bundled with the app (same file the
+  // library would otherwise fetch from its default CDN)
+  const onnx = env.backends.onnx as {
+    wasm?: { wasmPaths?: string | { wasm?: string } };
+  };
+  if (onnx.wasm) onnx.wasm.wasmPaths = { wasm: ortWasm };
   // ios cache api fails on the model files
   env.useBrowserCache = !isIosWebKit();
 

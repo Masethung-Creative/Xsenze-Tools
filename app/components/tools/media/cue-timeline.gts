@@ -12,6 +12,8 @@ export interface CueLane {
   lit?: boolean;
   /** Index of the one cue drawn in the primary colour. */
   active?: number | null;
+  /** The first this many cues drawn in the primary colour (work in progress). */
+  litThrough?: number;
 }
 
 export interface CueTimelineSignature {
@@ -69,7 +71,7 @@ export default class CueTimeline extends Component<CueTimelineSignature> {
       lane,
       blocks: blocks(lane.cues, span).map((style, index) => ({
         style,
-        active: index === lane.active,
+        active: index === lane.active || index < (lane.litThrough ?? 0),
       })),
     }));
   }
