@@ -35,6 +35,7 @@ import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
+import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
@@ -100,6 +101,7 @@ export const icons: Record<string, string> = {
   maximize: iMaximize,
   menu: iMenu,
   mic: iMic,
+  'monitor-up': iMonitorUp,
   moon: iMoon,
   music: iMusic,
   pause: iPause,

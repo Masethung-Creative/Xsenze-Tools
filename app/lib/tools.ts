@@ -129,6 +129,22 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['cut', 'clip', 'fade', 'trim', 'mp3', 'wav'],
       },
       {
+        id: 'screen-recorder',
+        name: 'Screen Recorder',
+        description:
+          'Record your screen with optional tab audio (supported browsers only) and microphone audio',
+        icon: 'monitor-up',
+        produces: ['video/webm'],
+        keywords: [
+          'screen',
+          'capture',
+          'record',
+          'screencast',
+          'tutorial',
+          'demo',
+        ],
+      },
+      {
         id: 'video-atlas',
         name: 'Video Atlas',
         description: 'Everything about one video file',
