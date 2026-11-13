@@ -5,15 +5,13 @@
  * Copyright (c) 2025 Supertone Inc. The model weights are OpenRAIL-M and are
  * downloaded by the visitor's browser from the pinned archive revision below.
  */
-// the ONNX runtime binary, bundled (the package does not export this path)
-import ortWasm from '../../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
+import { loadOrt, type Ort } from 'xsenze-tools/lib/dub/ort';
 import {
   fetchCached,
   type FetchProgress,
 } from 'xsenze-tools/lib/dub/fetch-cached';
 import type { Preset } from 'xsenze-tools/lib/dub/engines';
 
-type Ort = typeof import('onnxruntime-web');
 type Session = import('onnxruntime-web').InferenceSession;
 type Tensor = import('onnxruntime-web').Tensor;
 
@@ -68,10 +66,7 @@ export function loadSupertonic(
   onProgress: (ratio: number) => void,
 ): Promise<Loaded> {
   loading ??= (async () => {
-    const ort = (await import('onnxruntime-web/webgpu')) as unknown as Ort;
-    ort.env.wasm.wasmPaths = { wasm: ortWasm };
-    // its notices about CPU-assigned nodes are expected, not errors
-    ort.env.logLevel = 'error';
+    const ort = await loadOrt();
     const progress = new Map<string, FetchProgress>();
     const report = (file: string) => (p: FetchProgress) => {
       progress.set(file, p);
@@ -100,9 +95,10 @@ export function loadSupertonic(
         executionProviders: providers,
         graphOptimizationLevel: 'all',
       });
-    const [dp, textEnc, vectorEst, vocoder] = await Promise.all(
-      models.map((m) => session(m)),
-    );
+    // one at a time: the WebGPU runtime refuses to build two sessions at once
+    const sessions: Session[] = [];
+    for (const m of models) sessions.push(await session(m));
+    const [dp, textEnc, vectorEst, vocoder] = sessions;
     return {
       ort,
       cfg,

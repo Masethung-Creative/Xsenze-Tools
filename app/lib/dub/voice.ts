@@ -7,7 +7,7 @@ export interface Speech {
 }
 
 type WorkerReply =
-  | { type: 'progress'; id: number; ratio: number }
+  | { type: 'progress'; id: number; ratio: number; phase?: 'speak' }
   | { type: 'result'; id: number; audio: Float32Array; rate: number }
   | { type: 'error'; id: number; message: string };
 
@@ -30,6 +30,7 @@ function voiceWorker(): Worker {
 /**
  * Speak `text` with `engine` in a preset voice (one-voice engines ignore it),
  * or in the voice of `clone` for a cloning engine; `speed` above 1 is faster.
+ * `onSpeaking` hears how far through the line a slow engine is.
  */
 export function speak(
   engine: EngineId,
@@ -39,6 +40,7 @@ export function speak(
   speed = 1,
   onDownload?: (ratio: number) => void,
   clone?: CloneRef,
+  onSpeaking?: (ratio: number) => void,
 ): Promise<Speech> {
   const w = voiceWorker();
   const id = nextId++;
@@ -47,7 +49,8 @@ export function speak(
       const reply = event.data;
       if (reply.id !== id) return;
       if (reply.type === 'progress') {
-        onDownload?.(reply.ratio);
+        if (reply.phase === 'speak') onSpeaking?.(reply.ratio);
+        else onDownload?.(reply.ratio);
         return;
       }
       w.removeEventListener('message', listen);

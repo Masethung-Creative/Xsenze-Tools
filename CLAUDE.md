@@ -14,6 +14,10 @@ Rules:
   component files; it re-emits the whole utility sheet).
 - Transformers.js: always set `env.backends.onnx.wasm.wasmPaths` to the bundled `ort-wasm` URL (the
   library defaults to a CDN). Run long model work in a Web Worker (see `lib/nllb.worker.ts`).
+- Raw ONNX code (no Transformers.js) loads the runtime via `loadOrt()` in `lib/dub/ort.ts`: a
+  stable `onnxruntime-web` plus its asyncify WASM. Transformers.js keeps its own nested pre-release
+  runtime, whose WebGPU kernels turned Chatterbox into noise. Create WebGPU sessions one at a time.
+- Check new voice output by transcribing it with Whisper, not by its loudness: noise has loudness too.
 - Audio inputs: use `AUDIO_ACCEPT` from `lib/tools.ts` (iOS needs explicit extensions).
 - Before finishing: `npm run lint` and `npm run build` must pass.
 - Do not mention third-party reference sites in repo files, comments or commit messages.
@@ -36,4 +40,4 @@ Tools (Audio and Video categories, built one at a time, user reviews each):
   hand-off from `lib/handoff.ts`.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,
-  audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc (all 16 ported), plus our own subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js) and audio-dub (Whisper -> NLLB -> voice engines in `lib/dub/`: Supertonic 3 + MMS, Auto picks per language; speakers found per line in `lib/dub/speakers.ts` (WavLM voiceprints + pitch), a preset voice each; Chatterbox Multilingual clones each speaker from a clip of their lines (`lib/dub/chatterbox.ts`; its speech encoder runs on WASM, WebGPU lacks its AveragePool); Phase 3 Indic engines pending).
+  audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc (all 16 ported), plus our own subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js) and audio-dub (Whisper -> NLLB -> voice engines in `lib/dub/`: Supertonic 3 + MMS, Auto picks per language; speakers found per line in `lib/dub/speakers.ts` (CAM++ voiceprints from `lib/dub/fbank.ts` features + pitch; WavLM q8 scrambled them), a preset voice each; Chatterbox Multilingual clones each speaker from a clip of their lines (`lib/dub/chatterbox.ts`; its speech encoder runs on WASM, WebGPU lacks its AveragePool); Phase 3 Indic engines pending).

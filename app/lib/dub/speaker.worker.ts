@@ -1,81 +1,73 @@
 /// <reference lib="webworker" />
 /**
  * Speaker embeddings in a worker: one voiceprint per stretch of speech, so
- * lines by the same person can be grouped. WavLM Base Plus (speaker
- * verification head), MIT licence, about 30 MB once.
+ * lines by the same person can be grouped. CAM++ (3D-Speaker, Apache 2.0),
+ * trained on 200k Chinese and English speakers, about 28 MB once. It reads
+ * Kaldi filterbank features (see `fbank.ts`) and gives a 192-value print.
  * In:  { type: 'embed', id, segments: Float32Array[] (mono 16 kHz) }
  * Out: { type: 'progress', id, phase: 'download' | 'embed', ratio }
  *      { type: 'result', id, embeddings: Float32Array[] } | { type: 'error', id, message }
  */
-// the ONNX runtime binary, bundled (the package does not export this path)
-import ortWasm from '../../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
+import { loadOrt, type Ort } from 'xsenze-tools/lib/dub/ort';
+import { fbank } from 'xsenze-tools/lib/dub/fbank';
+import { fetchCached } from 'xsenze-tools/lib/dub/fetch-cached';
 
-const MODEL = 'Xenova/wavlm-base-plus-sv';
+type Session = import('onnxruntime-web').InferenceSession;
+
+const MODEL =
+  'https://huggingface.co/csukuangfj/speaker-embedding-models/resolve/0743f301363dec56491a490f6d6cbc9d67f9a3bf/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx';
+const BINS = 80;
+/** Shorter than this gives the model too few frames to read a voice. */
+const MIN_SAMPLES = 16000 / 4;
 
 type Incoming = { type: 'embed'; id: number; segments: Float32Array[] };
 
 interface Loaded {
-  processor: (audio: Float32Array) => Promise<Record<string, unknown>>;
-  model: (
-    inputs: Record<string, unknown>,
-  ) => Promise<{ embeddings: { data: Float32Array } }>;
+  ort: Ort;
+  session: Session;
 }
 
 let loading: Promise<Loaded> | null = null;
 
 function load(onProgress: (ratio: number) => void): Promise<Loaded> {
   loading ??= (async () => {
-    const { AutoProcessor, AutoModel, env } =
-      await import('@huggingface/transformers');
-    env.allowLocalModels = false;
-    // the ONNX runtime binary comes from the app bundle, not the library's CDN
-    const onnx = env.backends.onnx as {
-      wasm?: { wasmPaths?: string | { wasm?: string } };
-    };
-    if (onnx.wasm) onnx.wasm.wasmPaths = { wasm: ortWasm };
-    const files = new Map<string, { loaded: number; total: number }>();
-    const progress_callback = (info: {
-      status: string;
-      file?: string;
-      loaded?: number;
-      total?: number;
-    }) => {
-      if (info.status !== 'progress' || !info.file || !info.total) return;
-      files.set(info.file, { loaded: info.loaded ?? 0, total: info.total });
-      let loaded = 0;
-      let total = 0;
-      for (const f of files.values()) {
-        loaded += f.loaded;
-        total += f.total;
-      }
-      onProgress(total ? loaded / total : 0);
-    };
-    const [processor, model] = await Promise.all([
-      AutoProcessor.from_pretrained(MODEL, { progress_callback }),
-      AutoModel.from_pretrained(MODEL, {
-        dtype: 'q8',
-        device: 'wasm',
-        progress_callback,
-      }),
-    ]);
-    return {
-      processor: processor as unknown as Loaded['processor'],
-      model: model as unknown as Loaded['model'],
-    };
+    const ort = await loadOrt();
+    const bytes = await fetchCached(MODEL, (p) =>
+      onProgress(p.total ? p.loaded / p.total : 0),
+    ).then((r) => r.arrayBuffer());
+    const session = await ort.InferenceSession.create(new Uint8Array(bytes), {
+      executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all',
+    });
+    return { ort, session };
   })();
   loading.catch(() => (loading = null));
   return loading;
 }
 
+/** Repeat a very short clip so the model still sees enough frames. */
+function padded(segment: Float32Array): Float32Array {
+  if (segment.length >= MIN_SAMPLES || !segment.length) return segment;
+  const out = new Float32Array(MIN_SAMPLES);
+  for (let i = 0; i < out.length; i++) out[i] = segment[i % segment.length]!;
+  return out;
+}
+
 async function embed(message: Incoming): Promise<Float32Array[]> {
   const report = (phase: 'download' | 'embed', ratio: number) =>
     postMessage({ type: 'progress', id: message.id, phase, ratio });
-  const { processor, model } = await load((r) => report('download', r));
+  const { ort, session } = await load((r) => report('download', r));
+  const input = session.inputNames[0]!;
+  const output = session.outputNames[0]!;
   const out: Float32Array[] = [];
   for (const [i, segment] of message.segments.entries()) {
-    const inputs = await processor(segment);
-    const { embeddings } = await model(inputs);
-    out.push(Float32Array.from(embeddings.data));
+    const { data, frames } = fbank(padded(segment), BINS);
+    const x = new ort.Tensor('float32', data, [1, frames, BINS]);
+    const result = await session.run({ [input]: x });
+    x.dispose();
+    const print = result[output]!;
+    out.push(Float32Array.from(print.data as Float32Array));
+    print.dispose();
     report('embed', (i + 1) / message.segments.length);
   }
   return out;

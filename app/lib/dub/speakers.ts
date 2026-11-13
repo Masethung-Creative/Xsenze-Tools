@@ -48,8 +48,11 @@ export interface Diarization {
 
 /** Auto finds at most this many. */
 export const MAX_SPEAKERS = 8;
-/** Lines whose voiceprints are at least this alike are one person (cosine). */
-const SAME_VOICE = 0.82;
+/**
+ * Lines whose voiceprints are at least this alike are one person (cosine).
+ * CAM++ puts one person's lines around 0.7-0.9 and different people below 0.4.
+ */
+const SAME_VOICE = 0.55;
 /** Lines shorter than this give weak voiceprints: they join the nearest group. */
 const RELIABLE_S = 1;
 const RATE = 16000;

@@ -2,7 +2,8 @@
 /**
  * The voice engines in a worker, so speaking never freezes the page.
  * In:  { type: 'speak', id, engine, lang, text, voice, speed, clone? }
- * Out: { type: 'progress', id, ratio } while an engine's model downloads
+ * Out: { type: 'progress', id, ratio } while an engine's model downloads,
+ *      { type: 'progress', id, ratio, phase: 'speak' } through a slow line
  *      { type: 'result', id, audio, rate } | { type: 'error', id, message }
  */
 // the ONNX runtime binary, bundled (the package does not export this path)
@@ -99,6 +100,13 @@ async function speak(
       message.clone.key,
       message.clone.audio,
       onProgress,
+      (ratio) =>
+        postMessage({
+          type: 'progress',
+          id: message.id,
+          ratio,
+          phase: 'speak',
+        }),
     );
   }
   const pipe = await loadMms(message.lang, onProgress);

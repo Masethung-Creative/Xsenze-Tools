@@ -213,6 +213,8 @@ export default class AudioDubTool extends Component {
   @tracked moving: number | null = null;
   /** Who is being voiced, for the status line. */
   @tracked speaking = '';
+  /** How far through the current line a slow engine is, 0-1. */
+  @tracked lineShare = 0;
   @tracked background: Background = 'duck';
   @tracked engine: EngineChoice = 'auto';
 
@@ -451,7 +453,7 @@ export default class AudioDubTool extends Component {
   }
 
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: WavLM (MIT). Free, non-commercial use.';
+    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
   }
 
   get canRun() {
@@ -670,7 +672,11 @@ export default class AudioDubTool extends Component {
     const name = nameOf(job.code);
     if (job.stage === 'voice') {
       const who = this.speaking ? ` · ${this.speaking}` : '';
-      return `Voicing ${name}${who}… ${job.done} / ${this.cues.length}`;
+      // a slow engine shows how far into the current line it is
+      const line = this.lineShare
+        ? ` · line ${Math.round(this.lineShare * 100)}%`
+        : '';
+      return `Voicing ${name}${who}… ${job.done} / ${this.cues.length}${line}`;
     }
     return `${STAGE_TEXT[job.stage]} ${name}`;
   }
@@ -687,7 +693,7 @@ export default class AudioDubTool extends Component {
       (sum, job) => sum + (job.state === 'done' ? this.cues.length : job.done),
       0,
     );
-    return n ? done / n : 0;
+    return n ? Math.min(1, (done + this.lineShare) / n) : 0;
   }
 
   get sharePercent() {
@@ -891,6 +897,7 @@ export default class AudioDubTool extends Component {
     this.phase = '';
     this.current = '';
     this.speaking = '';
+    this.lineShare = 0;
     this.downloading = false;
     this.#abort = null;
   }
@@ -1052,8 +1059,10 @@ export default class AudioDubTool extends Component {
             1,
             onDownload,
             clone,
+            (r) => (this.lineShare = r),
           );
           this.downloading = false;
+          this.lineShare = 0;
           const need = seconds(speech) / slot;
           let rate: number | undefined;
           if (need > 1.02) {
@@ -1093,6 +1102,7 @@ export default class AudioDubTool extends Component {
       });
       if (!this.tab) this.tab = code;
     } catch (error) {
+      this.lineShare = 0;
       if (signal.aborted) {
         this.#update(code, { state: 'stopped', stage: undefined });
         throw error;

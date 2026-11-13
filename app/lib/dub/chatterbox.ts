@@ -7,8 +7,7 @@
  * language model writes speech tokens one at a time from the text, and the
  * conditional decoder turns those tokens into 24 kHz audio in that voice.
  */
-// the ONNX runtime binary, bundled (the package does not export this path)
-import ortWasm from '../../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
+import { loadOrt, type Ort } from 'xsenze-tools/lib/dub/ort';
 import {
   cangjieFrom,
   chatterboxTokenizer,
@@ -22,7 +21,6 @@ import {
   type FetchProgress,
 } from 'xsenze-tools/lib/dub/fetch-cached';
 
-type Ort = typeof import('onnxruntime-web');
 type Session = import('onnxruntime-web').InferenceSession;
 type Tensor = import('onnxruntime-web').Tensor;
 
@@ -62,6 +60,11 @@ interface Voice {
   speakerFeatures: Tensor;
 }
 
+/** Share of a line's time spent writing speech tokens; the decoder takes the rest. */
+const GEN_SHARE = 0.3;
+/** How long the decoder took lately, for the progress bar (0 until known). */
+let decodeMs = 0;
+
 let loading: Promise<Loaded> | null = null;
 let cangjie: Promise<Cangjie> | null = null;
 const voices = new Map<string, Promise<Voice>>();
@@ -81,9 +84,7 @@ export function loadChatterbox(
   onProgress: (ratio: number) => void,
 ): Promise<Loaded> {
   loading ??= (async () => {
-    const ort = (await import('onnxruntime-web/webgpu')) as unknown as Ort;
-    ort.env.wasm.wasmPaths = { wasm: ortWasm };
-    ort.env.logLevel = 'error';
+    const ort = await loadOrt();
     const progress = new Map<string, FetchProgress>();
     const report = (file: string) => (p: FetchProgress) => {
       progress.set(file, p);
@@ -111,6 +112,9 @@ export function loadChatterbox(
       // it runs once per voice, so the CPU costs little
       const providers =
         gpu && name !== MODELS.encoder ? ['webgpu', 'wasm'] : ['wasm'];
+      // the language model's cache stays on the GPU between tokens: reading
+      // all 60 cache tensors back after every token was most of the time spent
+      const onGpu = gpu && name === MODELS.lm;
       const [graph, data] = await Promise.all([
         bytes(`onnx/${name}.onnx`),
         bytes(`onnx/${name}.onnx_data`),
@@ -120,6 +124,7 @@ export function loadChatterbox(
           executionProviders: providers,
           graphOptimizationLevel: 'all',
           externalData: [{ path: `${name}.onnx_data`, data }],
+          ...(onGpu ? { preferredOutputLocation: 'gpu-buffer' as const } : {}),
         }),
       );
     }
@@ -195,6 +200,7 @@ export async function speakChatterbox(
   voiceKey: string,
   reference: Float32Array,
   onProgress: (ratio: number) => void,
+  onSpeaking?: (ratio: number) => void,
 ): Promise<{ audio: Float32Array; rate: number }> {
   const m = await loadChatterbox(onProgress);
   const { ort } = m;
@@ -207,8 +213,11 @@ export async function speakChatterbox(
   const ids = m.tokenizer.encode(prepared);
   // positions count text tokens from the one after the first; speech tokens sit at 0
   const positions = ids.map((id, i) => (id >= START_SPEECH ? 0 : i - 1));
-  // roughly 2.5 tokens per character covers slow speech; the stop token ends it sooner
-  const maxTokens = Math.min(1000, 60 + Math.ceil(text.length * 2.5));
+  // speech runs about 1.3 tokens a character (25 a second); the stop token
+  // ends a line, and this cap only stops a model that never stops
+  const maxTokens = Math.min(1000, 60 + Math.ceil(text.length * 3));
+  // the usual length, for progress only
+  const expected = 10 + text.length * 1.4;
 
   const exaggeration = new ort.Tensor(
     'float32',
@@ -246,7 +255,8 @@ export async function speakChatterbox(
     });
     const logitsTensor = out[m.lm.outputNames[0]!]!;
     const vocab = logitsTensor.dims[2]!;
-    const all = logitsTensor.data as Float32Array;
+    // only the logits come back to the CPU (getData also reads a GPU tensor)
+    const all = (await logitsTensor.getData()) as Float32Array;
     const logits = all.slice(all.length - vocab);
     for (const id of new Set(generated)) {
       const s = logits[id]!;
@@ -263,6 +273,7 @@ export async function speakChatterbox(
     logitsTensor.dispose();
     past = nextPast;
     if (next === STOP_SPEECH) break;
+    if (step % 4 === 0) onSpeaking?.(GEN_SHARE * Math.min(1, step / expected));
 
     const e = await m.embed.run({
       input_ids: int64(ort, [next], [1, 1]),
@@ -280,11 +291,21 @@ export async function speakChatterbox(
     .filter((id, i, a) => !(i === a.length - 1 && id === STOP_SPEECH));
   const prompt = Array.from(voice.promptTokens.data as BigInt64Array, Number);
   const tokens = [...prompt, ...speech];
-  const wav = await m.decoder.run({
-    speech_tokens: int64(ort, tokens, [1, tokens.length]),
-    speaker_embeddings: voice.speakerEmbeddings,
-    speaker_features: voice.speakerFeatures,
-  });
+  // the decoder is one long call: the bar moves on by how long the last one took
+  const started = performance.now();
+  const tick = setInterval(() => {
+    const share = (performance.now() - started) / (decodeMs || 10000);
+    onSpeaking?.(GEN_SHARE + (0.97 - GEN_SHARE) * Math.min(1, share));
+  }, 250);
+  const wav = await m.decoder
+    .run({
+      speech_tokens: int64(ort, tokens, [1, tokens.length]),
+      speaker_embeddings: voice.speakerEmbeddings,
+      speaker_features: voice.speakerFeatures,
+    })
+    .finally(() => clearInterval(tick));
+  const took = performance.now() - started;
+  decodeMs = decodeMs ? (decodeMs + took) / 2 : took;
   const audio = (wav[m.decoder.outputNames[0]!]!.data as Float32Array).slice();
   return { audio, rate: CLONE_RATE };
 }
