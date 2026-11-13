@@ -162,6 +162,22 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'subtitle-studio',
+        name: 'Subtitle Studio',
+        description: 'Burn subtitles to video',
+        icon: 'subtitles',
+        accepts: [...VIDEO_ACCEPT, ...SUBTITLE_ACCEPT],
+        produces: ['video/mp4', 'video/webm'],
+        keywords: [
+          'burn',
+          'hardcode',
+          'captions',
+          'subtitles',
+          'srt',
+          'open captions',
+        ],
+      },
+      {
         id: 'video-atlas',
         name: 'Video Atlas',
         description: 'Everything about one video file',

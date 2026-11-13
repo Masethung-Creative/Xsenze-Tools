@@ -1,0 +1,110 @@
+/* SubtitleCueRow: 8 px above and below, 14 px leading, 12 px trailing */
+.cue-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+  inline-size: 100%;
+  margin: 0;
+  padding: 8px 12px 8px 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--canon-card);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+  text-align: start;
+}
+
+.cue-row--marked::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 2px;
+  background: var(--canon-primary);
+  content: "";
+}
+
+.cue-row--pressable {
+  cursor: pointer;
+}
+
+.cue-row--pressable:focus-visible {
+  outline: 2px solid var(--canon-primary);
+  outline-offset: -2px;
+}
+
+.cue-row-times {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  min-inline-size: 0;
+  font-family: var(--canon-mono-font);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cue-row-index {
+  flex: none;
+  color: var(--canon-muted-foreground);
+  font-weight: var(--canon-weight-semibold);
+}
+
+.cue-row-time {
+  flex: none;
+  color: var(--canon-foreground);
+}
+
+/* the end time takes the slack */
+.cue-row-time--end {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.cue-row-text {
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-body);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* the editable fields keep the display's look */
+input.cue-row-time,
+textarea.cue-row-text {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  caret-color: var(--canon-primary);
+  font: inherit;
+  appearance: none;
+}
+
+input.cue-row-time {
+  inline-size: 13ch;
+  font-family: var(--canon-mono-font);
+  font-size: 12px;
+}
+
+input.cue-row-time--end {
+  inline-size: auto;
+}
+
+textarea.cue-row-text {
+  display: block;
+  inline-size: 100%;
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-body);
+  line-height: 1.3;
+  resize: none;
+}
+
+input.cue-row-time:focus-visible,
+textarea.cue-row-text:focus-visible {
+  outline: 2px solid var(--canon-primary);
+  outline-offset: 2px;
+}
