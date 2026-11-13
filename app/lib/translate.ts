@@ -53,6 +53,13 @@ export const TRANSLATE_LANGUAGES: Language[] = [
   { code: 'cs', name: 'Czech', flores: 'ces_Latn' },
   { code: 'ro', name: 'Romanian', flores: 'ron_Latn' },
   { code: 'hu', name: 'Hungarian', flores: 'hun_Latn' },
+  { code: 'bg', name: 'Bulgarian', flores: 'bul_Cyrl' },
+  { code: 'hr', name: 'Croatian', flores: 'hrv_Latn' },
+  { code: 'sk', name: 'Slovak', flores: 'slk_Latn' },
+  { code: 'sl', name: 'Slovenian', flores: 'slv_Latn' },
+  { code: 'et', name: 'Estonian', flores: 'est_Latn' },
+  { code: 'lv', name: 'Latvian', flores: 'lvs_Latn' },
+  { code: 'lt', name: 'Lithuanian', flores: 'lit_Latn' },
   { code: 'ar', name: 'Arabic', flores: 'arb_Arab', rtl: true },
   { code: 'he', name: 'Hebrew', flores: 'heb_Hebr', rtl: true },
   { code: 'fa', name: 'Persian', flores: 'pes_Arab', rtl: true },
@@ -134,6 +141,20 @@ export async function browserCanTranslate(
 /** How long the browser translator may sit without download progress. */
 const STALL_MS = 20_000;
 
+/** A browser translation that never answers (its language pack never arrives) fails instead of hanging. */
+function withinStall<T>(work: Promise<T>): Promise<T> {
+  let timer = 0;
+  return Promise.race([
+    work,
+    new Promise<never>((_, reject) => {
+      timer = window.setTimeout(
+        () => reject(new Error('browser-translator-stalled')),
+        STALL_MS,
+      );
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
 const aborted = (signal?: AbortSignal) => {
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 };
@@ -182,7 +203,7 @@ async function viaBrowser(
     const out: string[] = [];
     for (const [i, text] of texts.entries()) {
       aborted(options.signal);
-      const line = text ? await translator.translate(text) : '';
+      const line = text ? await withinStall(translator.translate(text)) : '';
       out.push(line);
       options.onLine?.(i, line);
       options.onProgress?.({

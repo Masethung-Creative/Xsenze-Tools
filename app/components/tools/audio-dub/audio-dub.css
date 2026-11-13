@@ -1,0 +1,91 @@
+/* band: waveform over the script lane and the dub lanes, the figure in its own column */
+.ad-picture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--canon-panel-padding);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-block: 8px;
+  padding-inline: var(--canon-panel-padding);
+}
+
+.ad-picture-art {
+  display: grid;
+  grid-template-rows: 56px minmax(0, 1fr);
+  row-gap: 6px;
+  align-self: stretch;
+  min-inline-size: 0;
+}
+
+/* audio only: the strips have no frame row */
+.ad-picture .media-strips--waveform {
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+/* the waveform starts where the lanes start, after their label column */
+.ad-wave {
+  margin-inline-start: 44px;
+}
+
+.ad-picture .media-wave {
+  color: color-mix(in srgb, var(--canon-muted-foreground) 55%, transparent);
+}
+
+.ad-timeline {
+  row-gap: 4px;
+}
+
+/* the figure never covers a cue */
+.ad-figure {
+  min-inline-size: 7ch;
+  text-align: end;
+  pointer-events: none;
+}
+
+.ad-file .canon-row-title,
+.ad-target .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* busy: loader and percent, as the other AI tools */
+.ad-busy-cell {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-footnote);
+  font-weight: var(--canon-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-bar {
+  block-size: 3px;
+}
+
+.ad-job-actions {
+  display: inline-flex;
+  align-self: stretch;
+}
+
+/* waiting and stopped languages read quieter */
+.ad-job--waiting .canon-row-title,
+.ad-job--stopped .canon-row-title {
+  color: var(--canon-muted-foreground);
+}
+
+.ad-job--failed .canon-row-detail {
+  color: var(--canon-destructive, var(--canon-primary));
+}
+
+/* the script scrolls inside its panel */
+.ad-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canon-hairline);
+  max-block-size: 420px;
+  overflow-y: auto;
+  background: var(--canon-border);
+}

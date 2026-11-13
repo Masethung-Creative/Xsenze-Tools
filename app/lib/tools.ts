@@ -85,6 +85,26 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'audio-dub',
+        name: 'Audio Dub',
+        description:
+          'Dub audio or video into many languages at once, on your device',
+        icon: 'mic-vocal',
+        beta: true,
+        accepts: [...AUDIO_ACCEPT, ...VIDEO_ACCEPT, ...SUBTITLE_ACCEPT],
+        produces: ['audio/wav', 'video/mp4', '.srt'],
+        keywords: [
+          'dub',
+          'dubbing',
+          'voice over',
+          'translate',
+          'tts',
+          'text to speech',
+          'multilingual',
+          'ai',
+        ],
+      },
+      {
         id: 'audio-extractor',
         name: 'Audio Extractor',
         description: 'Extract the audio out of a video file',

@@ -24,6 +24,10 @@ export interface LanguageSelectSignature {
     /** A code that cannot be picked here (the other side). */
     exclude?: string;
     disabled?: boolean;
+    /** Offer Auto-detect as the first row; nothing selected means auto. */
+    auto?: boolean;
+    /** Codes listed but not pickable yet, marked Coming soon. */
+    unavailable?: ReadonlySet<string>;
     onChange: (codes: string[]) => void;
   };
 }
@@ -31,7 +35,10 @@ export interface LanguageSelectSignature {
 /** The first rows of the list: the languages most people here want. */
 const COMMON_COUNT = 13;
 
+const AUTO = 'Auto-detect';
+
 const Globe = <template><IconSvg @name="globe" /></template>;
+const Soon = <template><IconSvg @name="clock" /></template>;
 const Tick = <template>
   <span class="st-tick"><IconSvg @name="check" /></span>
 </template>;
@@ -64,7 +71,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
 
   get text() {
     const picked = this.args.selected;
-    if (picked.length === 0) return 'Choose…';
+    if (picked.length === 0) return this.args.auto ? AUTO : 'Choose…';
     if (picked.length === 1) return languageOf(picked[0]!)?.name ?? picked[0]!;
     return `${picked.length} languages`;
   }
@@ -81,6 +88,15 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
 
   #item(language: Language, group: string, prefix = ''): CanonCommandItem {
     const ticked = this.args.selected.includes(language.code);
+    if (this.args.unavailable?.has(language.code))
+      return {
+        id: prefix + language.code,
+        title: language.name,
+        group,
+        keywords: [language.code],
+        icon: Soon,
+        detail: 'Coming soon',
+      };
     return {
       id: prefix + language.code,
       title: language.name,
@@ -109,7 +125,10 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
     const common = usable
       .slice(0, COMMON_COUNT)
       .map((l) => this.#item(l, 'Common', 'common-'));
-    return [...picked, ...common, ...all];
+    const auto: CanonCommandItem[] = this.args.auto
+      ? [{ id: 'auto', title: AUTO, keywords: ['auto', 'detect'], icon: Globe }]
+      : [];
+    return [...auto, ...picked, ...common, ...all];
   }
 
   show = () => (this.open = true);
@@ -123,6 +142,12 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
 
   pick = (close: CanonDialogClose, item: CanonCommandItem) => {
     const code = item.id.replace(/^(common|picked)-/, '');
+    if (this.args.unavailable?.has(code)) return;
+    if (code === 'auto') {
+      this.args.onChange([]);
+      close();
+      return;
+    }
     if (!this.args.multiple) {
       this.args.onChange([code]);
       close();
