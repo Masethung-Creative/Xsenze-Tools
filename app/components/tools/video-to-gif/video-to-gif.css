@@ -1,0 +1,32 @@
+.vg-lane {
+  position: relative;
+  block-size: 100%;
+}
+
+.vg-lane .media-head {
+  z-index: 1;
+}
+
+.vg-video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.vg-source .canon-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the result at the source aspect, capped as the preview */
+.vg-gif {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-inline-size: none;
+  max-block-size: 340px;
+  background: var(--canon-muted);
+  object-fit: contain;
+}

@@ -24,6 +24,7 @@ import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
 import iImage from 'lucide-static/icons/image.svg?raw';
+import iImagePlay from 'lucide-static/icons/image-play.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
@@ -83,6 +84,7 @@ export const icons: Record<string, string> = {
   headphones: iHeadphones,
   house: iHouse,
   image: iImage,
+  'image-play': iImagePlay,
   info: iInfo,
   inspect: iInspect,
   maximize: iMaximize,

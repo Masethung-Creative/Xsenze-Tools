@@ -146,6 +146,15 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['cut', 'clip', 'trim', 'shorten', 'video', 'mp4'],
       },
       {
+        id: 'video-to-gif',
+        name: 'Video to GIF',
+        description: 'Turn video clips into looping GIFs',
+        icon: 'image-play',
+        accepts: VIDEO_ACCEPT,
+        produces: ['image/gif'],
+        keywords: ['gif', 'animation', 'loop', 'meme', 'convert', 'video'],
+      },
+      {
         id: 'voice-recorder',
         name: 'Voice Recorder',
         description: 'Record voice memos in the browser',
