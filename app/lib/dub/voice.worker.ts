@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /**
  * The voice engines in a worker, so speaking never freezes the page.
- * In:  { type: 'speak', id, engine, lang, text, voice, speed }
+ * In:  { type: 'speak', id, engine, lang, text, voice, speed, clone? }
  * Out: { type: 'progress', id, ratio } while an engine's model downloads
  *      { type: 'result', id, audio, rate } | { type: 'error', id, message }
  */
@@ -13,6 +13,8 @@ import {
   type Preset,
 } from 'xsenze-tools/lib/dub/engines';
 import { speakSupertonic } from 'xsenze-tools/lib/dub/supertonic';
+import { speakChatterbox } from 'xsenze-tools/lib/dub/chatterbox';
+import type { CloneRef } from 'xsenze-tools/lib/dub/voice';
 
 type Incoming = {
   type: 'speak';
@@ -22,6 +24,7 @@ type Incoming = {
   text: string;
   voice: Preset;
   speed: number;
+  clone?: CloneRef;
 };
 
 type MmsPipe = (
@@ -88,6 +91,16 @@ async function speak(
       message.speed,
       onProgress,
     );
+  if (message.engine === 'chatterbox') {
+    if (!message.clone) throw new Error('Chatterbox needs a voice to clone');
+    return speakChatterbox(
+      message.text,
+      message.lang,
+      message.clone.key,
+      message.clone.audio,
+      onProgress,
+    );
+  }
   const pipe = await loadMms(message.lang, onProgress);
   const out = await pipe(message.text);
   return { audio: out.audio, rate: out.sampling_rate };

@@ -39,6 +39,8 @@ import {
 import { downloadBlob } from 'xsenze-tools/lib/download';
 import { detectLanguage } from 'xsenze-tools/lib/dub/detect-language';
 import {
+  CLONE_RATE,
+  CLONE_SECONDS,
   DUB_LANGUAGES,
   ENGINES,
   engineInfo,
@@ -62,11 +64,12 @@ import {
   diarize,
   mono16k,
   speakerLabel,
+  voiceClips,
   type Speaker,
   type VoiceMode,
   type VoiceType,
 } from 'xsenze-tools/lib/dub/speakers';
-import { speak } from 'xsenze-tools/lib/dub/voice';
+import { speak, type CloneRef } from 'xsenze-tools/lib/dub/voice';
 import { formatBytes } from 'xsenze-tools/lib/format';
 import {
   detectFormat,
@@ -163,6 +166,10 @@ const nameOf = (code: string) => languageOf(code)?.name ?? code;
 /** Engine and voices for a finished row; one-voice engines name none. */
 const voiceLabel = (engine: EngineId, voices: Preset[]) => {
   const info = engineInfo(engine);
+  if (info.clones)
+    return voices.length === 1
+      ? `${info.name} · cloned voice`
+      : `${info.name} · ${voices.length} cloned voices`;
   if (info.voices.length < 2) return `${info.name} · single voice`;
   return voices.length === 1
     ? `${info.name} · ${voices[0]}`
@@ -221,6 +228,9 @@ export default class AudioDubTool extends Component {
   @tracked error = '';
   @tracked combined: { blob: Blob; url: string } | null = null;
   #abort: AbortController | null = null;
+  /** Each speaker's clip for cloning, made once per run; keys stay unique across runs. */
+  #clips: Float32Array[] | null = null;
+  #clipRun = 0;
   #sample: HTMLAudioElement | null = null;
 
   // ?adSample=<same-origin path> ?adSubs=<srt> ?adTo=hi,de ?adRun=1: preset the tool from the URL
@@ -286,6 +296,7 @@ export default class AudioDubTool extends Component {
   }
 
   #resetResults() {
+    this.#clips = null;
     this.playback.unload();
     this.#revoke();
     this.jobs = [];
@@ -434,8 +445,13 @@ export default class AudioDubTool extends Component {
     return `${info.note} About ${info.sizeMb} MB once, then cached. Licence: ${info.licence}.`;
   }
 
+  /** Cloning picked outright: every speaker keeps their own voice, so Female/Male has no say. */
+  get cloning() {
+    return this.engine === 'chatterbox';
+  }
+
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply) and MMS (CC-BY-NC). Translation: NLLB-200 (CC-BY-NC). Speakers: WavLM (MIT). Free, non-commercial use.';
+    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: WavLM (MIT). Free, non-commercial use.';
   }
 
   get canRun() {
@@ -988,6 +1004,17 @@ export default class AudioDubTool extends Component {
       const fallback: Preset = this.voice === 'male' ? 'M1' : 'F1';
       const used = new Set<Preset>();
       const placed: PlacedLine[] = [];
+      if (info.clones && !this.#clips) {
+        this.#clipRun++;
+        this.#clips = await voiceClips(
+          original,
+          cues,
+          this.assign,
+          Math.max(1, this.speakers.length),
+          CLONE_RATE,
+          CLONE_SECONDS,
+        );
+      }
       for (const [i, cue] of cues.entries()) {
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         const text = (texts[i] ?? '').trim();
@@ -995,6 +1022,19 @@ export default class AudioDubTool extends Component {
         const voice = presets[who] ?? fallback;
         const speaker = this.speakers[who];
         this.speaking = this.many && speaker ? speakerLabel(speaker) : '';
+        let clone: CloneRef | undefined;
+        if (info.clones) {
+          // a speaker with no clip of their own borrows the longest one
+          const clips = this.#clips!;
+          const own = clips[who];
+          const audio = own?.length
+            ? own
+            : clips.reduce((a, b) => (b.length > a.length ? b : a));
+          clone = {
+            key: `${this.#clipRun}:${own?.length ? who : 'any'}`,
+            audio,
+          };
+        }
         if (text) {
           used.add(voice);
           const next = cues[i + 1]?.start ?? (original.duration + 1) * 1000;
@@ -1004,7 +1044,15 @@ export default class AudioDubTool extends Component {
             this.downloading = r < 1;
             this.percent = Math.round(r * 100);
           };
-          let speech = await speak(engine, code, text, voice, 1, onDownload);
+          let speech = await speak(
+            engine,
+            code,
+            text,
+            voice,
+            1,
+            onDownload,
+            clone,
+          );
           this.downloading = false;
           const need = seconds(speech) / slot;
           let rate: number | undefined;
@@ -1225,16 +1273,18 @@ export default class AudioDubTool extends Component {
           {{else}}
             <CanonEmptyRow @text="Pick languages above" />
           {{/each}}
-          <CanonHeading @text="Voice" />
-          <CanonSegmented
-            class="ad-voice"
-            aria-label="Voice"
-            @items={{VOICE_LABELS}}
-            @selected={{this.voiceIndex}}
-            @disabled={{this.busy}}
-            @onChange={{this.pickVoice}}
-          />
-          <CanonStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
+          {{#unless this.cloning}}
+            <CanonHeading @text="Voice" />
+            <CanonSegmented
+              class="ad-voice"
+              aria-label="Voice"
+              @items={{VOICE_LABELS}}
+              @selected={{this.voiceIndex}}
+              @disabled={{this.busy}}
+              @onChange={{this.pickVoice}}
+            />
+            <CanonStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
+          {{/unless}}
           <CanonHeading @text="Speakers" />
           <CanonSegmented
             class="ad-speaker-count"

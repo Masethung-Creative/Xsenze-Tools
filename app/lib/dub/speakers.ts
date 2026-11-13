@@ -64,10 +64,18 @@ const PITCH_SLACK = 3;
 /** Similarity taken off per semitone beyond the slack. */
 const PITCH_WEIGHT = 0.04;
 
+/**
+ * Pitch apart by more than this many semitones (a man and a woman, say) is
+ * never one voice: voiceprints alone can rate one person's lines less alike
+ * than two different people's, so a gentle penalty is not enough here.
+ */
+const PITCH_SPLIT = 7;
+
 /** How much a pitch difference lowers two voiceprints' likeness. */
 function pitchGap(a = 0, b = 0): number {
   if (!a || !b) return 0;
   const semitones = Math.abs(12 * Math.log2(a / b));
+  if (semitones > PITCH_SPLIT) return 1;
   return Math.max(0, semitones - PITCH_SLACK) * PITCH_WEIGHT;
 }
 
@@ -378,12 +386,62 @@ export const speakerLabel = (s: Speaker) =>
   s.name ? `S${s.id} ${s.name}` : `S${s.id}`;
 
 /** The decoded file as mono 16 kHz, the rate the speaker model hears. */
-export async function mono16k(buffer: AudioBuffer): Promise<Float32Array> {
-  const frames = Math.max(1, Math.ceil(buffer.duration * RATE));
-  const offline = new OfflineAudioContext(1, frames, RATE);
+export function mono16k(buffer: AudioBuffer): Promise<Float32Array> {
+  return monoAt(buffer, RATE);
+}
+
+/** Mono at `rate`, mixed down from every channel. */
+async function monoAt(
+  buffer: AudioBuffer,
+  rate: number,
+): Promise<Float32Array> {
+  const frames = Math.max(1, Math.ceil(buffer.duration * rate));
+  const offline = new OfflineAudioContext(1, frames, rate);
   const source = offline.createBufferSource();
   source.buffer = buffer;
   source.connect(offline.destination);
   source.start();
   return (await offline.startRendering()).getChannelData(0);
+}
+
+/**
+ * A clip of each speaker for voice cloning: their longest lines joined with a
+ * short pause, up to `seconds`, mono at `rate`. Empty for a speaker with none.
+ */
+export async function voiceClips(
+  buffer: AudioBuffer,
+  cues: Cue[],
+  assign: number[],
+  count: number,
+  rate: number,
+  seconds: number,
+): Promise<Float32Array[]> {
+  const pcm = await monoAt(buffer, rate);
+  const gap = Math.round(rate * 0.15);
+  const limit = Math.round(rate * seconds);
+  return Array.from({ length: count }, (_, who) => {
+    const lines = cues
+      .map((cue, i) => ({ cue, i }))
+      .filter(({ i }) => (assign[i] ?? 0) === who)
+      .sort((a, b) => b.cue.end - b.cue.start - (a.cue.end - a.cue.start));
+    const parts: Float32Array[] = [];
+    let total = 0;
+    for (const { cue } of lines) {
+      if (total >= limit) break;
+      const from = Math.max(0, Math.floor((cue.start / 1000) * rate));
+      const to = Math.min(pcm.length, Math.ceil((cue.end / 1000) * rate));
+      if (to <= from) continue;
+      const part = pcm.subarray(from, Math.min(to, from + limit - total));
+      parts.push(part);
+      total += part.length + gap;
+    }
+    const clip = new Float32Array(Math.max(0, total - gap));
+    let at = 0;
+    for (const part of parts) {
+      clip.set(part.subarray(0, clip.length - at), at);
+      at += part.length + gap;
+      if (at >= clip.length) break;
+    }
+    return clip;
+  });
 }

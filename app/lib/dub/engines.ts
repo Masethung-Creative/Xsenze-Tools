@@ -2,9 +2,11 @@
  * The voice engines Audio Dub can use, and how Auto picks one per language.
  * Shared by the page (to show choices) and the voice worker (to run them).
  * Engines are tried in order: the first that speaks the language wins.
+ * Chatterbox comes last, so Auto uses it only where no preset engine speaks;
+ * picked on its own it clones every speaker's voice.
  */
 
-export type EngineId = 'supertonic' | 'mms';
+export type EngineId = 'supertonic' | 'mms' | 'chatterbox';
 export type EngineChoice = 'auto' | EngineId;
 export type VoiceGender = 'female' | 'male';
 
@@ -32,6 +34,8 @@ export interface EngineInfo {
   voices: readonly VoiceGender[];
   /** Whether the engine has its own speed control (pitch kept). */
   speedControl: boolean;
+  /** Speaks in each speaker's own voice from a clip of the original. */
+  clones?: boolean;
 }
 
 /** Supertonic 3: 31 languages, 5 female and 5 male voices. */
@@ -84,6 +88,36 @@ export const MMS_MODELS: Record<string, string> = {
   ro: 'ron',
 };
 
+/** Chatterbox Multilingual's languages we can translate to (Japanese needs a kana reader it lacks here). */
+export const CHATTERBOX_LANGUAGES = [
+  'ar',
+  'da',
+  'de',
+  'el',
+  'en',
+  'es',
+  'fi',
+  'fr',
+  'he',
+  'hi',
+  'it',
+  'ko',
+  'ms',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'ru',
+  'sv',
+  'sw',
+  'tr',
+  'zh',
+] as const;
+
+/** Cloning engines hear the reference clip at this rate, trimmed to this length. */
+export const CLONE_RATE = 24000;
+export const CLONE_SECONDS = 10;
+
 export const ENGINES: EngineInfo[] = [
   {
     id: 'supertonic',
@@ -109,6 +143,20 @@ export const ENGINES: EngineInfo[] = [
     languages: Object.keys(MMS_MODELS),
     voices: ['female'],
     speedControl: false,
+  },
+  {
+    id: 'chatterbox',
+    name: 'Chatterbox',
+    short: 'Clone',
+    note: 'Each speaker keeps their own voice, cloned from their lines in the original.',
+    licence: 'MIT',
+    licenceUrl:
+      'https://huggingface.co/onnx-community/chatterbox-multilingual-ONNX',
+    sizeMb: 1550,
+    languages: CHATTERBOX_LANGUAGES,
+    voices: ['female', 'male'],
+    speedControl: false,
+    clones: true,
   },
 ];
 
@@ -161,6 +209,10 @@ const ISO3: Record<string, string> = {
   tr: 'tur',
   uk: 'ukr',
   vi: 'vie',
+  he: 'heb',
+  ms: 'msa',
+  no: 'nor',
+  sw: 'swa',
   ta: 'tam',
   te: 'tel',
   ml: 'mal',

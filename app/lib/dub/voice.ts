@@ -11,6 +11,12 @@ type WorkerReply =
   | { type: 'result'; id: number; audio: Float32Array; rate: number }
   | { type: 'error'; id: number; message: string };
 
+/** A speaker's voice to clone: a clip of them (mono 24 kHz), cached in the worker under `key`. */
+export interface CloneRef {
+  key: string;
+  audio: Float32Array;
+}
+
 let worker: Worker | null = null;
 let nextId = 0;
 
@@ -21,7 +27,10 @@ function voiceWorker(): Worker {
   return worker;
 }
 
-/** Speak `text` with `engine` in a preset voice (one-voice engines ignore it); `speed` above 1 is faster. */
+/**
+ * Speak `text` with `engine` in a preset voice (one-voice engines ignore it),
+ * or in the voice of `clone` for a cloning engine; `speed` above 1 is faster.
+ */
 export function speak(
   engine: EngineId,
   lang: string,
@@ -29,6 +38,7 @@ export function speak(
   voice: Preset,
   speed = 1,
   onDownload?: (ratio: number) => void,
+  clone?: CloneRef,
 ): Promise<Speech> {
   const w = voiceWorker();
   const id = nextId++;
@@ -46,6 +56,15 @@ export function speak(
       else reject(new Error(reply.message));
     };
     w.addEventListener('message', listen);
-    w.postMessage({ type: 'speak', id, engine, lang, text, voice, speed });
+    w.postMessage({
+      type: 'speak',
+      id,
+      engine,
+      lang,
+      text,
+      voice,
+      speed,
+      clone,
+    });
   });
 }
