@@ -49,6 +49,7 @@ import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iVideo from 'lucide-static/icons/video.svg?raw';
 import iVolume from 'lucide-static/icons/volume.svg?raw';
 import iVolume2 from 'lucide-static/icons/volume-2.svg?raw';
+import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
 import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
@@ -104,6 +105,7 @@ export const icons: Record<string, string> = {
   video: iVideo,
   volume: iVolume,
   'volume-2': iVolume2,
+  'volume-x': iVolumeX,
   x: iX,
   'zoom-in': iZoomIn,
   'zoom-out': iZoomOut,

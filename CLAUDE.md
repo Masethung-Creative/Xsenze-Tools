@@ -34,6 +34,6 @@ Tools (Audio & Video category, built one at a time, user reviews each):
   hand-off from `lib/handoff.ts`.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,
-  audio-extractor. Remaining:
-  video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor,
+  audio-extractor, video-muter. Remaining:
+  video-trimmer, video-atlas, video-to-gif, frame-extractor,
   screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc.
