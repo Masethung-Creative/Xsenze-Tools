@@ -9,7 +9,9 @@ import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
 import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
+import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
+import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
@@ -30,6 +32,7 @@ import iMic from 'lucide-static/icons/mic.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
+import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
 import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
@@ -65,7 +68,9 @@ export const icons: Record<string, string> = {
   'chevron-right': iChevronRight,
   'circle-check-big': iCircleCheckBig,
   'circle-dot': iCircleDot,
+  clapperboard: iClapperboard,
   'clipboard-paste': iClipboardPaste,
+  copy: iCopy,
   dices: iDices,
   'disc-3': iDisc3,
   download: iDownload,
@@ -86,6 +91,7 @@ export const icons: Record<string, string> = {
   moon: iMoon,
   music: iMusic,
   pause: iPause,
+  'picture-in-picture-2': iPictureInPicture2,
   play: iPlay,
   podcast: iPodcast,
   radio: iRadio,

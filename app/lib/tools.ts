@@ -113,6 +113,21 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['cut', 'clip', 'fade', 'trim', 'mp3', 'wav'],
       },
       {
+        id: 'video-atlas',
+        name: 'Video Atlas',
+        description: 'Everything about one video file',
+        icon: 'clapperboard',
+        accepts: VIDEO_ACCEPT,
+        keywords: [
+          'info',
+          'metadata',
+          'codec',
+          'resolution',
+          'inspect',
+          'video',
+        ],
+      },
+      {
         id: 'video-muter',
         name: 'Video Muter',
         description: 'Strip the audio from a video',
