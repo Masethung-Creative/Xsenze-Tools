@@ -22,3 +22,6 @@
 
 # vendor runtime files copied by scripts/copy-vendor.mjs
 /public/mediainfo/
+
+.vercel
+.env*
