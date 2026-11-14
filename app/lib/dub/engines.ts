@@ -7,7 +7,7 @@
  * preset engine speaks; picked on its own it clones every speaker's voice.
  */
 
-export type EngineId = 'supertonic' | 'parler' | 'mms' | 'chatterbox';
+export type EngineId = 'supertonic' | 'parler' | 'chatterbox';
 export type EngineChoice = 'auto' | EngineId;
 export type VoiceGender = 'female' | 'male';
 
@@ -73,21 +73,6 @@ export const SUPERTONIC_LANGUAGES = [
   'uk',
   'vi',
 ] as const;
-
-/** MMS voices already converted for the browser: our code to the model's ISO 639-3. */
-export const MMS_MODELS: Record<string, string> = {
-  en: 'eng',
-  hi: 'hin',
-  es: 'spa',
-  fr: 'fra',
-  de: 'deu',
-  ar: 'ara',
-  ru: 'rus',
-  ko: 'kor',
-  pt: 'por',
-  vi: 'vie',
-  ro: 'ron',
-};
 
 /** Chatterbox Multilingual's languages we can translate to (Japanese needs a kana reader it lacks here). */
 export const CHATTERBOX_LANGUAGES = [
@@ -181,18 +166,6 @@ export const ENGINES: EngineInfo[] = [
     sizeMb: 2144,
     languages: PARLER_LANGUAGES,
     voices: ['female', 'male'],
-    speedControl: false,
-  },
-  {
-    id: 'mms',
-    name: 'MMS',
-    short: 'MMS',
-    note: 'Meta’s massively multilingual voices: one voice per language.',
-    licence: 'CC-BY-NC 4.0',
-    licenceUrl: 'https://huggingface.co/facebook/mms-tts',
-    sizeMb: 35,
-    languages: Object.keys(MMS_MODELS),
-    voices: ['female'],
     speedControl: false,
   },
   {

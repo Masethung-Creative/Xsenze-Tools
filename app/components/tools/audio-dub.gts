@@ -53,6 +53,7 @@ import {
 } from 'xsenze-tools/lib/dub/engines';
 import {
   MAX_SPEED,
+  MIN_SPEED,
   decodeForMix,
   renderDub,
   seconds,
@@ -60,6 +61,7 @@ import {
   type PlacedLine,
 } from 'xsenze-tools/lib/dub/mix';
 import { hasVideo, videoWithAudio } from 'xsenze-tools/lib/dub/mux';
+import { separate, type Separated } from 'xsenze-tools/lib/dub/separate';
 import {
   assignPresets,
   diarize,
@@ -111,6 +113,8 @@ interface Job {
   lines: string[];
   /** Distinct voices used, for the row. */
   voices?: Preset[];
+  /** Script lines (by index) still too long for their slot at the fastest speed: they run into the next line. */
+  long?: number[];
   /** The mixed track, kept for the multi-language video. */
   mix?: AudioBuffer;
   /** The download: WAV for audio, MP4 for video. */
@@ -137,10 +141,12 @@ const VOICE_NOTES: Record<VoiceMode, string> = {
 /** 0 is Auto: find how many. */
 const SPEAKER_COUNTS = [0, 1, 2, 3, 4, 5, 6];
 const SPEAKER_LABELS = ['Auto', '1', '2', '3', '4', '5', '6'];
-const BACKGROUNDS: Background[] = ['duck', 'dub'];
-const BACKGROUND_LABELS = ['Keep quietly', 'Dub only'];
+const BACKGROUNDS: Background[] = ['music', 'duck', 'dub'];
+const BACKGROUND_LABELS = ['Keep music', 'Keep quietly', 'Dub only'];
 const BACKGROUND_NOTES: Record<Background, string> = {
-  duck: 'The original plays softly under the new voice: music and effects stay.',
+  music:
+    'Keeps the music and sound effects at full level and removes the original voices. Separated on this device (about 126 MB once, needs WebGPU).',
+  duck: 'The whole original, voices too, plays softly under the new voice.',
   dub: 'Only the new voice: the original audio is left out.',
 };
 const ENGINE_CHOICES: EngineChoice[] = ['auto', ...ENGINES.map((e) => e.id)];
@@ -184,6 +190,19 @@ const voiceLabel = (engine: EngineId, voices: Preset[], lang: string) => {
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || 'audio';
 
+/** The row's hint when some dubbed lines are too long for their slot even at full speed. */
+function longNote(lines: number[]): string {
+  if (!lines.length) return '';
+  const which = lines
+    .slice(0, 5)
+    .map((i) => i + 1)
+    .join(', ');
+  const more = lines.length > 5 ? '…' : '';
+  return lines.length === 1
+    ? ` · line ${which} is too long and runs into the next: shorten it in the script, then redo`
+    : ` · lines ${which}${more} are too long and run into the next: shorten them in the script, then redo`;
+}
+
 const STAGE_TEXT: Record<Stage, string> = {
   translate: 'Translating…',
   voice: 'Voicing…',
@@ -221,12 +240,15 @@ export default class AudioDubTool extends Component {
   @tracked speaking = '';
   /** How far through the current line a slow engine is, 0-1. */
   @tracked lineShare = 0;
-  @tracked background: Background = 'duck';
+  @tracked background: Background = 'music';
+  /** This browser could not separate the music, so 'music' falls back to 'duck'. */
+  @tracked noSeparation = false;
   @tracked engine: EngineChoice = 'auto';
 
   @tracked jobs: Job[] = [];
   @tracked busy = false;
-  @tracked phase: 'transcribe' | 'speakers' | 'dub' | 'video' | '' = '';
+  @tracked phase:
+    'transcribe' | 'speakers' | 'separate' | 'dub' | 'video' | '' = '';
   @tracked percent = 0;
   @tracked downloading = false;
   /** Which model is downloading, for the status line. */
@@ -239,6 +261,8 @@ export default class AudioDubTool extends Component {
   /** Each speaker's clip for cloning, made once per run; keys stay unique across runs. */
   #clips: Float32Array[] | null = null;
   #clipRun = 0;
+  /** The original's background without its voices, split once per file. */
+  #bed: { original: AudioBuffer; separated: Promise<Separated> } | null = null;
   #sample: HTMLAudioElement | null = null;
 
   // ?adSample=<same-origin path> ?adSubs=<srt> ?adTo=hi,de ?adRun=1: preset the tool from the URL
@@ -405,13 +429,16 @@ export default class AudioDubTool extends Component {
   }
 
   get targetRows() {
-    return this.targets.map((code) => ({
-      code,
-      name: nameOf(code),
-      icon: flagOf(code),
-      engine: engineInfo(pickEngine(code, this.engine) ?? 'mms').name,
-      unsupported: !pickEngine(code, this.engine),
-    }));
+    return this.targets.map((code) => {
+      const engine = pickEngine(code, this.engine);
+      return {
+        code,
+        name: nameOf(code),
+        icon: flagOf(code),
+        engine: engine ? engineInfo(engine).name : '',
+        unsupported: !engine,
+      };
+    });
   }
 
   get voiceIndex() {
@@ -439,6 +466,8 @@ export default class AudioDubTool extends Component {
   }
 
   get backgroundNote() {
+    if (this.background === 'music' && this.noSeparation)
+      return 'This browser could not separate the music (it needs WebGPU), so the original plays softly under the new voice instead.';
     return BACKGROUND_NOTES[this.background];
   }
 
@@ -459,7 +488,7 @@ export default class AudioDubTool extends Component {
   }
 
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), Indic Parler-TTS (Apache 2.0), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
+    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), Indic Parler-TTS (Apache 2.0) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
   }
 
   get canRun() {
@@ -508,7 +537,7 @@ export default class AudioDubTool extends Component {
   };
 
   pickBackground = (index: number) => {
-    this.background = BACKGROUNDS[index] ?? 'duck';
+    this.background = BACKGROUNDS[index] ?? 'music';
   };
 
   pickEngine = (index: number) => {
@@ -668,6 +697,10 @@ export default class AudioDubTool extends Component {
       return this.downloading
         ? 'Downloading speaker model…'
         : 'Finding who speaks each line…';
+    if (this.phase === 'separate')
+      return this.downloading
+        ? 'Downloading the music separation model…'
+        : 'Separating the voices from the music…';
     if (this.phase === 'video') return 'Building the video…';
     if (this.downloading)
       return this.downloadWhat === 'translation'
@@ -691,7 +724,8 @@ export default class AudioDubTool extends Component {
     if (
       this.downloading ||
       this.phase === 'transcribe' ||
-      this.phase === 'speakers'
+      this.phase === 'speakers' ||
+      this.phase === 'separate'
     )
       return this.percent / 100;
     const n = this.cues.length * Math.max(1, this.jobs.length);
@@ -773,7 +807,8 @@ export default class AudioDubTool extends Component {
         job.state === 'running'
           ? `${job.engine ? engineInfo(job.engine).name + ' · ' : ''}${job.stage === 'voice' ? `${job.done} / ${this.cues.length}` : STAGE_TEXT[job.stage ?? 'translate']}`
           : job.state === 'done' && job.engine
-            ? voiceLabel(job.engine, job.voices ?? [], job.code)
+            ? voiceLabel(job.engine, job.voices ?? [], job.code) +
+              longNote(job.long ?? [])
             : job.state === 'failed'
               ? (job.error ?? 'Failed')
               : job.state === 'stopped'
@@ -942,6 +977,7 @@ export default class AudioDubTool extends Component {
 
     try {
       if (!(await this.#prepare(file, original, abort.signal))) return;
+      const bed = await this.#background(original, abort.signal);
 
       // 3. each language in turn
       this.phase = 'dub';
@@ -954,7 +990,7 @@ export default class AudioDubTool extends Component {
       }));
       for (const code of targets) {
         if (abort.signal.aborted || this.isDestroying) break;
-        await this.#dubOne(code, file, original, abort.signal);
+        await this.#dubOne(code, file, original, abort.signal, bed);
       }
     } catch (error) {
       if (!abort.signal.aborted && !this.isDestroying) {
@@ -973,12 +1009,53 @@ export default class AudioDubTool extends Component {
     }
   };
 
+  /**
+   * The background to mix under the dub when 'music' is picked: the original
+   * without its voices, split once per file. Null when 'music' is not picked
+   * or this browser cannot separate (the mix then keeps the original quietly).
+   */
+  async #background(
+    original: AudioBuffer,
+    signal: AbortSignal,
+  ): Promise<AudioBuffer | null> {
+    if (this.background !== 'music' || this.noSeparation) return null;
+    if (this.#bed?.original !== original) {
+      const separated = separate(
+        original,
+        (phase, ratio) => {
+          this.downloading = phase === 'download' && ratio < 1;
+          this.percent = Math.round(ratio * 100);
+        },
+        signal,
+      );
+      this.#bed = { original, separated };
+      separated.catch(() => {
+        if (this.#bed?.separated === separated) this.#bed = null;
+      });
+    }
+    const phase = this.phase;
+    this.phase = 'separate';
+    this.percent = 0;
+    try {
+      return (await this.#bed.separated).background;
+    } catch (error) {
+      if (signal.aborted) throw error;
+      console.warn('Separating the music failed:', error);
+      this.noSeparation = true;
+      return null;
+    } finally {
+      this.downloading = false;
+      this.phase = phase;
+    }
+  }
+
   /** Translate, voice, fit and mix one language; marks its job done or failed. */
   async #dubOne(
     code: string,
     file: File,
     original: AudioBuffer,
     signal: AbortSignal,
+    bed: AudioBuffer | null = null,
   ) {
     const to = languageOf(code);
     const from = languageOf(this.sourceCode) ?? TRANSLATE_LANGUAGES[0]!;
@@ -1017,6 +1094,7 @@ export default class AudioDubTool extends Component {
       const fallback: Preset = this.voice === 'male' ? 'M1' : 'F1';
       const used = new Set<Preset>();
       const placed: PlacedLine[] = [];
+      const long: number[] = [];
       if (info.clones && !this.#clips) {
         this.#clipRun++;
         this.#clips = await voiceClips(
@@ -1069,10 +1147,16 @@ export default class AudioDubTool extends Component {
           );
           this.downloading = false;
           this.lineShare = 0;
-          const need = seconds(speech) / slot;
+          // too long for its slot: faster; much quicker than the original said it: a little slower
+          const said = (cue.end - cue.start) / 1000;
+          const length = seconds(speech);
+          let speed = 1;
+          if (length > slot * 1.02) speed = Math.min(length / slot, MAX_SPEED);
+          if (length / MAX_SPEED > slot * 1.05) long.push(i);
+          else if (length < said * 0.85)
+            speed = Math.max(length / (said * 0.95), MIN_SPEED, length / slot);
           let rate: number | undefined;
-          if (need > 1.02) {
-            const speed = Math.min(need, MAX_SPEED);
+          if (speed !== 1) {
             if (info.speedControl)
               speech = await speak(engine, code, text, voice, speed);
             else rate = speed;
@@ -1085,7 +1169,14 @@ export default class AudioDubTool extends Component {
       // mix, then the file: MP4 with the new audio for video, WAV for audio
       this.speaking = '';
       this.#update(code, { stage: 'mix', voices: [...used] });
-      const mix = await renderDub(original, placed, this.background);
+      const background =
+        this.background === 'music' && !bed ? 'duck' : this.background;
+      const mix = await renderDub(
+        original,
+        placed,
+        background,
+        bed ?? undefined,
+      );
       let out: Blob;
       if (this.video) {
         out = await videoWithAudio(
@@ -1105,6 +1196,7 @@ export default class AudioDubTool extends Component {
         file: out,
         url: URL.createObjectURL(out),
         done: cues.length,
+        long,
       });
       if (!this.tab) this.tab = code;
     } catch (error) {
@@ -1144,7 +1236,9 @@ export default class AudioDubTool extends Component {
       mix: undefined,
     });
     try {
-      await this.#dubOne(code, this.file, this.original, abort.signal);
+      const bed = await this.#background(this.original, abort.signal);
+      this.phase = 'dub';
+      await this.#dubOne(code, this.file, this.original, abort.signal, bed);
     } catch {
       // stopped
     } finally {
