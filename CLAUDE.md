@@ -21,6 +21,8 @@ Rules:
 - When a model is wrong on WebGPU, find the wrong graph before switching files: run each graph on
   WASM in turn, and teacher-force decoders with a CPU run's tokens to compare step by step.
 - Audio inputs: use `AUDIO_ACCEPT` from `lib/tools.ts` (iOS needs explicit extensions).
+- Browser checks with Playwright: read results back with `browser_evaluate` as short JSON. Take a
+  screenshot or page snapshot only to check how something looks.
 - Before finishing: `npm run lint` and `npm run build` must pass.
 - Hosting: Vercel builds every push to `main` (settings in `vercel.json`) and serves it at
   xsenzetools.vercel.app, so a push is a release.
