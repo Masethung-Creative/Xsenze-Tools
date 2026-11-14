@@ -1,12 +1,14 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
+import CanonBar from 'delphicanon/components/canon-bar';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonCanvas from 'delphicanon/components/canon-canvas';
 import CanonCompressionScale from 'delphicanon/components/canon-compression-scale';
 import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonImageCompare from 'delphicanon/components/canon-image-compare';
+import CanonLoader from 'delphicanon/components/canon-loader';
 import CanonRow from 'delphicanon/components/canon-row';
 import CanonRows from 'delphicanon/components/canon-rows';
 import CanonSegmented from 'delphicanon/components/canon-segmented';
@@ -104,6 +106,19 @@ const VIEWS = ['Original', 'Compressed'];
 
 const Trash = <template><IconSvg @name="trash-2" /></template>;
 const Shrink = <template><IconSvg @name="shrink" /></template>;
+const Cancel = <template><IconSvg @name="x" /></template>;
+
+// the countdown waits for this much time and progress before it guesses
+const ETA_AFTER_MS = 2000;
+const ETA_AFTER_SHARE = 0.02;
+
+function clock(seconds: number) {
+  const s = Math.max(0, Math.ceil(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
+}
 
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
 
@@ -145,13 +160,18 @@ export default class VideoCompressor extends Component {
   @tracked after = '';
   @tracked aspect = 16 / 9;
   @tracked info: Section[] = [];
+  @tracked compareOn = false;
+  @tracked startedAt = 0;
+  @tracked now = 0;
 
   #token = 0;
   #job = 0;
   #abort: AbortController | null = null;
+  #ticker: ReturnType<typeof setInterval> | undefined;
 
   willDestroy() {
     super.willDestroy();
+    this.#stopClock();
     this.#job++;
     this.#token++;
     this.#abort?.abort();
@@ -415,8 +435,24 @@ export default class VideoCompressor extends Component {
     return (this.view === 1 && this.resultUrl) || this.intake.url || undefined;
   }
 
-  get comparing() {
+  /** Both compare frames are ready. */
+  get canCompare() {
     return !!(this.before && this.after);
+  }
+
+  get comparing() {
+    return this.compareOn && this.canCompare;
+  }
+
+  get percent() {
+    return `${Math.round(this.progress * 100)}%`;
+  }
+
+  get countdown() {
+    const elapsed = this.now - this.startedAt;
+    const share = this.progress;
+    if (elapsed < ETA_AFTER_MS || share < ETA_AFTER_SHARE) return 'Estimating…';
+    return `${clock((elapsed * (1 - share)) / share / 1000)} left`;
   }
 
   get fileName() {
@@ -501,6 +537,21 @@ export default class VideoCompressor extends Component {
     this.playback.pause();
     this.view = i;
   };
+  setCompare = (on: boolean) => {
+    this.playback.pause();
+    this.compareOn = on;
+  };
+
+  #startClock() {
+    this.#stopClock();
+    this.startedAt = this.now = Date.now();
+    this.#ticker = setInterval(() => (this.now = Date.now()), 500);
+  }
+
+  #stopClock() {
+    clearInterval(this.#ticker);
+    this.#ticker = undefined;
+  }
 
   // ---------- the job ----------
 
@@ -517,6 +568,7 @@ export default class VideoCompressor extends Component {
     this.failed = false;
     this.#releaseResult();
     this.playback.pause();
+    this.#startClock();
     const abort = new AbortController();
     this.#abort = abort;
     try {
@@ -545,7 +597,10 @@ export default class VideoCompressor extends Component {
       this.failed = true;
     } finally {
       if (this.#abort === abort) this.#abort = null;
-      if (job === this.#job) this.busy = false;
+      if (job === this.#job) {
+        this.busy = false;
+        this.#stopClock();
+      }
     }
   }
 
@@ -584,6 +639,7 @@ export default class VideoCompressor extends Component {
     this.#job++;
     this.#abort?.abort();
     this.#abort = null;
+    this.#stopClock();
     this.busy = false;
     this.progress = 0;
   };
@@ -604,6 +660,7 @@ export default class VideoCompressor extends Component {
     this.result = null;
     this.info = [];
     this.view = 0;
+    this.compareOn = false;
   }
 
   #reset() {
@@ -614,6 +671,7 @@ export default class VideoCompressor extends Component {
     this.#releaseResult();
     this.support = null;
     this.rates = null;
+    this.#stopClock();
     this.busy = false;
     this.progress = 0;
     this.failed = false;
@@ -638,12 +696,36 @@ export default class VideoCompressor extends Component {
     >
       <:banner>
         <CanonCanvas @height={{scaleHeight}}>
-          <CanonCompressionScale
-            @before={{this.sourceBytes}}
-            @after={{this.shownBytes}}
-            @format={{this.scaleFormat}}
-            @working={{this.busy}}
-          />
+          {{#if this.busy}}
+            <div class="vc-working">
+              <div class="vc-working-head">
+                <span class="vc-working-title">
+                  <CanonLoader @cell={{5}} @gap={{1}} />
+                  Compressing…
+                </span>
+                <span class="vc-working-time" role="status">
+                  <span class="vc-working-eta">{{this.countdown}}</span>
+                  <span class="vc-working-percent">{{this.percent}}</span>
+                </span>
+              </div>
+              <CanonBar class="vc-working-bar" @share={{this.progress}} />
+              <div class="vc-working-foot">
+                <CanonButton
+                  class="vc-working-cancel"
+                  @kind="cell"
+                  @text="Cancel"
+                  @icon={{Cancel}}
+                  @onClick={{this.cancel}}
+                />
+              </div>
+            </div>
+          {{else}}
+            <CanonCompressionScale
+              @before={{this.sourceBytes}}
+              @after={{this.shownBytes}}
+              @format={{this.scaleFormat}}
+            />
+          {{/if}}
         </CanonCanvas>
       </:banner>
       <:sidebar>
@@ -718,13 +800,13 @@ export default class VideoCompressor extends Component {
           </CanonRow>
           <CanonHeading @text="Output" />
           <CanonTiles @items={{this.tiles}} />
+          {{! progress shows in the banner; here the button just says so }}
           <Job
-            @title="Compress"
+            @title={{if this.busy "Compressing…" "Compress"}}
             @icon={{Shrink}}
             @failure={{COMPRESS_ERROR}}
             @disabled={{if this.ready false true}}
-            @busy={{this.busy}}
-            @progress={{this.progress}}
+            @busy={{false}}
             @failed={{this.failed}}
             @result={{this.resultRow}}
             @onRun={{this.compress}}
@@ -771,6 +853,14 @@ export default class VideoCompressor extends Component {
               @selected={{this.view}}
               @onChange={{this.pickView}}
             />
+            <CanonRow @title="Compare quality" as |titleId|>
+              <CanonSwitch
+                aria-labelledby={{titleId}}
+                @on={{this.compareOn}}
+                @disabled={{if this.canCompare false true}}
+                @onChange={{this.setCompare}}
+              />
+            </CanonRow>
           {{/if}}
         </CanonRows>
         <CanonCanvas
@@ -784,7 +874,7 @@ export default class VideoCompressor extends Component {
             {{! the transport is its control; user media lacks captions }}
             {{! template-lint-disable require-media-caption }}
             <video
-              class="vc-video"
+              class="vc-video {{if this.comparing 'vc-hidden'}}"
               src={{this.playUrl}}
               playsinline
               preload="metadata"
@@ -793,27 +883,18 @@ export default class VideoCompressor extends Component {
               {{on "loadedmetadata" this.metadata}}
               {{on "error" this.intake.failed}}
             ></video>
+            {{#if this.comparing}}
+              <div class="vc-compare">
+                <CanonImageCompare
+                  @before={{this.before}}
+                  @after={{this.after}}
+                  @beforeTitle="Original"
+                  @afterTitle="Compressed"
+                />
+              </div>
+            {{/if}}
           {{/if}}
         </CanonCanvas>
-        {{#if this.comparing}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Compare one frame" />
-          </CanonRows>
-          <CanonCanvas
-            class="vc-compare"
-            @aspect={{this.previewAspect}}
-            @maxHeight={{tallestPreview}}
-            @boxing="unlessWide"
-            @background="#000"
-          >
-            <CanonImageCompare
-              @before={{this.before}}
-              @after={{this.after}}
-              @beforeTitle="Original"
-              @afterTitle="Compressed"
-            />
-          </CanonCanvas>
-        {{/if}}
         <Sections @sections={{this.info}} />
       </:main>
       <:footer>

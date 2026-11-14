@@ -5,6 +5,64 @@
   object-fit: contain;
 }
 
+.vc-hidden {
+  display: none;
+}
+
+.vc-compare,
 .vc-compare .canon-image-compare {
   block-size: 100%;
+}
+
+/* the banner while compressing */
+.vc-working {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-inline: var(--canon-panel-padding, 16px);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+}
+
+.vc-working-head,
+.vc-working-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vc-working-foot {
+  justify-content: flex-end;
+}
+
+.vc-working-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.vc-working-time {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vc-working-eta {
+  color: var(--canon-muted-foreground);
+}
+
+.vc-working-percent {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.vc-working-bar {
+  block-size: 6px;
 }
