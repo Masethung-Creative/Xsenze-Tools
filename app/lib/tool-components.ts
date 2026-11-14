@@ -30,6 +30,8 @@ const loaders: Record<string, Loader> = {
   'video-muter': () => import('xsenze-tools/components/tools/video-muter'),
   'video-compressor': () =>
     import('xsenze-tools/components/tools/video-compressor'),
+  'image-compressor': () =>
+    import('xsenze-tools/components/tools/image-compressor'),
   'audio-extractor': () =>
     import('xsenze-tools/components/tools/audio-extractor'),
   'audio-atlas': () => import('xsenze-tools/components/tools/audio-atlas'),

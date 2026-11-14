@@ -125,7 +125,7 @@ export default class AppSidebar extends Component<Signature> {
             {{else}}
               <p class="sidebar__empty">
                 <Icon @name={{cat.icon}} />
-                First tool coming soon
+                Coming soon
               </p>
             {{/if}}
           </section>

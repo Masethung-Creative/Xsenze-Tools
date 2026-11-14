@@ -1,0 +1,53 @@
+.work-banner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-inline: var(--canon-panel-padding, 16px);
+  color: var(--canon-foreground);
+  font-family: var(--canon-font);
+}
+
+.work-banner-head,
+.work-banner-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.work-banner-foot {
+  justify-content: flex-end;
+}
+
+.work-banner-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.work-banner-time {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.work-banner-eta {
+  color: var(--canon-muted-foreground);
+}
+
+.work-banner-percent {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.work-banner-bar {
+  block-size: 6px;
+}

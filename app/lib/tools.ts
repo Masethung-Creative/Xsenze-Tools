@@ -34,6 +34,20 @@ export const VIDEO_ACCEPT = [
   '.avi',
 ] as const;
 
+export const IMAGE_ACCEPT = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.avif',
+  '.bmp',
+] as const;
+
 export const SUBTITLE_ACCEPT = ['.srt', '.vtt'] as const;
 
 export const acceptAttr = (list: readonly string[]): string => list.join(',');
@@ -59,6 +73,8 @@ export interface ToolCategory {
   name: string;
   icon: IconName;
   description: string;
+  /** Shown while the category has no tools yet. */
+  soon?: string;
   tools: Tool[];
 }
 
@@ -299,7 +315,7 @@ export const toolCategories: ToolCategory[] = [
         id: 'video-compressor',
         name: 'Video Compressor',
         description:
-          'Make videos smaller: resize, re-encode or hit a file size',
+          'Make videos smaller, one or many: resize, re-encode or hit a file size',
         icon: 'shrink',
         accepts: VIDEO_ACCEPT,
         produces: ['video/mp4', 'video/webm'],
@@ -342,6 +358,81 @@ export const toolCategories: ToolCategory[] = [
         keywords: ['gif', 'animation', 'loop', 'meme', 'convert', 'video'],
       },
     ],
+  },
+  {
+    id: 'image',
+    name: 'Image',
+    icon: 'image',
+    description: 'Compress, resize and convert images in your browser.',
+    tools: [
+      {
+        id: 'image-compressor',
+        name: 'Image Compressor',
+        description: 'Make images smaller: JPEG, WebP, AVIF or PNG, in bulk',
+        icon: 'image-minus',
+        accepts: IMAGE_ACCEPT,
+        produces: ['image/jpeg', 'image/webp', 'image/avif', 'image/png'],
+        keywords: [
+          'compress',
+          'optimize',
+          'optimise',
+          'shrink',
+          'resize',
+          'jpg',
+          'png',
+          'webp',
+          'avif',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pdf',
+    name: 'PDF',
+    icon: 'file-text',
+    description: 'Merge, split, compress and convert PDFs in your browser.',
+    soon: 'PDF tools are on their way.',
+    tools: [],
+  },
+  {
+    id: 'dev',
+    name: 'Dev Tools',
+    icon: 'code-xml',
+    description: 'Formatters, encoders and converters for developers.',
+    soon: 'Developer tools are on their way.',
+    tools: [],
+  },
+  {
+    id: 'other',
+    name: 'Other Tools',
+    icon: 'shapes',
+    description: 'Handy everyday tools that fit nowhere else.',
+    soon: 'More tools are on their way.',
+    tools: [],
+  },
+  {
+    id: 'ui-kit',
+    name: 'Xsenze UI Kit',
+    icon: 'component',
+    description: 'Components and building blocks for your own interfaces.',
+    soon: 'The Xsenze UI Kit is on its way.',
+    tools: [],
+  },
+  {
+    id: 'paths',
+    name: 'Paths',
+    icon: 'route',
+    description: 'Career and learning paths, skill by skill.',
+    soon: 'Paths are on their way.',
+    tools: [],
+  },
+  {
+    id: 'roadmap',
+    name: 'Roadmap',
+    icon: 'map',
+    description: 'What we are building next.',
+    soon: 'The roadmap is on its way.',
+    tools: [],
   },
 ];
 

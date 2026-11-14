@@ -1,0 +1,10 @@
+.ic-image {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.ic-item--on {
+  box-shadow: inset 3px 0 0 var(--canon-primary);
+}

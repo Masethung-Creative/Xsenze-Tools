@@ -28,9 +28,13 @@ const ToolGrid: TOC<{ Args: { categories: ToolCategory[] } }> = <template>
               <Icon @name={{cat.icon}} class="cell__icon" />
               <span class="cell__name">Coming soon</span>
               <span class="cell__desc">
-                The first
-                {{cat.name}}
-                tool is on its way.
+                {{#if cat.soon}}
+                  {{cat.soon}}
+                {{else}}
+                  The first
+                  {{cat.name}}
+                  tool is on its way.
+                {{/if}}
               </span>
             </div>
           </li>

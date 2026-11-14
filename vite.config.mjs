@@ -15,5 +15,13 @@ export default defineConfig({
   optimizeDeps: {
     // a dynamic import is missed by the dependency scan
     include: ['@huggingface/transformers'],
+    // their WASM is found next to the module, which pre-bundling moves
+    exclude: [
+      '@jsquash/avif',
+      '@jsquash/jpeg',
+      '@jsquash/oxipng',
+      '@jsquash/resize',
+      '@jsquash/webp',
+    ],
   },
 });

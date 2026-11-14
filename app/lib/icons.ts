@@ -21,6 +21,8 @@ import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
 import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
+import iCodeXml from 'lucide-static/icons/code-xml.svg?raw';
+import iComponent from 'lucide-static/icons/component.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iCpu from 'lucide-static/icons/cpu.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
@@ -32,6 +34,7 @@ import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFile from 'lucide-static/icons/file.svg?raw';
 import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
+import iFileText from 'lucide-static/icons/file-text.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFlame from 'lucide-static/icons/flame.svg?raw';
 import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
@@ -44,11 +47,13 @@ import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
 import iImage from 'lucide-static/icons/image.svg?raw';
 import iImageDown from 'lucide-static/icons/image-down.svg?raw';
+import iImageMinus from 'lucide-static/icons/image-minus.svg?raw';
 import iImagePlay from 'lucide-static/icons/image-play.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
+import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMerge from 'lucide-static/icons/merge.svg?raw';
@@ -65,8 +70,10 @@ import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
+import iRoute from 'lucide-static/icons/route.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
+import iShapes from 'lucide-static/icons/shapes.svg?raw';
 import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
@@ -116,6 +123,8 @@ export const icons: Record<string, string> = {
   clipboard: iClipboard,
   'clipboard-paste': iClipboardPaste,
   clock: iClock,
+  'code-xml': iCodeXml,
+  component: iComponent,
   copy: iCopy,
   cpu: iCpu,
   delete: iDelete,
@@ -127,6 +136,7 @@ export const icons: Record<string, string> = {
   file: iFile,
   'file-audio': iFileAudio,
   'file-music': iFileMusic,
+  'file-text': iFileText,
   film: iFilm,
   flame: iFlame,
   'folder-open': iFolderOpen,
@@ -139,11 +149,13 @@ export const icons: Record<string, string> = {
   house: iHouse,
   image: iImage,
   'image-down': iImageDown,
+  'image-minus': iImageMinus,
   'image-play': iImagePlay,
   info: iInfo,
   inspect: iInspect,
   key: iKey,
   languages: iLanguages,
+  map: iMap,
   maximize: iMaximize,
   menu: iMenu,
   merge: iMerge,
@@ -160,8 +172,10 @@ export const icons: Record<string, string> = {
   radio: iRadio,
   repeat: iRepeat,
   'rotate-ccw': iRotateCcw,
+  route: iRoute,
   scissors: iScissors,
   search: iSearch,
+  shapes: iShapes,
   'shield-check': iShieldCheck,
   shrink: iShrink,
   'skip-back': iSkipBack,
