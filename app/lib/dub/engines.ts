@@ -141,6 +141,13 @@ export function parlerVoice(lang: string, preset: Preset): string {
   return list[(Number(preset.slice(1)) - 1) % list.length]!;
 }
 
+/**
+ * Voice engines are switched off on the site until they are reworked: no
+ * language gets an engine, so Dub stays disabled and the Voice engine section
+ * says Coming soon. Set to true to bring them back.
+ */
+export const VOICES_READY = false as boolean;
+
 export const ENGINES: EngineInfo[] = [
   {
     id: 'supertonic',
@@ -190,11 +197,12 @@ export const engineInfo = (id: EngineId): EngineInfo =>
 /** Every language some engine can voice. */
 export const DUB_LANGUAGES = new Set(ENGINES.flatMap((e) => e.languages));
 
-/** The engine that voices `language`: the first in order, or the forced one if it can. */
+/** The engine that voices `language`: the first in order, or the forced one if it can. None while voices are off. */
 export function pickEngine(
   language: string,
   choice: EngineChoice = 'auto',
 ): EngineId | null {
+  if (!VOICES_READY) return null;
   if (choice !== 'auto')
     return engineInfo(choice).languages.includes(language) ? choice : null;
   return ENGINES.find((e) => e.languages.includes(language))?.id ?? null;

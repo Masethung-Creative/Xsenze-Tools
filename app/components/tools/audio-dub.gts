@@ -47,6 +47,7 @@ import {
   parlerVoice,
   iso3,
   pickEngine,
+  VOICES_READY,
   type EngineChoice,
   type EngineId,
   type Preset,
@@ -488,7 +489,10 @@ export default class AudioDubTool extends Component {
   }
 
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), Indic Parler-TTS (Apache 2.0) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
+    const voices = VOICES_READY
+      ? 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), Indic Parler-TTS (Apache 2.0) and Chatterbox (MIT). '
+      : '';
+    return `${voices}Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.`;
   }
 
   get canRun() {
@@ -1425,15 +1429,23 @@ export default class AudioDubTool extends Component {
             @row={{true}}
           />
           <CanonHeading @text="Voice engine" />
-          <CanonSegmented
-            class="ad-engine"
-            aria-label="Voice engine"
-            @items={{ENGINE_LABELS}}
-            @selected={{this.engineIndex}}
-            @disabled={{this.busy}}
-            @onChange={{this.pickEngine}}
-          />
-          <CanonStatus @text={{this.engineNote}} @tone="muted" @row={{true}} />
+          {{#if VOICES_READY}}
+            <CanonSegmented
+              class="ad-engine"
+              aria-label="Voice engine"
+              @items={{ENGINE_LABELS}}
+              @selected={{this.engineIndex}}
+              @disabled={{this.busy}}
+              @onChange={{this.pickEngine}}
+            />
+            <CanonStatus
+              @text={{this.engineNote}}
+              @tone="muted"
+              @row={{true}}
+            />
+          {{else}}
+            <CanonEmptyRow @text="Coming soon" />
+          {{/if}}
           <CanonButton
             class="ad-run"
             @kind="primary"
