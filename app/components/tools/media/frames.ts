@@ -86,6 +86,49 @@ export async function peaks(
   }
 }
 
+/**
+ * One frame of a video at `time` seconds as a PNG object URL, drawn at
+ * `width` × `height` so frames of different sizes line up; null when the
+ * browser cannot show it.
+ */
+export async function frameAt(
+  file: Blob,
+  time: number,
+  width: number,
+  height: number,
+): Promise<string | null> {
+  const video = document.createElement('video');
+  video.muted = true;
+  video.preload = 'auto';
+  video.playsInline = true;
+  const source = URL.createObjectURL(file);
+  video.src = source;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      video.addEventListener('loadeddata', () => resolve(), { once: true });
+      video.addEventListener('error', () => reject(new Error('unreadable')), {
+        once: true,
+      });
+    });
+    const duration = await resolveDuration(video);
+    await seekTo(video, Math.min(time, Math.max(0, duration - 0.05)));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d')!.drawImage(video, 0, 0, width, height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/png'),
+    );
+    return blob ? URL.createObjectURL(blob) : null;
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(source);
+    video.removeAttribute('src');
+    video.load();
+  }
+}
+
 /** Indices of `total` thumbnails, evenly spread, for `count` cells. */
 export function spread(count: number, total: number): number[] {
   if (count <= 0 || total <= 0) return [];

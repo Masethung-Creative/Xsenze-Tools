@@ -147,6 +147,120 @@ export async function encodableCodecs(
   return new Set(BURN_CODECS.filter((_, i) => answers[i]));
 }
 
+export const COMPRESS_CODECS = ['avc', 'hevc', 'vp9', 'av1'] as const;
+export type CompressCodec = (typeof COMPRESS_CODECS)[number];
+
+export interface CompressSupport {
+  /** Codecs this browser can encode at the output size. */
+  encoders: Set<CompressCodec>;
+  /** Codecs each container can hold. */
+  holds: Record<Container, Set<CompressCodec>>;
+}
+
+export async function compressSupport(
+  width: number,
+  height: number,
+): Promise<CompressSupport> {
+  const m = await loadMediabunny();
+  const formats = await Promise.all(
+    CONTAINERS.map(({ id }) => outputFormat(id)),
+  );
+  const holds = {} as Record<Container, Set<CompressCodec>>;
+  CONTAINERS.forEach(({ id }, i) => {
+    const codecs = formats[i]!.getSupportedVideoCodecs() as string[];
+    holds[id] = new Set(COMPRESS_CODECS.filter((c) => codecs.includes(c)));
+  });
+  if (!('VideoEncoder' in globalThis)) return { encoders: new Set(), holds };
+  const answers = await Promise.all(
+    COMPRESS_CODECS.map((codec) => m.canEncodeVideo(codec, { width, height })),
+  );
+  return {
+    encoders: new Set(COMPRESS_CODECS.filter((_, i) => answers[i])),
+    holds,
+  };
+}
+
+export interface SourceRates {
+  /** Seconds. */
+  duration: number;
+  /** Bits per second; the file's whole rate less the audio. */
+  video: number;
+  audio: number;
+}
+
+/** The source's bitrates, which cap a compressed video and price its audio. */
+export async function sourceRates(file: File): Promise<SourceRates> {
+  const m = await loadMediabunny();
+  const input = openInput(m, file);
+  const [duration, audio] = await Promise.all([
+    input.computeDuration(),
+    input.getPrimaryAudioTrack(),
+  ]);
+  const audioRate = audio
+    ? (await audio.computePacketStats(200)).averageBitrate
+    : 0;
+  const total = duration > 0 ? (file.size * 8) / duration : 0;
+  return {
+    duration,
+    video: Math.max(0, total - audioRate),
+    audio: audioRate,
+  };
+}
+
+export interface CompressOptions extends ConvertControls {
+  container: Container;
+  codec: CompressCodec;
+  /** Output size; none keeps the source's. */
+  size: { width: number; height: number } | null;
+  /** None keeps the source's rate. */
+  frameRate: number | null;
+  videoBitrate: number;
+  /** Remove drops it, copy keeps its packets, a number re-encodes at that bitrate. */
+  audio: 'remove' | 'copy' | number;
+}
+
+export async function compressVideo(
+  file: File,
+  options: CompressOptions,
+): Promise<ConvertResult> {
+  const m = await loadMediabunny();
+  const format = await outputFormat(options.container);
+  const output = new m.Output({ format, target: new m.BufferTarget() });
+  const { audio } = options;
+  const conversion = await m.Conversion.init({
+    input: openInput(m, file),
+    output,
+    video: {
+      codec: options.codec,
+      // a bitrate keeps the size predictable
+      quality: new m.Quality({ bitrate: options.videoBitrate }),
+      forceTranscode: true,
+      ...(options.size && {
+        width: options.size.width,
+        height: options.size.height,
+        fit: 'fill' as const,
+      }),
+      ...(options.frameRate && { frameRate: options.frameRate }),
+    },
+    // a container that cannot hold the source's audio re-encodes it anyway
+    audio:
+      audio === 'remove'
+        ? { discard: true }
+        : audio === 'copy'
+          ? {}
+          : { quality: new m.Quality({ bitrate: audio }) },
+    showWarnings: false,
+  });
+  const blob = await runConversion(
+    conversion,
+    output,
+    format.mimeType,
+    options,
+    'compress',
+  );
+  return { blob, ext: ext(format) };
+}
+
 export type Overlay = (
   ctx: OffscreenCanvasRenderingContext2D,
   width: number,

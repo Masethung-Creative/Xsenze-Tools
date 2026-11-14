@@ -296,6 +296,25 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'video-compressor',
+        name: 'Video Compressor',
+        description:
+          'Make videos smaller: resize, re-encode or hit a file size',
+        icon: 'shrink',
+        accepts: VIDEO_ACCEPT,
+        produces: ['video/mp4', 'video/webm'],
+        keywords: [
+          'compress',
+          'shrink',
+          'reduce size',
+          'resize',
+          'smaller',
+          'bitrate',
+          'h264',
+          'mp4',
+        ],
+      },
+      {
         id: 'video-muter',
         name: 'Video Muter',
         description: 'Strip the audio from a video',

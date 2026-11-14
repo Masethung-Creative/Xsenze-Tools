@@ -22,6 +22,7 @@ import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
+import iCpu from 'lucide-static/icons/cpu.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
@@ -46,6 +47,7 @@ import iImageDown from 'lucide-static/icons/image-down.svg?raw';
 import iImagePlay from 'lucide-static/icons/image-play.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
+import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
@@ -66,6 +68,7 @@ import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
 import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
+import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
 import iSkipForward from 'lucide-static/icons/skip-forward.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
@@ -114,6 +117,7 @@ export const icons: Record<string, string> = {
   'clipboard-paste': iClipboardPaste,
   clock: iClock,
   copy: iCopy,
+  cpu: iCpu,
   delete: iDelete,
   dices: iDices,
   'disc-3': iDisc3,
@@ -138,6 +142,7 @@ export const icons: Record<string, string> = {
   'image-play': iImagePlay,
   info: iInfo,
   inspect: iInspect,
+  key: iKey,
   languages: iLanguages,
   maximize: iMaximize,
   menu: iMenu,
@@ -158,6 +163,7 @@ export const icons: Record<string, string> = {
   scissors: iScissors,
   search: iSearch,
   'shield-check': iShieldCheck,
+  shrink: iShrink,
   'skip-back': iSkipBack,
   'skip-forward': iSkipForward,
   'sliders-horizontal': iSlidersHorizontal,

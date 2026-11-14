@@ -28,6 +28,8 @@ const loaders: Record<string, Loader> = {
   'video-atlas': () => import('xsenze-tools/components/tools/video-atlas'),
   'video-trimmer': () => import('xsenze-tools/components/tools/video-trimmer'),
   'video-muter': () => import('xsenze-tools/components/tools/video-muter'),
+  'video-compressor': () =>
+    import('xsenze-tools/components/tools/video-compressor'),
   'audio-extractor': () =>
     import('xsenze-tools/components/tools/audio-extractor'),
   'audio-atlas': () => import('xsenze-tools/components/tools/audio-atlas'),
