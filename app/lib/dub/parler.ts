@@ -3,19 +3,24 @@
  * generation itself is in `parler-gen.ts`.
  *
  * Files: the T5 description encoder at 4 bits, both decoder graphs at fp16
- * (the 4-bit decoder never finds the end of a line) and DAC's fp16 decoder,
- * about 2 GB once. The description is tokenised with flan-t5's tokenizer and
- * the line with the model's own: the encoder only knows T5's 32k tokens.
+ * (the 4-bit decoder never finds the end of a line) and DAC's full-precision
+ * decoder, about 2.1 GB once. The description is tokenised with flan-t5's
+ * tokenizer and the line with the model's own: the encoder only knows T5's
+ * 32k tokens.
  *
- * Not offered yet (see `PARLER_ENGINE` in engines.ts): on the CPU these files
- * speak clearly, but onnxruntime-web 1.29's WebGPU kernels get the fp16
- * decoder wrong from its very first step (scores off by up to 7.7, with
- * the same inputs), so the speech comes out garbled. The graphs use fp16
- * LayerNormalization (73 of them) and Softmax, the likeliest suspects.
+ * Where each part runs: WebGPU gets two of them wrong, and either one garbles
+ * the speech. The 4-bit encoder runs on WASM (once a line, so it costs little),
+ * and DAC runs at full precision (its fp16 graph is wrong on WebGPU, and right
+ * on the CPU). The fp16 decoders are right on WebGPU: checked step by step
+ * against the CPU with the same tokens.
  */
 // the ONNX runtime binary for Transformers.js, which only tokenises here
 import ortWasmJsep from '../../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
-import { parlerVoice, type Preset } from 'xsenze-tools/lib/dub/engines';
+import {
+  engineInfo,
+  parlerVoice,
+  type Preset,
+} from 'xsenze-tools/lib/dub/engines';
 import {
   fetchCached,
   type FetchProgress,
@@ -32,7 +37,7 @@ type Session = import('onnxruntime-web').InferenceSession;
 const REPO = 'naklitechie/indic-parler-tts-ONNX';
 const REVISION = 'd4598da15f7085dc41f697e26e2bc6e944bb1a22';
 const BASE = `https://huggingface.co/${REPO}/resolve/${REVISION}`;
-const DAC = `https://huggingface.co/onnx-community/dac_44khz-ONNX/resolve/c831ed0363c5e97ab0026399fe0ecb01f7a392bd/onnx/decoder_model_fp16.onnx`;
+const DAC = `https://huggingface.co/onnx-community/dac_44khz-ONNX/resolve/c831ed0363c5e97ab0026399fe0ecb01f7a392bd/onnx/decoder_model.onnx`;
 const T5 = 'google/flan-t5-large';
 const T5_REVISION = '0613663d0d48ea86ba8cb3d7a44f0f65dc596a2a';
 
@@ -99,16 +104,15 @@ export function loadParler(
 ): Promise<Loaded> {
   loading ??= (async () => {
     const ort = await loadOrt();
+    // the files come one after another, so the bar counts against all of
+    // them from the start: a file's size is only known once it begins
+    const expected = engineInfo('parler').sizeMb * 1e6;
     const progress = new Map<string, FetchProgress>();
     const report = (file: string) => (p: FetchProgress) => {
       progress.set(file, p);
       let loaded = 0;
-      let total = 0;
-      for (const v of progress.values()) {
-        loaded += v.loaded;
-        total += v.total;
-      }
-      if (total) onProgress(loaded / total);
+      for (const v of progress.values()) loaded += v.loaded;
+      onProgress(Math.min(1, loaded / expected));
     };
     const bytes = (url: string) =>
       fetchCached(url, report(url))
@@ -129,7 +133,8 @@ export function loadParler(
         bytes(`${BASE}/${name}.onnx.data`),
       ]);
       sessions[key] = await ort.InferenceSession.create(graph, {
-        executionProviders: providers,
+        // WebGPU gets the 4-bit encoder wrong
+        executionProviders: key === 'encoder' ? ['wasm'] : providers,
         graphOptimizationLevel: 'all',
         externalData: [{ path: `${name}.onnx.data`, data }],
         // the decoders' caches stay on the GPU from one frame to the next

@@ -291,32 +291,70 @@ function loadNllb(onProgress?: (p: Progress) => void): Promise<NllbPipe> {
   );
 }
 
+/** Titles that end in a full stop but don't end a sentence. */
+const TITLE = /^(mr|mrs|ms|dr|st|jr|sr|prof|vs)\.$/i;
+
+/**
+ * A line's sentences. NLLB drops a short sentence when a line holds two
+ * ("Thanks for having me. I love making bread…" lost its first), so each is
+ * translated on its own.
+ */
+function sentences(text: string, lang: string): string[] {
+  const parts = Intl.Segmenter
+    ? Array.from(
+        new Intl.Segmenter(lang, { granularity: 'sentence' }).segment(text),
+        (s) => s.segment.trim(),
+      )
+    : (text.match(/[^.!?]+[.!?]*/g) ?? [text]).map((s) => s.trim());
+  const out: string[] = [];
+  let carry = '';
+  for (const part of parts.filter(Boolean)) {
+    const words = part.split(/\s+/);
+    if (TITLE.test(words[words.length - 1]!)) carry += part + ' ';
+    else {
+      out.push(carry + part);
+      carry = '';
+    }
+  }
+  if (carry) out.push(carry.trim());
+  return out;
+}
+
+/** Put a line's translated sentences back together. */
+function joinSentences(parts: string[], lang: string): string {
+  // Chinese and Japanese run sentences on with no space, so each needs its
+  // full stop (NLLB sometimes leaves it off)
+  if (lang !== 'zh' && lang !== 'ja') return parts.join(' ');
+  return parts
+    .map((p, i) =>
+      i < parts.length - 1 && !/[。！？.!?」』]$/.test(p) ? p + '。' : p,
+    )
+    .join('');
+}
+
 async function viaNllb(
   texts: string[],
   options: TranslateOptions,
 ): Promise<string[]> {
   const pipe = await loadNllb(options.onProgress);
   const out: string[] = [];
-  const BATCH = 1;
-  for (let i = 0; i < texts.length; i += BATCH) {
-    aborted(options.signal);
-    const batch = texts.slice(i, i + BATCH);
-    const todo = batch.filter(Boolean);
-    const result = todo.length
-      ? await pipe(todo, {
-          src_lang: options.from.flores,
-          tgt_lang: options.to.flores,
-        })
-      : [];
-    let k = 0;
-    for (const text of batch) {
-      const line = text ? (result[k++]?.translation_text ?? '') : '';
-      out.push(line);
-      options.onLine?.(out.length - 1, line);
+  for (let i = 0; i < texts.length; i++) {
+    const text = texts[i]!;
+    const parts: string[] = [];
+    for (const sentence of text ? sentences(text, options.from.code) : []) {
+      aborted(options.signal);
+      const [result] = await pipe([sentence], {
+        src_lang: options.from.flores,
+        tgt_lang: options.to.flores,
+      });
+      parts.push(result?.translation_text.trim() ?? '');
     }
+    const line = joinSentences(parts.filter(Boolean), options.to.code);
+    out.push(line);
+    options.onLine?.(i, line);
     options.onProgress?.({
       phase: 'translate',
-      ratio: Math.min(1, (i + BATCH) / texts.length),
+      ratio: (i + 1) / texts.length,
     });
   }
   return out;

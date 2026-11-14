@@ -2,9 +2,9 @@
  * The voice engines Audio Dub can use, and how Auto picks one per language.
  * Shared by the page (to show choices) and the voice worker (to run them).
  * Engines are tried in order: the first that speaks the language wins.
- * Chatterbox comes last, so Auto uses it only where no preset engine speaks;
- * picked on its own it clones every speaker's voice. Indic Parler is built
- * but not offered yet (see `PARLER_ENGINE`).
+ * Indic Parler comes after Supertonic, so Auto gives it the Indian languages
+ * Supertonic lacks. Chatterbox comes last, so Auto uses it only where no
+ * preset engine speaks; picked on its own it clones every speaker's voice.
  */
 
 export type EngineId = 'supertonic' | 'parler' | 'mms' | 'chatterbox';
@@ -148,25 +148,6 @@ export function parlerVoice(lang: string, preset: Preset): string {
   return list[(Number(preset.slice(1)) - 1) % list.length]!;
 }
 
-/**
- * Indic Parler-TTS, built but held back from `ENGINES`: WebGPU computes its
- * fp16 decoder wrongly in the browser, so its speech is garbled there (on
- * the CPU it is clear, but a line takes minutes). Add it to `ENGINES` after
- * Supertonic once a runtime gets it right.
- */
-export const PARLER_ENGINE: EngineInfo = {
-  id: 'parler',
-  name: 'Indic Parler-TTS',
-  short: 'Indic',
-  note: 'AI4Bharat’s voices for Indian languages, female or male.',
-  licence: 'Apache 2.0',
-  licenceUrl: 'https://huggingface.co/ai4bharat/indic-parler-tts',
-  sizeMb: 2050,
-  languages: PARLER_LANGUAGES,
-  voices: ['female', 'male'],
-  speedControl: false,
-};
-
 export const ENGINES: EngineInfo[] = [
   {
     id: 'supertonic',
@@ -180,6 +161,19 @@ export const ENGINES: EngineInfo[] = [
     languages: SUPERTONIC_LANGUAGES,
     voices: ['female', 'male'],
     speedControl: true,
+  },
+  {
+    id: 'parler',
+    name: 'Indic Parler-TTS',
+    short: 'Indic',
+    note: 'AI4Bharat’s voices for Indian languages, female or male.',
+    licence: 'Apache 2.0',
+    licenceUrl: 'https://huggingface.co/ai4bharat/indic-parler-tts',
+    // all of its files (see lib/dub/parler.ts), which its download bar counts on
+    sizeMb: 2144,
+    languages: PARLER_LANGUAGES,
+    voices: ['female', 'male'],
+    speedControl: false,
   },
   {
     id: 'mms',
@@ -210,7 +204,7 @@ export const ENGINES: EngineInfo[] = [
 ];
 
 export const engineInfo = (id: EngineId): EngineInfo =>
-  [...ENGINES, PARLER_ENGINE].find((e) => e.id === id)!;
+  ENGINES.find((e) => e.id === id)!;
 
 /** Every language some engine can voice. */
 export const DUB_LANGUAGES = new Set(ENGINES.flatMap((e) => e.languages));

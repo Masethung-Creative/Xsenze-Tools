@@ -459,7 +459,7 @@ export default class AudioDubTool extends Component {
   }
 
   get licenceNote() {
-    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
+    return 'Voices: Supertonic 3 (OpenRAIL-M, use restrictions apply), Indic Parler-TTS (Apache 2.0), MMS (CC-BY-NC) and Chatterbox (MIT). Translation: NLLB-200 (CC-BY-NC). Speakers: CAM++ (Apache 2.0). Free, non-commercial use.';
   }
 
   get canRun() {
