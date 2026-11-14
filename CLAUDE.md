@@ -22,6 +22,8 @@ Rules:
   WASM in turn, and teacher-force decoders with a CPU run's tokens to compare step by step.
 - Audio inputs: use `AUDIO_ACCEPT` from `lib/tools.ts` (iOS needs explicit extensions).
 - Before finishing: `npm run lint` and `npm run build` must pass.
+- Hosting: Vercel builds every push to `main` (settings in `vercel.json`) and serves it at
+  xsenzetools.vercel.app, so a push is a release.
 - Do not mention third-party reference sites in repo files, comments or commit messages.
 
 Design:
