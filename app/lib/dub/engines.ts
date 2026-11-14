@@ -121,11 +121,11 @@ export const CLONE_SECONDS = 10;
 
 /**
  * Indic Parler-TTS's named voices for each language we translate to, sorted
- * by their measured pitch into female and male (best first). Tamil has no
- * male voice of its own: Malayalam's Harish and Kannada's Suresh read it
- * clearly (checked by transcribing it back). Bengali's Arjun measured 203 Hz,
- * too high to be sure of, so he is left out. Still to measure: Gujarati,
- * Kannada, Malayalam, Telugu, Nepali.
+ * by their measured pitch into female and male (best first), each checked by
+ * transcribing it back. Tamil has no male voice of its own: Malayalam's
+ * Harish and Kannada's Suresh read it clearly; nor has Nepali, which Hindi's
+ * Rohit and Aman read clearly (and Divya, beside its own Amrita). Bengali's
+ * Arjun measured 203 Hz, too high to be sure of, so he is left out.
  */
 export const PARLER_VOICES: Record<
   string,
@@ -133,9 +133,17 @@ export const PARLER_VOICES: Record<
 > = {
   ta: { female: ['Jaya', 'Kavitha'], male: ['Harish', 'Suresh'] },
   hi: { female: ['Divya', 'Rani'], male: ['Rohit', 'Aman'] },
-  bn: { female: ['Aditi', 'Rashmi'], male: ['Tapan'] },
-  mr: { female: ['Sunita'], male: ['Sanjay', 'Nikhil'] },
+  bn: { female: ['Aditi', 'Rashmi', 'Riya'], male: ['Tapan', 'Arnav'] },
+  mr: {
+    female: ['Sunita', 'Isha', 'Radha'],
+    male: ['Sanjay', 'Nikhil', 'Varun'],
+  },
   pa: { female: ['Divjot'], male: ['Gurpreet'] },
+  gu: { female: ['Neha'], male: ['Yash'] },
+  kn: { female: ['Anu', 'Vidya'], male: ['Chetan', 'Suresh'] },
+  ml: { female: ['Anjali', 'Anju'], male: ['Harish'] },
+  te: { female: ['Lalitha'], male: ['Kiran', 'Prakash'] },
+  ne: { female: ['Amrita', 'Divya'], male: ['Rohit', 'Aman'] },
 };
 
 export const PARLER_LANGUAGES = Object.keys(PARLER_VOICES);
