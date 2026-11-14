@@ -16,7 +16,7 @@ Every file is processed on the user's device.
 | Local storage      | [Dexie](https://dexie.org) (IndexedDB), `browser-fs-access` for open/save                                              |
 | Lint/format        | ESLint, ember-template-lint, Stylelint, Prettier                                                                       |
 | Tests              | QUnit + ember-qunit                                                                                                    |
-| Hosting            | Static build (`dist/`) on Cloudflare Workers assets (`wrangler.jsonc`)                                                 |
+| Hosting            | Static build (`dist/`) on Vercel (`vercel.json`); Cloudflare Workers assets also set up (`wrangler.jsonc`)             |
 
 ## Getting started
 
