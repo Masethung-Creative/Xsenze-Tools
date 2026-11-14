@@ -15,6 +15,7 @@ import {
 } from 'xsenze-tools/lib/dub/engines';
 import { speakSupertonic } from 'xsenze-tools/lib/dub/supertonic';
 import { speakChatterbox } from 'xsenze-tools/lib/dub/chatterbox';
+import { speakParler } from 'xsenze-tools/lib/dub/parler';
 import type { CloneRef } from 'xsenze-tools/lib/dub/voice';
 
 type Incoming = {
@@ -84,6 +85,16 @@ async function speak(
 ): Promise<{ audio: Float32Array; rate: number }> {
   const onProgress = (ratio: number) =>
     postMessage({ type: 'progress', id: message.id, ratio });
+  const onSpeaking = (ratio: number) =>
+    postMessage({ type: 'progress', id: message.id, ratio, phase: 'speak' });
+  if (message.engine === 'parler')
+    return speakParler(
+      message.text,
+      message.lang,
+      message.voice,
+      onProgress,
+      onSpeaking,
+    );
   if (message.engine === 'supertonic')
     return speakSupertonic(
       message.text,
@@ -100,13 +111,7 @@ async function speak(
       message.clone.key,
       message.clone.audio,
       onProgress,
-      (ratio) =>
-        postMessage({
-          type: 'progress',
-          id: message.id,
-          ratio,
-          phase: 'speak',
-        }),
+      onSpeaking,
     );
   }
   const pipe = await loadMms(message.lang, onProgress);

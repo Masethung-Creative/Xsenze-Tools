@@ -3,10 +3,11 @@
  * Shared by the page (to show choices) and the voice worker (to run them).
  * Engines are tried in order: the first that speaks the language wins.
  * Chatterbox comes last, so Auto uses it only where no preset engine speaks;
- * picked on its own it clones every speaker's voice.
+ * picked on its own it clones every speaker's voice. Indic Parler is built
+ * but not offered yet (see `PARLER_ENGINE`).
  */
 
-export type EngineId = 'supertonic' | 'mms' | 'chatterbox';
+export type EngineId = 'supertonic' | 'parler' | 'mms' | 'chatterbox';
 export type EngineChoice = 'auto' | EngineId;
 export type VoiceGender = 'female' | 'male';
 
@@ -118,6 +119,54 @@ export const CHATTERBOX_LANGUAGES = [
 export const CLONE_RATE = 24000;
 export const CLONE_SECONDS = 10;
 
+/**
+ * Indic Parler-TTS's named voices for each language we translate to, sorted
+ * by their measured pitch into female and male (best first). Tamil has no
+ * male voice of its own: Malayalam's Harish and Kannada's Suresh read it
+ * clearly (checked by transcribing it back). Bengali's Arjun measured 203 Hz,
+ * too high to be sure of, so he is left out. Still to measure: Gujarati,
+ * Kannada, Malayalam, Telugu, Nepali.
+ */
+export const PARLER_VOICES: Record<
+  string,
+  { female: readonly string[]; male: readonly string[] }
+> = {
+  ta: { female: ['Jaya', 'Kavitha'], male: ['Harish', 'Suresh'] },
+  hi: { female: ['Divya', 'Rani'], male: ['Rohit', 'Aman'] },
+  bn: { female: ['Aditi', 'Rashmi'], male: ['Tapan'] },
+  mr: { female: ['Sunita'], male: ['Sanjay', 'Nikhil'] },
+  pa: { female: ['Divjot'], male: ['Gurpreet'] },
+};
+
+export const PARLER_LANGUAGES = Object.keys(PARLER_VOICES);
+
+/** The named Parler voice `preset` stands for in `lang`: its gender, then its number. */
+export function parlerVoice(lang: string, preset: Preset): string {
+  const voices = PARLER_VOICES[lang] ?? { female: ['Jaya'], male: [] };
+  const male = preset.startsWith('M');
+  const list = male && voices.male.length ? voices.male : voices.female;
+  return list[(Number(preset.slice(1)) - 1) % list.length]!;
+}
+
+/**
+ * Indic Parler-TTS, built but held back from `ENGINES`: WebGPU computes its
+ * fp16 decoder wrongly in the browser, so its speech is garbled there (on
+ * the CPU it is clear, but a line takes minutes). Add it to `ENGINES` after
+ * Supertonic once a runtime gets it right.
+ */
+export const PARLER_ENGINE: EngineInfo = {
+  id: 'parler',
+  name: 'Indic Parler-TTS',
+  short: 'Indic',
+  note: 'AI4Bharat’s voices for Indian languages, female or male.',
+  licence: 'Apache 2.0',
+  licenceUrl: 'https://huggingface.co/ai4bharat/indic-parler-tts',
+  sizeMb: 2050,
+  languages: PARLER_LANGUAGES,
+  voices: ['female', 'male'],
+  speedControl: false,
+};
+
 export const ENGINES: EngineInfo[] = [
   {
     id: 'supertonic',
@@ -161,7 +210,7 @@ export const ENGINES: EngineInfo[] = [
 ];
 
 export const engineInfo = (id: EngineId): EngineInfo =>
-  ENGINES.find((e) => e.id === id)!;
+  [...ENGINES, PARLER_ENGINE].find((e) => e.id === id)!;
 
 /** Every language some engine can voice. */
 export const DUB_LANGUAGES = new Set(ENGINES.flatMap((e) => e.languages));
@@ -222,6 +271,7 @@ const ISO3: Record<string, string> = {
   gu: 'guj',
   pa: 'pan',
   ur: 'urd',
+  ne: 'nep',
   zh: 'zho',
   th: 'tha',
 };

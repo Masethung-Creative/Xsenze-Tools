@@ -44,6 +44,7 @@ import {
   DUB_LANGUAGES,
   ENGINES,
   engineInfo,
+  parlerVoice,
   iso3,
   pickEngine,
   type EngineChoice,
@@ -164,16 +165,21 @@ const keepPaste = (event: Event) => event.stopPropagation();
 const nameOf = (code: string) => languageOf(code)?.name ?? code;
 
 /** Engine and voices for a finished row; one-voice engines name none. */
-const voiceLabel = (engine: EngineId, voices: Preset[]) => {
+const voiceLabel = (engine: EngineId, voices: Preset[], lang: string) => {
   const info = engineInfo(engine);
   if (info.clones)
     return voices.length === 1
       ? `${info.name} · cloned voice`
       : `${info.name} · ${voices.length} cloned voices`;
   if (info.voices.length < 2) return `${info.name} · single voice`;
-  return voices.length === 1
-    ? `${info.name} · ${voices[0]}`
-    : `${info.name} · ${voices.length} voices`;
+  // Parler's voices have names: show them
+  const named =
+    engine === 'parler' ? voices.map((v) => parlerVoice(lang, v)) : voices;
+  return named.length === 1
+    ? `${info.name} · ${named[0]}`
+    : named.length <= 3 && engine === 'parler'
+      ? `${info.name} · ${named.join(', ')}`
+      : `${info.name} · ${named.length} voices`;
 };
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || 'audio';
@@ -767,7 +773,7 @@ export default class AudioDubTool extends Component {
         job.state === 'running'
           ? `${job.engine ? engineInfo(job.engine).name + ' · ' : ''}${job.stage === 'voice' ? `${job.done} / ${this.cues.length}` : STAGE_TEXT[job.stage ?? 'translate']}`
           : job.state === 'done' && job.engine
-            ? voiceLabel(job.engine, job.voices ?? [])
+            ? voiceLabel(job.engine, job.voices ?? [], job.code)
             : job.state === 'failed'
               ? (job.error ?? 'Failed')
               : job.state === 'stopped'
