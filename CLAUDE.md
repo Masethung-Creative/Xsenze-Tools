@@ -58,7 +58,10 @@ their `soon` line from `lib/tools.ts`):
   - `prompts.ts`: picture prompts for each model, built fresh from the project. Midjourney rules
     come from the user's skills: parameters last, `--v 8.2` (`--niji 7` for anime), `--raw`
     with `--s 50`, never `--q`, and `--oref` switches to V7;
-  - `export.ts`: Markdown and CSV.
+  - `export.ts`: Markdown and CSV;
+  - `read-document.ts`: any story file to plain text for the story box (docx, odt, epub, rtf,
+    html, fdx, srt/vtt/ass, text in any encoding; PDF through `read-pdf.ts`, pdf.js loaded only
+    then; audio and video through Whisper). .doc and .pages can't be read: it asks for docx or PDF.
 
   The project tabs are `components/tools/story-studio/*-tab.gts`. Projects autosave to
   localStorage (`xsenze.story-studio`) and move between devices as `.story.json` files (Open file,

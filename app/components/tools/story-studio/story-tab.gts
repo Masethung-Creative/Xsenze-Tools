@@ -1,10 +1,13 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
+import { fn } from '@ember/helper';
+import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
 import type CanonToastService from 'delphicanon/services/canon-toast';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonCodeBlock from 'delphicanon/components/canon-code-block';
+import CanonDialog from 'delphicanon/components/canon-dialog';
 import CanonGrid from 'delphicanon/components/canon-grid';
 import CanonHeading from 'delphicanon/components/canon-heading';
 import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
@@ -22,6 +25,11 @@ import TabBar, {
   TAB,
 } from 'xsenze-tools/components/tools/story-studio/tab-bar';
 import PasteClear from 'xsenze-tools/components/tools/text-tool/paste-clear';
+import { IconSvg } from 'xsenze-tools/components/icon';
+import {
+  readDocument,
+  transcribeStory,
+} from 'xsenze-tools/lib/story/read-document';
 import {
   passesOf,
   promptOf,
@@ -34,6 +42,14 @@ import type { Project } from 'xsenze-tools/lib/story/types';
 
 /** Words a minute when a story is read aloud to children. */
 const READ_PACE = 130;
+
+const FileIcon = <template><IconSvg @name="folder-open" /></template>;
+
+/** A story read from a file, waiting for Replace or Add to the end. */
+interface Incoming {
+  text: string;
+  name: string;
+}
 
 export interface StoryTabSignature {
   Args: {
@@ -52,6 +68,16 @@ export default class StoryTab extends Component<StoryTabSignature> {
   @tracked showsPrompt = false;
   @tracked report: Report | undefined;
   @tracked error: string | undefined;
+
+  /** What a story file is doing now: reading, downloading, listening. */
+  @tracked reading: string | undefined;
+  @tracked readNote: string | undefined;
+  @tracked readProblem: string | undefined;
+  @tracked incoming: Incoming | undefined;
+  /** Audio or video waiting for the go-ahead to be heard. */
+  @tracked media: File | undefined;
+  /** Only the latest file's result is used. */
+  #readToken = 0;
 
   constructor(owner: Owner, args: StoryTabSignature['Args']) {
     super(owner, args);
@@ -144,6 +170,114 @@ export default class StoryTab extends Component<StoryTabSignature> {
 
   setStory = (story: string) =>
     this.args.store.put({ ...this.args.project, story });
+
+  // ---------- a story from a file ----------
+
+  get hasIncoming() {
+    return !!this.incoming;
+  }
+
+  get incomingText() {
+    return `Your story box already has text. Replace it with the story from “${this.incoming?.name ?? ''}”, or add that story to the end?`;
+  }
+
+  get hasMedia() {
+    return !!this.media;
+  }
+
+  get mediaText() {
+    return `Turn the speech in “${this.media?.name ?? ''}” into text? The speech reader (Whisper, about 80–140 MB) downloads once, then works offline. A long recording takes a few minutes.`;
+  }
+
+  openStoryFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (file) void this.#readStory(file);
+    });
+    input.click();
+  };
+
+  dragOver = (event: DragEvent) => {
+    if (!event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  /** A dropped file; dropped text keeps the text box's own behaviour. */
+  dropped = (event: DragEvent) => {
+    const file = event.dataTransfer?.files[0];
+    if (!file) return;
+    event.preventDefault();
+    void this.#readStory(file);
+  };
+
+  async #readStory(file: File) {
+    const token = ++this.#readToken;
+    this.readNote = undefined;
+    this.readProblem = undefined;
+    this.reading = `Reading ${file.name}…`;
+    const result = await readDocument(file, (note) => {
+      if (token === this.#readToken) this.reading = note;
+    });
+    if (this.isDestroying || token !== this.#readToken) return;
+    this.reading = undefined;
+    if ('error' in result) this.readProblem = `${file.name}: ${result.error}`;
+    else if ('media' in result) this.media = file;
+    else this.#offer(result.text, file.name);
+  }
+
+  async #listen(file: File) {
+    const token = ++this.#readToken;
+    this.readNote = undefined;
+    this.readProblem = undefined;
+    this.reading = `Listening to ${file.name}…`;
+    const language = String(this.args.project.answers.language ?? '');
+    try {
+      const text = await transcribeStory(file, language, (percent) => {
+        if (token !== this.#readToken) return;
+        this.reading =
+          percent < 100
+            ? `Downloading the speech reader: ${Math.round(percent)}%`
+            : `Listening to ${file.name}…`;
+      });
+      if (this.isDestroying || token !== this.#readToken) return;
+      this.reading = undefined;
+      if (text) this.#offer(text, file.name);
+      else this.readProblem = `${file.name}: no speech was heard in it.`;
+    } catch {
+      if (this.isDestroying || token !== this.#readToken) return;
+      this.reading = undefined;
+      this.readProblem = `${file.name}: this recording could not be played, so it could not be heard. Try an mp3, wav, m4a or mp4.`;
+    }
+  }
+
+  #offer(text: string, name: string) {
+    if (this.args.project.story.trim()) this.incoming = { text, name };
+    else this.#use(text, name, false);
+  }
+
+  #use(text: string, name: string, add: boolean) {
+    const before = this.args.project.story.trimEnd();
+    this.setStory(add && before ? `${before}\n\n${text}` : text);
+    this.readNote = add
+      ? `Added the story from ${name} to the end.`
+      : `Read the story from ${name}.`;
+  }
+
+  incomingClosed = (choice: string) => {
+    const { incoming } = this;
+    this.incoming = undefined;
+    if (incoming && (choice === 'replace' || choice === 'add'))
+      this.#use(incoming.text, incoming.name, choice === 'add');
+  };
+
+  mediaClosed = (choice: string) => {
+    const { media } = this;
+    this.media = undefined;
+    if (media && choice === 'listen') void this.#listen(media);
+  };
 
   fill = () => {
     const outcome = readAnswer(this.args.project, this.pass, this.answer);
@@ -266,14 +400,35 @@ export default class StoryTab extends Component<StoryTabSignature> {
           <CanonTextArea
             class="ss-story"
             @value={{@project.story}}
-            @placeholder="Paste your story or script here"
+            @placeholder="Paste your story or script here, or drop a file: Word, PDF, text, script, subtitles, web page, e-book, or a recording"
             @height={{320}}
             @onChange={{this.setStory}}
             aria-label="Your story"
+            {{on "dragover" this.dragOver}}
+            {{on "drop" this.dropped}}
           />
           <CanonGrid>
             <PasteClear @text={{@project.story}} @onChange={{this.setStory}} />
+            <CanonButton
+              @text="Open file"
+              @icon={{FileIcon}}
+              @disabled={{if this.reading true false}}
+              @onClick={{this.openStoryFile}}
+            />
           </CanonGrid>
+          {{#if this.reading}}
+            <CanonStatus @text={{this.reading}} @tone="muted" @row={{true}} />
+          {{/if}}
+          {{#if this.readNote}}
+            <CanonStatus @text={{this.readNote}} @tone="ok" @row={{true}} />
+          {{/if}}
+          {{#if this.readProblem}}
+            <CanonStatus
+              @text={{this.readProblem}}
+              @tone="warn"
+              @row={{true}}
+            />
+          {{/if}}
           <CanonStatus @text={{this.storyStats}} @tone="muted" @row={{true}} />
         </CanonRows>
         <CanonRows @framed={{true}}>
@@ -282,5 +437,37 @@ export default class StoryTab extends Component<StoryTabSignature> {
         </CanonRows>
       </:main>
     </CanonSplit>
+
+    <CanonDialog
+      @open={{this.hasIncoming}}
+      @title="You already have a story here"
+      @message={{this.incomingText}}
+      @onClose={{this.incomingClosed}}
+    >
+      <:footer as |close|>
+        <CanonButton @text="Add to the end" @onClick={{fn close "add"}} />
+        <CanonButton
+          @kind="primary"
+          @text="Replace"
+          @onClick={{fn close "replace"}}
+        />
+      </:footer>
+    </CanonDialog>
+
+    <CanonDialog
+      @open={{this.hasMedia}}
+      @title="Hear the story in this recording?"
+      @message={{this.mediaText}}
+      @onClose={{this.mediaClosed}}
+    >
+      <:footer as |close|>
+        <CanonButton @text="Cancel" @onClick={{fn close ""}} />
+        <CanonButton
+          @kind="primary"
+          @text="Turn into text"
+          @onClick={{fn close "listen"}}
+        />
+      </:footer>
+    </CanonDialog>
   </template>
 }
