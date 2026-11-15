@@ -11,6 +11,7 @@ import ProjectView from 'xsenze-tools/components/tools/story-studio/project-view
 import ProjectsDialog from 'xsenze-tools/components/tools/story-studio/projects-dialog';
 import { downloadText } from 'xsenze-tools/lib/download';
 import {
+  PROJECT_FILE_ACCEPT,
   ProjectStore,
   copyOf,
   projectFileName,
@@ -38,10 +39,10 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
   @tracked creating = false;
   @tracked seed: Seed | undefined;
   @tracked projectsOpen = false;
-  /** Why a picked file could not be opened. */
+  /** Why picked files could not be opened. */
   @tracked fileProblem: string | undefined;
-  /** A project from a file whose id this browser already has. */
-  @tracked clash: Project | undefined;
+  /** Projects from files whose ids this browser already has. */
+  @tracked clashes: Project[] = [];
 
   get project(): Project | undefined {
     return this.creating ? undefined : this.store.current;
@@ -56,11 +57,21 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
   }
 
   get hasClash() {
-    return !!this.clash;
+    return this.clashes.length > 0;
+  }
+
+  get clashTitle() {
+    return this.clashes.length > 1
+      ? 'These projects are already here'
+      : 'This project is already here';
   }
 
   get clashText() {
-    return `“${this.clash?.title ?? ''}” is already in this browser. Replace it with the one in the file, or keep both?`;
+    const titles = this.clashes.map((p) => `“${p.title}”`);
+    if (titles.length < 2)
+      return `${titles[0] ?? ''} is already in this browser. Replace it with the one in the file, or keep both?`;
+    const named = `${titles.slice(0, -1).join(', ')} and ${titles.at(-1)}`;
+    return `${named} are already in this browser. Replace them with the ones in the files, or keep both?`;
   }
 
   startNew = () => {
@@ -122,30 +133,54 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
   openFile = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json,application/json';
+    input.accept = PROJECT_FILE_ACCEPT;
     input.addEventListener('change', () => {
       const file = input.files?.[0];
-      if (file) void this.#read(file);
+      if (file) void this.#readAll([file]);
     });
     input.click();
   };
 
-  async #read(file: File) {
-    const result = readProjectFile(await file.text().catch(() => ''));
+  /** Files dropped or chosen in Saved projects. */
+  openFiles = (files: File[]) => void this.#readAll(files);
+
+  /**
+   * Adds the project in each file, settings and all, and opens the first.
+   * A project this browser already has waits for Replace or Keep both.
+   */
+  async #readAll(files: File[]) {
+    const read = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        result: readProjectFile(await file.text().catch(() => '')),
+      })),
+    );
     if (this.isDestroying) return;
-    if ('error' in result) {
-      this.fileProblem = result.error;
-      return;
+    const problems: string[] = [];
+    const clashes: Project[] = [];
+    const added: Project[] = [];
+    for (const { name, result } of read) {
+      if ('error' in result) {
+        problems.push(
+          read.length > 1 ? `${name}: ${result.error}` : result.error,
+        );
+      } else if (this.store.find(result.project.id)) {
+        // so is a second file of a project added just now
+        clashes.push(result.project);
+      } else {
+        this.store.add(result.project);
+        added.push(result.project);
+      }
     }
-    if (this.store.find(result.project.id)) {
-      this.clash = result.project;
-      return;
-    }
-    this.#take(result.project);
+    this.#show(added[0]);
+    if (problems.length) this.fileProblem = problems.join(' ');
+    if (clashes.length) this.clashes = clashes;
   }
 
-  #take(project: Project) {
-    this.store.add(project);
+  /** Opens a project that is in the store and closes whatever covered it. */
+  #show(project: Project | undefined) {
+    if (!project) return;
+    this.store.open(project.id);
     this.creating = false;
     this.seed = undefined;
     this.projectsOpen = false;
@@ -155,12 +190,14 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
 
   /** Replace, Keep both, or a dismiss that keeps things as they are. */
   clashClosed = (choice: string) => {
-    const { clash } = this;
-    this.clash = undefined;
-    if (!clash) return;
-    if (choice === 'replace') this.#take(clash);
-    else if (choice === 'both')
-      this.#take(copyOf(clash, `${clash.title} (copy)`));
+    const { clashes } = this;
+    this.clashes = [];
+    if (choice !== 'replace' && choice !== 'both') return;
+    const taken = clashes.map((p) =>
+      choice === 'replace' ? p : copyOf(p, `${p.title} (copy)`),
+    );
+    for (const project of taken) this.store.add(project);
+    this.#show(taken[0]);
   };
 
   <template>
@@ -191,6 +228,7 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
       @currentId={{this.store.currentId}}
       @onOpen={{this.openProject}}
       @onDelete={{this.deleteProject}}
+      @onFiles={{this.openFiles}}
       @onClose={{this.hideProjects}}
     />
 
@@ -207,7 +245,7 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
 
     <CanonDialog
       @open={{this.hasClash}}
-      @title="This project is already here"
+      @title={{this.clashTitle}}
       @message={{this.clashText}}
       @onClose={{this.clashClosed}}
     >

@@ -127,3 +127,8 @@
   font-size: var(--canon-text-body);
   line-height: 1.5;
 }
+
+/* Saved projects: a shorter drop area, so the list starts higher */
+.ss-projects .canon-drop-zone {
+  --canon-drop-height: 104px;
+}

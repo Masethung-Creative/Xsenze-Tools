@@ -61,7 +61,8 @@ their `soon` line from `lib/tools.ts`):
   - `export.ts`: Markdown and CSV.
 
   The project tabs are `components/tools/story-studio/*-tab.gts`. Projects autosave to
-  localStorage (`xsenze.story-studio`) and move between devices as `.story.json` files. Only the
+  localStorage (`xsenze.story-studio`) and move between devices as `.story.json` files (Open file,
+  or drop several in Saved projects; a project already here asks Replace or Keep both). Only the
   project type is locked after Create. No server: the chatbot steps are the user's own copy and
   paste.
 

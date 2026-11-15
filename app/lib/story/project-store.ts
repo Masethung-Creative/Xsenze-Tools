@@ -28,6 +28,9 @@ const KEY = 'xsenze.story-studio';
 const FILE_APP = 'xsenze-story-studio';
 const FILE_VERSION = 1;
 
+/** What the file pickers and the drop area take: project files are JSON. */
+export const PROJECT_FILE_ACCEPT = '.json,application/json';
+
 interface Saved {
   currentId?: string;
   projects: unknown[];

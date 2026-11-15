@@ -3,12 +3,17 @@ import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import CanonButton from 'delphicanon/components/canon-button';
 import CanonDialog from 'delphicanon/components/canon-dialog';
+import CanonDropZone from 'delphicanon/components/canon-drop-zone';
 import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
 import CanonGrid from 'delphicanon/components/canon-grid';
 import CanonRow from 'delphicanon/components/canon-row';
 import CanonStatus from 'delphicanon/components/canon-status';
+import { IconSvg } from 'xsenze-tools/components/icon';
+import { PROJECT_FILE_ACCEPT } from 'xsenze-tools/lib/story/project-store';
 import { typeInfo } from 'xsenze-tools/lib/story/project-types';
 import type { Project } from 'xsenze-tools/lib/story/types';
+
+const FolderIcon = <template><IconSvg @name="folder-open" /></template>;
 
 interface Line {
   id: string;
@@ -25,6 +30,8 @@ export interface ProjectsDialogSignature {
     currentId?: string;
     onOpen: (id: string) => void;
     onDelete: (id: string) => void;
+    /** Project files dropped or chosen here. */
+    onFiles: (files: File[]) => void;
     onClose: () => void;
   };
 }
@@ -38,7 +45,10 @@ const when = (ms: number) =>
     minute: '2-digit',
   });
 
-/** The projects kept in this browser: open one, or delete it after a second tap. */
+/**
+ * The projects kept in this browser: open one, delete one after a second
+ * tap, or bring one in from its project file with every setting in place.
+ */
 export default class ProjectsDialog extends Component<ProjectsDialogSignature> {
   /** The project a Delete tap is waiting to confirm. */
   @tracked deleting: string | undefined;
@@ -77,6 +87,16 @@ export default class ProjectsDialog extends Component<ProjectsDialogSignature> {
       @message="Kept in this browser. Use Save file to move one to another device."
       @onClose={{this.closed}}
     >
+      <:header>
+        <CanonDropZone
+          @prompt="Drop a project file (.story.json) here, or press Files. It opens with all its settings."
+          @icon={{FolderIcon}}
+          @accept={{PROJECT_FILE_ACCEPT}}
+          @multiple={{true}}
+          @paste={{false}}
+          @onFiles={{@onFiles}}
+        />
+      </:header>
       <:default>
         {{#each this.lines key="id" as |line|}}
           <CanonRow @title={{line.title}} @detail={{line.detail}}>
