@@ -9,12 +9,14 @@ import iArrowUpDown from 'lucide-static/icons/arrow-up-down.svg?raw';
 import iArrowUpToLine from 'lucide-static/icons/arrow-up-to-line.svg?raw';
 import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
 import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
+import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
 import iBox from 'lucide-static/icons/box.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
+import iCircle from 'lucide-static/icons/circle.svg?raw';
 import iCircleCheckBig from 'lucide-static/icons/circle-check-big.svg?raw';
 import iCircleDot from 'lucide-static/icons/circle-dot.svg?raw';
 import iClapperboard from 'lucide-static/icons/clapperboard.svg?raw';
@@ -29,6 +31,7 @@ import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
+import iDrama from 'lucide-static/icons/drama.svg?raw';
 import iEdit from 'lucide-static/icons/edit.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFile from 'lucide-static/icons/file.svg?raw';
@@ -42,6 +45,7 @@ import iFrame from 'lucide-static/icons/frame.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iGlobe from 'lucide-static/icons/globe.svg?raw';
 import iGpu from 'lucide-static/icons/gpu.svg?raw';
+import iGraduationCap from 'lucide-static/icons/graduation-cap.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
@@ -53,6 +57,7 @@ import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
+import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
@@ -62,6 +67,7 @@ import iMicVocal from 'lucide-static/icons/mic-vocal.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
+import iOrigami from 'lucide-static/icons/origami.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
@@ -69,6 +75,7 @@ import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
+import iReplace from 'lucide-static/icons/replace.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRoute from 'lucide-static/icons/route.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
@@ -79,6 +86,8 @@ import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
 import iSkipForward from 'lucide-static/icons/skip-forward.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
+import iSpace from 'lucide-static/icons/space.svg?raw';
+import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSpeech from 'lucide-static/icons/speech.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
@@ -96,6 +105,7 @@ import iVideo from 'lucide-static/icons/video.svg?raw';
 import iVolume from 'lucide-static/icons/volume.svg?raw';
 import iVolume2 from 'lucide-static/icons/volume-2.svg?raw';
 import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
+import iWandSparkles from 'lucide-static/icons/wand-sparkles.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
 import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
@@ -111,12 +121,14 @@ export const icons: Record<string, string> = {
   'arrow-up-to-line': iArrowUpToLine,
   'audio-lines': iAudioLines,
   'audio-waveform': iAudioWaveform,
+  'book-open': iBookOpen,
   box: iBox,
   camera: iCamera,
   captions: iCaptions,
   check: iCheck,
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
+  circle: iCircle,
   'circle-check-big': iCircleCheckBig,
   'circle-dot': iCircleDot,
   clapperboard: iClapperboard,
@@ -131,6 +143,7 @@ export const icons: Record<string, string> = {
   dices: iDices,
   'disc-3': iDisc3,
   download: iDownload,
+  drama: iDrama,
   edit: iEdit,
   eye: iEye,
   file: iFile,
@@ -144,6 +157,7 @@ export const icons: Record<string, string> = {
   gauge: iGauge,
   globe: iGlobe,
   gpu: iGpu,
+  'graduation-cap': iGraduationCap,
   'grid-3x3': iGrid3x3,
   headphones: iHeadphones,
   house: iHouse,
@@ -155,6 +169,7 @@ export const icons: Record<string, string> = {
   inspect: iInspect,
   key: iKey,
   languages: iLanguages,
+  lock: iLock,
   map: iMap,
   maximize: iMaximize,
   menu: iMenu,
@@ -164,6 +179,7 @@ export const icons: Record<string, string> = {
   'monitor-up': iMonitorUp,
   moon: iMoon,
   music: iMusic,
+  origami: iOrigami,
   pause: iPause,
   pencil: iPencil,
   'picture-in-picture-2': iPictureInPicture2,
@@ -171,6 +187,7 @@ export const icons: Record<string, string> = {
   podcast: iPodcast,
   radio: iRadio,
   repeat: iRepeat,
+  replace: iReplace,
   'rotate-ccw': iRotateCcw,
   route: iRoute,
   scissors: iScissors,
@@ -181,6 +198,8 @@ export const icons: Record<string, string> = {
   'skip-back': iSkipBack,
   'skip-forward': iSkipForward,
   'sliders-horizontal': iSlidersHorizontal,
+  space: iSpace,
+  sparkles: iSparkles,
   speaker: iSpeaker,
   speech: iSpeech,
   square: iSquare,
@@ -198,6 +217,7 @@ export const icons: Record<string, string> = {
   volume: iVolume,
   'volume-2': iVolume2,
   'volume-x': iVolumeX,
+  'wand-sparkles': iWandSparkles,
   x: iX,
   'zoom-in': iZoomIn,
   'zoom-out': iZoomOut,

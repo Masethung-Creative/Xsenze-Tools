@@ -46,6 +46,17 @@ their `soon` line from `lib/tools.ts`):
 
 - `lib/flow-hooks.ts` is a reduced stand-in (no workflows); `deliverPending` feeds the omnibox
   hand-off from `lib/handoff.ts`.
+- Story Studio (`story-studio`, AI Studio category) is built in phases the user checks one by
+  one. `STORY_STUDIO_LIVE` in `lib/tools.ts` keeps it to dev builds until it is finished; the
+  site shows AI Studio as Coming soon. Its data is in `lib/story/`:
+  - `project-types.ts`: every New project question, option and default, plus the plan maths;
+  - `targets.ts`: image models and video tools (Sora is gone: it shut down in 2026);
+  - `keywords.ts`: looks, to be swapped for the user's keywords skill.
+
+  Projects autosave to localStorage (`xsenze.story-studio`) and move between devices as
+  `.story.json` files. Only the project type is locked after Create. No server: the chatbot steps
+  are the user's own copy and paste.
+
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,
   audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc (all 16 ported), plus our own video-compressor (one or many videos; mediabunny transcode

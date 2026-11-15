@@ -1,0 +1,108 @@
+/* What are you making: three square tiles, hairlines between them */
+.ss-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--canon-hairline);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--canon-border);
+}
+
+.ss-types li {
+  display: flex;
+}
+
+.ss-type {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: 20px 16px;
+  border: 0;
+  background: var(--canon-card);
+  color: var(--canon-foreground);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease-quart);
+}
+
+.ss-type:hover {
+  background: var(--canon-accent-bg);
+}
+
+.ss-type:focus-visible {
+  outline: 2px solid var(--canon-primary);
+  outline-offset: -2px;
+}
+
+.ss-type--on {
+  background: var(--canon-accent-bg);
+  box-shadow: inset 3px 0 0 var(--canon-primary);
+}
+
+.ss-type-icon {
+  margin-block-end: 6px;
+  color: var(--canon-primary);
+}
+
+.ss-type-icon svg {
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+.ss-type-name {
+  color: var(--canon-primary);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ss-type-desc {
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-subheadline);
+  line-height: 1.4;
+}
+
+/* the locked type beside its row title */
+.ss-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline-end: var(--canon-panel-padding);
+  color: var(--canon-muted-foreground);
+}
+
+.ss-locked .icon svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+/* the outline: one fold per module, episode or act */
+.ss-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canon-hairline);
+  background: var(--canon-border);
+}
+
+.ss-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 12px var(--canon-panel-padding);
+  background: var(--canon-card);
+  cursor: pointer;
+}
+
+.ss-group-title {
+  font-weight: 600;
+}
+
+.ss-group-meta {
+  color: var(--canon-muted-foreground);
+  font-size: var(--canon-text-subheadline);
+}
