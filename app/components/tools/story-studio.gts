@@ -17,6 +17,7 @@ import {
   projectFileText,
   readProjectFile,
 } from 'xsenze-tools/lib/story/project-store';
+import { list } from 'xsenze-tools/lib/story/project-types';
 import type { Project } from 'xsenze-tools/lib/story/types';
 import type { Tool } from 'xsenze-tools/lib/tools';
 import './story-studio/story-studio.css';
@@ -68,9 +69,20 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
   };
 
   startCopy = (project: Project) => {
+    const answers = sharedAnswers(project.answers);
+    // a story that comes along is one the copy already has
+    if (project.story.trim())
+      answers.have = [...new Set([...list(answers, 'have'), 'story'])];
     this.seed = {
-      answers: sharedAnswers(project.answers),
-      story: project.story,
+      answers,
+      carried: {
+        story: project.story,
+        synopsis: project.synopsis,
+        logline: project.logline,
+        assets: project.assets,
+        tools: project.tools,
+        style: project.style,
+      },
       title: `${project.title} (copy)`,
       from: project.title,
     };

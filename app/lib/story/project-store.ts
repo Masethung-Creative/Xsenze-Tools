@@ -13,8 +13,12 @@ import {
   typeInfo,
 } from './project-types';
 import {
+  blankPart,
   partHasContent,
+  type AiTool,
   type Answers,
+  type Asset,
+  type AssetKind,
   type Part,
   type Project,
   type ProjectType,
@@ -32,12 +36,17 @@ interface Saved {
 export const untitled = (type: ProjectType) =>
   `Untitled ${typeInfo(type).name.toLowerCase()}`;
 
+/** What a copy carries into its new project besides the shared answers. */
+export type Carried = Partial<
+  Pick<Project, 'story' | 'synopsis' | 'logline' | 'assets' | 'tools' | 'style'>
+>;
+
 /** A new project from the New project answers, its parts laid out. */
 export function newProject(
   type: ProjectType,
   answers: Answers,
   title: string,
-  story = '',
+  carried: Carried = {},
 ): Project {
   const settled = settle(type, answers);
   const now = Date.now();
@@ -49,40 +58,103 @@ export function newProject(
     updated: now,
     answers: settled,
     parts: layoutParts(planOf(type, settled), [], partHasContent).parts,
-    story,
+    story: carried.story ?? '',
+    synopsis: carried.synopsis ?? '',
+    logline: carried.logline ?? '',
+    assets: (carried.assets ?? []).map((a) => ({ ...a })),
+    tools: (carried.tools ?? []).map((t) => ({ ...t })),
+    style: { ...(carried.style ?? { link: '', file: '' }) },
+    chat: {},
+    filled: [],
   };
 }
 
-const isPart = (raw: unknown): raw is Part =>
-  !!raw &&
-  typeof raw === 'object' &&
-  typeof (raw as Part).id === 'string' &&
-  typeof (raw as Part).title === 'string';
+const str = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+const record = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+const KINDS: readonly AssetKind[] = [
+  'character',
+  'background',
+  'place',
+  'prop',
+];
+
+function revivePart(raw: unknown): Part | undefined {
+  const r = record(raw);
+  if (typeof r.id !== 'string') return undefined;
+  return {
+    ...blankPart(r.id, Number.isInteger(r.group) ? (r.group as number) : 0),
+    title: str(r.title),
+    summary: str(r.summary),
+    goal: str(r.goal),
+    tool: str(r.tool),
+    task: str(r.task),
+    recap: str(r.recap),
+    quiz: str(r.quiz),
+    beat: str(r.beat),
+    cast: Array.isArray(r.cast)
+      ? r.cast.filter((x): x is string => typeof x === 'string')
+      : [],
+  };
+}
+
+function reviveAsset(raw: unknown): Asset | undefined {
+  const r = record(raw);
+  const kind = KINDS.find((k) => k === r.kind);
+  if (typeof r.id !== 'string' || !kind) return undefined;
+  return {
+    id: r.id,
+    kind,
+    name: str(r.name),
+    role: str(r.role),
+    look: str(r.look),
+    have: r.have === true,
+    link: str(r.link),
+    file: str(r.file),
+  };
+}
+
+function reviveTool(raw: unknown): AiTool | undefined {
+  const r = record(raw);
+  if (typeof r.id !== 'string') return undefined;
+  return {
+    id: r.id,
+    name: str(r.name),
+    does: str(r.does),
+    use: str(r.use),
+    age: str(r.age),
+    safety: str(r.safety),
+    by: str(r.by),
+  };
+}
+
+const defined = <T>(x: T | undefined): x is T => x !== undefined;
 
 /** A project from storage or a file, gaps filled; undefined if it is not one. */
 export function revive(raw: unknown): Project | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
-  const p = raw as Partial<Project>;
+  const p = raw as Record<string, unknown>;
   const type = PROJECT_TYPES.find((t) => t.id === p.type)?.id;
   if (typeof p.id !== 'string' || !type) return undefined;
-  const answers = settle(
-    type,
-    p.answers && typeof p.answers === 'object' ? p.answers : {},
-  );
+  const answers = settle(type, record(p.answers) as Answers);
   const parts = (Array.isArray(p.parts) ? p.parts : [])
-    .filter(isPart)
-    .map((part) => ({
-      id: part.id,
-      group: Number.isInteger(part.group) ? part.group : 0,
-      title: part.title,
-    }));
+    .map(revivePart)
+    .filter(defined);
   const plan = planOf(type, answers);
   const now = Date.now();
+  const style = record(p.style);
+  const chat = Object.fromEntries(
+    Object.entries(record(p.chat)).filter(
+      (e): e is [string, string] => typeof e[1] === 'string',
+    ),
+  );
   return {
     id: p.id,
     type,
-    title:
-      typeof p.title === 'string' && p.title.trim() ? p.title : untitled(type),
+    title: str(p.title).trim() ? str(p.title) : untitled(type),
     created: typeof p.created === 'number' ? p.created : now,
     updated: typeof p.updated === 'number' ? p.updated : now,
     answers,
@@ -91,7 +163,20 @@ export function revive(raw: unknown): Project | undefined {
       parts.length < plan.parts
         ? layoutParts(plan, parts, partHasContent).parts
         : parts,
-    story: typeof p.story === 'string' ? p.story : '',
+    story: str(p.story),
+    synopsis: str(p.synopsis),
+    logline: str(p.logline),
+    assets: (Array.isArray(p.assets) ? p.assets : [])
+      .map(reviveAsset)
+      .filter(defined),
+    tools: (Array.isArray(p.tools) ? p.tools : [])
+      .map(reviveTool)
+      .filter(defined),
+    style: { link: str(style.link), file: str(style.file) },
+    chat,
+    filled: Array.isArray(p.filled)
+      ? p.filled.filter((x): x is string => typeof x === 'string')
+      : [],
   };
 }
 

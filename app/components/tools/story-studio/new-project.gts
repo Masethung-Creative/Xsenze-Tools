@@ -15,7 +15,11 @@ import Icon from 'xsenze-tools/components/icon';
 import Outline from 'xsenze-tools/components/tools/story-studio/outline';
 import PlanSummary from 'xsenze-tools/components/tools/story-studio/plan-summary';
 import Questions from 'xsenze-tools/components/tools/story-studio/questions';
-import { newProject, untitled } from 'xsenze-tools/lib/story/project-store';
+import {
+  newProject,
+  untitled,
+  type Carried,
+} from 'xsenze-tools/lib/story/project-store';
 import {
   HAVE_QUESTIONS,
   LOOK_QUESTIONS,
@@ -51,7 +55,8 @@ export const sharedAnswers = (a: Answers): Answers =>
 /** What Copy as new project carries into a new type. */
 export interface Seed {
   answers: Answers;
-  story: string;
+  /** The story, its list and the style picture. */
+  carried: Carried;
   /** The new name to start from. */
   title: string;
   /** The project it copies. */
@@ -144,7 +149,7 @@ export default class NewProject extends Component<NewProjectSignature> {
   create = () => {
     if (!this.type) return;
     this.args.onCreate(
-      newProject(this.type, this.answers, this.title, this.args.seed?.story),
+      newProject(this.type, this.answers, this.title, this.args.seed?.carried),
     );
   };
 

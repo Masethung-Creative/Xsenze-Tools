@@ -106,3 +106,24 @@
   color: var(--canon-muted-foreground);
   font-size: var(--canon-text-subheadline);
 }
+
+/* a bible item or a part: its rows, hairlines between */
+.ss-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canon-hairline);
+  background: var(--canon-border);
+}
+
+/* prompts are prose: wrap them rather than scroll sideways */
+.ss-prompt .canon-code-block-code {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* the story reads in the text font, not the code font */
+.story-studio .ss-story {
+  font-family: var(--canon-font);
+  font-size: var(--canon-text-body);
+  line-height: 1.5;
+}

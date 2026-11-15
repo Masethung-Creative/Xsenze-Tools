@@ -51,11 +51,19 @@ their `soon` line from `lib/tools.ts`):
   site shows AI Studio as Coming soon. Its data is in `lib/story/`:
   - `project-types.ts`: every New project question, option and default, plus the plan maths;
   - `targets.ts`: image models and video tools (Sora is gone: it shut down in 2026);
-  - `keywords.ts`: looks, to be swapped for the user's keywords skill.
+  - `keywords.ts`: looks, to be swapped for the user's keywords skill;
+  - `analysis.ts`: the chatbot prompts and the reader for the JSON answers. Up to 16 parts are
+    read in one step; longer plans are read as an outline first, then the details one group at a
+    time;
+  - `prompts.ts`: picture prompts for each model, built fresh from the project. Midjourney rules
+    come from the user's skills: parameters last, `--v 8.2` (`--niji 7` for anime), `--raw`
+    with `--s 50`, never `--q`, and `--oref` switches to V7;
+  - `export.ts`: Markdown and CSV.
 
-  Projects autosave to localStorage (`xsenze.story-studio`) and move between devices as
-  `.story.json` files. Only the project type is locked after Create. No server: the chatbot steps
-  are the user's own copy and paste.
+  The project tabs are `components/tools/story-studio/*-tab.gts`. Projects autosave to
+  localStorage (`xsenze.story-studio`) and move between devices as `.story.json` files. Only the
+  project type is locked after Create. No server: the chatbot steps are the user's own copy and
+  paste.
 
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,

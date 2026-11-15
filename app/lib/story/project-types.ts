@@ -7,7 +7,13 @@
 import { TRANSLATE_LANGUAGES } from 'xsenze-tools/lib/translate';
 import { ANIMATION_TYPES, MATCH_MINE, animationType } from './keywords';
 import { IMAGE_MODELS, STILL_SECONDS, VIDEO_TOOLS } from './targets';
-import type { Answer, Answers, Part, ProjectType } from './types';
+import {
+  blankPart,
+  type Answer,
+  type Answers,
+  type Part,
+  type ProjectType,
+} from './types';
 
 export interface Option {
   id: string;
@@ -909,8 +915,7 @@ export function layoutParts(
   let parts = [...old];
   const lost: Part[] = [];
   if (parts.length < plan.parts) {
-    while (parts.length < plan.parts)
-      parts.push({ id: newId(), group: 0, title: '' });
+    while (parts.length < plan.parts) parts.push(blankPart(newId()));
   } else {
     let excess = parts.length - plan.parts;
     for (let i = parts.length - 1; i >= 0 && excess > 0; i--) {
