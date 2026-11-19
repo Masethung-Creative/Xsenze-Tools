@@ -82,7 +82,11 @@ their `soon` line from `lib/tools.ts`):
   dev builds until export is in. The edit is plain data in `lib/video-edit/timeline.ts` (clips,
   video pieces, audio items placed in time, a level per layer; pure functions and a History for undo; unit tests in
   `tests/unit/video-edit-timeline-test.ts`). `lib/video-edit/player.ts` plays the edit on one clock: the
-  video track onto one canvas with black bars, every sound through its own Web Audio gain. A modifier must not read
+  video track onto one canvas with black bars, every sound through its own Web Audio gain.
+  `lib/video-edit/export.ts` renders the same edit in 5-second windows: frames from
+  `VideoSampleSink` drawn with `drawWithFit` onto one canvas into a `CanvasSource`, and every sound
+  mixed in an `OfflineAudioContext` (gain curves for volume and fades) into an `AudioBufferSource`.
+  MP4 is H.264/H.265/AV1 + AAC, WebM is VP9/AV1 + Opus. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.

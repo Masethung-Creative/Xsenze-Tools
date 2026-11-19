@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import type Owner from '@ember/owner';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
@@ -73,6 +74,18 @@ import {
   type Mix,
   type Piece,
 } from 'xsenze-tools/lib/video-edit/timeline';
+import Job from 'xsenze-tools/components/tools/media/job';
+import { downloadBlob } from 'xsenze-tools/lib/download';
+import { formatBytes } from 'xsenze-tools/lib/format';
+import {
+  CONTAINER_CODECS,
+  exportCodecs,
+  exportEdit,
+  type ExportCodec,
+  type ExportContainer,
+  type ExportResult,
+} from 'xsenze-tools/lib/video-edit/export';
+import type { Fit } from 'xsenze-tools/lib/video-edit/player';
 import './media/media.css';
 import './video-edit/video-edit.css';
 
@@ -110,6 +123,46 @@ const FilmIcon = icon('film');
 const AddIcon = icon('list-plus');
 const MusicIcon = icon('music');
 const VoiceIcon = icon('mic');
+const ExportIcon = icon('download');
+
+// ----- export settings -----
+
+const CONTAINERS: ExportContainer[] = ['mp4', 'webm'];
+const FORMAT_LABELS = ['MP4', 'WebM'];
+const CODEC_NAMES: Record<ExportCodec, string> = {
+  avc: 'H.264',
+  hevc: 'H.265',
+  vp9: 'VP9',
+  av1: 'AV1',
+};
+/** Bitrate for the same look, against H.264. */
+const CODEC_FACTOR: Record<ExportCodec, number> = {
+  avc: 1,
+  hevc: 0.6,
+  vp9: 0.65,
+  av1: 0.5,
+};
+const SHAPES: { label: string; ratio: number | null }[] = [
+  { label: 'First clip', ratio: null },
+  { label: '16:9', ratio: 16 / 9 },
+  { label: '9:16', ratio: 9 / 16 },
+  { label: '1:1', ratio: 1 },
+  { label: '4:5', ratio: 4 / 5 },
+];
+const SHAPE_LABELS = SHAPES.map((s) => s.label);
+const FITS: Fit[] = ['contain', 'cover'];
+const FIT_LABELS = ['Black bars', 'Fill'];
+/** The output's short side; 0 is the first clip's. */
+const SIZES = [1080, 720, 480, 0];
+const SIZE_LABELS = ['1080p', '720p', '480p', 'First clip'];
+const RATES = [0, 24, 25, 30, 60];
+const RATE_LABELS = ['First clip', '24', '25', '30', '60'];
+const QUALITY_LABELS = ['Small', 'Balanced', 'High'];
+/** H.264 bits per pixel per frame, per quality. */
+const BITS_PER_PIXEL = [0.04, 0.07, 0.11];
+const SOUND_BITS = 192_000;
+const EXPORT_ERROR = "Couldn't export. Try another format or a smaller size.";
+const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
 
 /** Typing in a field keeps its keys; switches and buttons do not. */
 function typing(target: EventTarget | null) {
@@ -163,9 +216,37 @@ export default class VideoEdit extends Component {
 
   #live = true;
 
+  // export settings and run
+  @tracked formatIndex = 0;
+  @tracked codecChoice: ExportCodec | null = null;
+  @tracked shapeIndex = 0;
+  @tracked fitIndex = 0;
+  /** -1 picks 1080p, or the first clip's size when it is smaller. */
+  @tracked sizeIndex = -1;
+  @tracked rateIndex = 0;
+  @tracked qualityIndex = 1;
+  @tracked keepSound = true;
+  @tracked encoders: Set<ExportCodec> | null = null;
+  @tracked busy = false;
+  @tracked progress = 0;
+  @tracked failed = false;
+  @tracked result: ExportResult | null = null;
+  @tracked resultUrl = '';
+  #abort: AbortController | null = null;
+  #job = 0;
+
+  constructor(owner: Owner, args: object) {
+    super(owner, args);
+    void exportCodecs(1920, 1080).then((set) => {
+      if (this.#live) this.encoders = set;
+    });
+  }
+
   willDestroy() {
     super.willDestroy();
     this.#live = false;
+    this.#abort?.abort();
+    if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
     this.player.destroy();
     for (const clip of this.clips) {
       URL.revokeObjectURL(clip.url);
@@ -453,9 +534,200 @@ export default class VideoEdit extends Component {
     )
       this.selected = null;
     this.#syncHistory();
-    this.player.shape(this.aspect, 'contain');
+    this.#stale();
+    this.player.shape(this.outAspect, this.fit);
     this.player.load(this.clips, next);
   }
+
+  // ----- export -----
+
+  get container(): ExportContainer {
+    return CONTAINERS[this.formatIndex] ?? 'mp4';
+  }
+
+  get fit(): Fit {
+    return FITS[this.fitIndex] ?? 'contain';
+  }
+
+  get firstVideo(): Clip | undefined {
+    return (
+      this.clipMap.get(this.pieces[0]?.clip ?? '') ??
+      this.clips.find((clip) => clip.kind === 'video')
+    );
+  }
+
+  /** Width over height of the exported frame. */
+  get outAspect() {
+    const ratio = SHAPES[this.shapeIndex]?.ratio;
+    if (ratio) return ratio;
+    const first = this.firstVideo;
+    return first?.width ? first.width / first.height : 16 / 9;
+  }
+
+  get sizeIndexShown() {
+    if (this.sizeIndex >= 0) return this.sizeIndex;
+    const first = this.firstVideo;
+    const short = first?.width ? Math.min(first.width, first.height) : 1080;
+    return short < 1080 ? 3 : 0;
+  }
+
+  get outSize() {
+    const first = this.firstVideo;
+    const firstShort = first?.width
+      ? Math.min(first.width, first.height)
+      : 1080;
+    const short = SIZES[this.sizeIndexShown] || firstShort;
+    const aspect = this.outAspect;
+    return aspect >= 1
+      ? { width: even(short * aspect), height: even(short) }
+      : { width: even(short), height: even(short / aspect) };
+  }
+
+  get outFps() {
+    const fps = RATES[this.rateIndex] || this.firstVideo?.fps || 30;
+    return Math.min(60, Math.max(1, Math.round(fps * 100) / 100));
+  }
+
+  /** The codecs the chosen format holds that this browser can encode. */
+  get codecs(): ExportCodec[] {
+    const held = CONTAINER_CODECS[this.container].video;
+    const encoders = this.encoders;
+    return encoders ? held.filter((c) => encoders.has(c)) : held;
+  }
+
+  get codec(): ExportCodec | null {
+    const choice = this.codecChoice;
+    return choice && this.codecs.includes(choice)
+      ? choice
+      : (this.codecs[0] ?? null);
+  }
+
+  get codecLabels() {
+    return this.codecs.map((c) => CODEC_NAMES[c]);
+  }
+
+  get codecIndex() {
+    return this.codec ? this.codecs.indexOf(this.codec) : -1;
+  }
+
+  get bitrate() {
+    const { width, height } = this.outSize;
+    const codec = this.codec ?? 'avc';
+    const bits =
+      (BITS_PER_PIXEL[this.qualityIndex] ?? 0.07) *
+      width *
+      height *
+      this.outFps *
+      CODEC_FACTOR[codec];
+    return Math.round(Math.min(40e6, Math.max(300e3, bits)));
+  }
+
+  get estimate() {
+    if (!this.hasItems) return DASH;
+    const bits =
+      (this.bitrate + (this.keepSound ? SOUND_BITS : 0)) * this.length;
+    const { width, height } = this.outSize;
+    return `About ${formatBytes(bits / 8)} · ${width} × ${height} · ${this.outFps} fps`;
+  }
+
+  get cannotExport() {
+    return this.busy || !this.hasItems || !this.codec;
+  }
+
+  get exportName() {
+    const base = this.firstVideo?.name ?? this.clips[0]?.name ?? 'video';
+    return `${base}-edit`;
+  }
+
+  get resultRow() {
+    const r = this.result;
+    if (!r) return null;
+    return {
+      name: `${this.exportName}.${r.ext}`,
+      detail: `${r.ext.toUpperCase()} · ${formatBytes(r.blob.size)} · ${tc(this.length)}`,
+    };
+  }
+
+  /** A change to the edit or the settings makes the last export stale. */
+  #stale() {
+    if (this.busy) this.cancelExport();
+    this.failed = false;
+    if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
+    this.resultUrl = '';
+    this.result = null;
+  }
+
+  #setting(apply: () => void) {
+    apply();
+    this.#stale();
+    this.player.shape(this.outAspect, this.fit);
+  }
+
+  pickFormat = (i: number) => this.#setting(() => (this.formatIndex = i));
+  pickCodec = (i: number) =>
+    this.#setting(() => (this.codecChoice = this.codecs[i] ?? null));
+  pickShape = (i: number) => this.#setting(() => (this.shapeIndex = i));
+  pickFit = (i: number) => this.#setting(() => (this.fitIndex = i));
+  pickSize = (i: number) => this.#setting(() => (this.sizeIndex = i));
+  pickRate = (i: number) => this.#setting(() => (this.rateIndex = i));
+  pickQuality = (i: number) => this.#setting(() => (this.qualityIndex = i));
+  pickSound = (on: boolean) => this.#setting(() => (this.keepSound = on));
+
+  runExport = () => void this.#export();
+
+  async #export() {
+    const codec = this.codec;
+    if (this.cannotExport || !codec) return;
+    const job = ++this.#job;
+    this.#stale();
+    this.busy = true;
+    this.progress = 0;
+    this.player.pause();
+    const abort = new AbortController();
+    this.#abort = abort;
+    try {
+      const result = await exportEdit(this.clips, this.edit, {
+        container: this.container,
+        codec,
+        ...this.outSize,
+        fps: this.outFps,
+        fit: this.fit,
+        bitrate: this.bitrate,
+        sound: this.keepSound,
+        signal: abort.signal,
+        onProgress: (fraction) => {
+          if (job === this.#job) this.progress = fraction;
+        },
+      });
+      if (job !== this.#job) return;
+      this.result = result;
+      this.resultUrl = URL.createObjectURL(result.blob);
+    } catch (error) {
+      if (job !== this.#job || (error as Error).name === 'AbortError') return;
+      console.error('Export failed:', error);
+      this.failed = true;
+    } finally {
+      if (this.#abort === abort) this.#abort = null;
+      if (job === this.#job) this.busy = false;
+    }
+  }
+
+  cancelExport = () => {
+    this.#job++;
+    this.#abort?.abort();
+    this.#abort = null;
+    this.busy = false;
+    this.progress = 0;
+  };
+
+  saveExport = () => {
+    const r = this.result;
+    if (r) downloadBlob(r.blob, `${this.exportName}.${r.ext}`);
+  };
+
+  previewExport = () => {
+    if (this.resultUrl) window.open(this.resultUrl, '_blank');
+  };
 
   #change(change: Partial<Edit>, record = true) {
     this.#commit({ ...this.edit, ...change }, record);
@@ -1198,10 +1470,76 @@ export default class VideoEdit extends Component {
           </XzGrid>
 
           <XzHeading @text="Export" />
-          <XzStatus
-            @text="Export to MP4 with every layer comes in step 3."
-            @tone="muted"
-            @row={{true}}
+          <XzSegmented
+            class="ve-format"
+            @items={{FORMAT_LABELS}}
+            @selected={{this.formatIndex}}
+            @onChange={{this.pickFormat}}
+          />
+          <XzSegmented
+            class="ve-codec"
+            @items={{this.codecLabels}}
+            @selected={{this.codecIndex}}
+            @onChange={{this.pickCodec}}
+          />
+          <XzHeading @text="Shape" />
+          <XzSegmented
+            class="ve-shape"
+            @items={{SHAPE_LABELS}}
+            @selected={{this.shapeIndex}}
+            @columns={{3}}
+            @onChange={{this.pickShape}}
+          />
+          <XzSegmented
+            class="ve-fit"
+            @items={{FIT_LABELS}}
+            @selected={{this.fitIndex}}
+            @onChange={{this.pickFit}}
+          />
+          <XzHeading @text="Size" />
+          <XzSegmented
+            class="ve-size"
+            @items={{SIZE_LABELS}}
+            @selected={{this.sizeIndexShown}}
+            @columns={{2}}
+            @onChange={{this.pickSize}}
+          />
+          <XzHeading @text="Frame rate" />
+          <XzSegmented
+            class="ve-rate"
+            @items={{RATE_LABELS}}
+            @selected={{this.rateIndex}}
+            @onChange={{this.pickRate}}
+          />
+          <XzHeading @text="Quality" />
+          <XzSegmented
+            class="ve-quality"
+            @items={{QUALITY_LABELS}}
+            @selected={{this.qualityIndex}}
+            @onChange={{this.pickQuality}}
+          />
+          <XzRow @title="Sound" @detail="The video's sound, Music and Voice">
+            <XzSwitch
+              class="ve-sound-on"
+              @on={{this.keepSound}}
+              @onChange={{this.pickSound}}
+              aria-label="Keep sound"
+            />
+          </XzRow>
+          <XzRow class="ve-estimate" @title="File" @detail={{this.estimate}} />
+          <Job
+            @title="Export"
+            @icon={{ExportIcon}}
+            @failure={{EXPORT_ERROR}}
+            @disabled={{this.cannotExport}}
+            @busy={{this.busy}}
+            @progress={{this.progress}}
+            @failed={{this.failed}}
+            @result={{this.resultRow}}
+            @onRun={{this.runExport}}
+            @onCancel={{this.cancelExport}}
+            @onSave={{this.saveExport}}
+            @onPreview={{this.previewExport}}
           />
         </XzRows>
       </:sidebar>
