@@ -54,3 +54,20 @@ export function snap(
   if (!step || step <= 0) return value;
   return Math.min(max, min + Math.round((value - min) / step) * step);
 }
+
+/**
+ * Drag speed by distance from the slider, in px: full, then a half, a
+ * quarter and a tenth: pull away from the slider for fine control.
+ */
+export const fineTiers = [
+  { distance: 60, speed: 0.5 },
+  { distance: 120, speed: 0.25 },
+  { distance: 180, speed: 0.1 },
+] as const;
+
+export function dragSpeed(distance: number): number {
+  return (
+    [...fineTiers].reverse().find((tier) => distance >= tier.distance)?.speed ??
+    1
+  );
+}

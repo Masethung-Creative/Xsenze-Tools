@@ -22,19 +22,68 @@
   color: var(--xz-text-muted);
 }
 
-.xz-delta--scale .xz-delta__bar {
+/* One bar: the fill grows to its share; the label rides after the fill and
+   moves inside it once it fits, switching to the fill's text colour. */
+.xz-delta__track {
+  --xz-delta-fill: var(--xz-surface-3);
+  --xz-delta-ink: var(--xz-text);
+
+  position: relative;
+  min-height: 2rem;
+}
+
+.xz-delta__track--after {
+  --xz-delta-fill: var(--xz-accent);
+  --xz-delta-ink: var(--xz-on-accent);
+}
+
+.xz-delta__track--grew {
+  --xz-delta-fill: var(--xz-danger);
+  --xz-delta-ink: var(--xz-on-danger);
+}
+
+.xz-delta--scale .xz-delta__track > .xz-delta__bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--xz-value, 100%);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: var(--xz-delta-fill);
   transition:
     width 600ms var(--xz-scale-easing, ease-out),
     background-color 200ms ease-out;
 }
 
-.xz-delta__bar--grew {
-  background: var(--xz-danger);
-  color: var(--xz-on-danger);
+.xz-delta__label {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--xz-value, 100%) + 10px);
+  display: flex;
+  align-items: center;
+  gap: var(--xz-space-2);
+  color: var(--xz-text);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
+  white-space: nowrap;
+  transition:
+    inset-inline-start 600ms var(--xz-scale-easing, ease-out),
+    color 200ms ease-out;
+}
+
+.xz-delta__label strong {
+  font-family: var(--xz-font-mono);
+}
+
+.xz-delta__track[data-inside] > .xz-delta__label {
+  inset-inline-start: 10px;
+  color: var(--xz-delta-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xz-delta--scale .xz-delta__bar {
+  .xz-delta--scale .xz-delta__track > .xz-delta__bar,
+  .xz-delta__label {
     transition: none;
   }
 }

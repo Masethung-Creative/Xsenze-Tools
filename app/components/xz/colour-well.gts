@@ -9,6 +9,7 @@ import {
   type Rgb,
 } from 'xsenze-tools/lib/xz/colour';
 import './colour-well.css';
+import press from 'xsenze-tools/modifiers/xz/press';
 
 export interface XzColourWellSignature {
   Args: {
@@ -61,6 +62,7 @@ export default class XzColourWell extends Component<XzColourWellSignature> {
       <div class="xz-colorfield">
         <input
           type="color"
+          {{press}}
           value={{this.hex}}
           aria-label={{if @label @label "Colour"}}
           {{on "input" this.picked}}

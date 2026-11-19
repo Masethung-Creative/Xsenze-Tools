@@ -4,7 +4,8 @@ import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import { Hold } from 'xsenze-tools/lib/xz/hold';
-import { clamp, snap } from 'xsenze-tools/lib/xz/number';
+import { clamp, dragSpeed, snap } from 'xsenze-tools/lib/xz/number';
+import { capture } from 'xsenze-tools/lib/xz/motion';
 import './slider.css';
 
 export interface XzSliderSignature {
@@ -97,24 +98,91 @@ export default class XzSlider extends Component<XzSliderSignature> {
     field.value = String(this.value);
   };
 
-  // template-lint forbids binding pointerdown: a sideways drag is told from a tap here
+  /**
+   * The pointer is handled here rather than by the range input: a tap sets
+   * the value, and a sideways drag moves it relative to where it was, finer
+   * the further the pointer is pulled from the bar (template-lint forbids
+   * binding pointerdown in the template).
+   */
   track = modifier((field: HTMLInputElement) => {
-    let start: { x: number; y: number } | undefined;
+    const cell = field.parentElement ?? field;
+    let pointer: number | undefined;
+    let start = { x: 0, y: 0 };
+    let lastX = 0;
+    let dragged = 0;
+    // the input's own direction says which way it fills (a trailing fill is rtl)
+    const backwards = () => getComputedStyle(field).direction === 'rtl';
+    const position = (x: number) => {
+      const box = field.getBoundingClientRect();
+      if (box.width <= 0) return undefined;
+      const unit = clamp((x - box.left) / box.width, 0, 1);
+      return this.min + (backwards() ? 1 - unit : unit) * this.span;
+    };
+    const show = () => (field.value = String(this.value));
+
     const down = (event: PointerEvent) => {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || field.disabled) return;
+      // the input would jump to the pointer and drag absolutely
+      event.preventDefault();
+      field.focus({ preventScroll: true });
+      pointer = event.pointerId;
       start = { x: event.clientX, y: event.clientY };
       this.dragging = false;
+      capture(field, pointer);
+      cell.dataset['active'] = '';
     };
     const move = (event: PointerEvent) => {
-      if (!start || this.dragging) return;
-      const dx = Math.abs(event.clientX - start.x);
-      const dy = Math.abs(event.clientY - start.y);
-      if (dx > 4 && dx > dy) this.dragging = true;
+      if (event.pointerId !== pointer) return;
+      if (!this.dragging) {
+        const dx = Math.abs(event.clientX - start.x);
+        const at = position(event.clientX);
+        if (
+          dx <= 4 ||
+          dx <= Math.abs(event.clientY - start.y) ||
+          at === undefined
+        )
+          return;
+        // absolute first, then relative
+        this.dragging = true;
+        dragged = at;
+        lastX = event.clientX;
+        this.apply(dragged, true);
+        show();
+        return;
+      }
+      const box = field.getBoundingClientRect();
+      const speed = dragSpeed(
+        Math.abs(event.clientY - (box.top + box.height / 2)),
+      );
+      const delta =
+        ((event.clientX - lastX) / Math.max(1, box.width)) * this.span * speed;
+      lastX = event.clientX;
+      dragged = clamp(
+        dragged + (backwards() ? -delta : delta),
+        this.min,
+        this.max,
+      );
+      this.apply(dragged, true);
+      show();
     };
-    const end = () => {
-      start = undefined;
+    const end = (event: PointerEvent) => {
+      if (event.pointerId !== pointer) return;
+      if (event.type === 'pointerup' && !this.dragging) {
+        const box = field.getBoundingClientRect();
+        const inside =
+          event.clientX >= box.left &&
+          event.clientX <= box.right &&
+          event.clientY >= box.top - 8 &&
+          event.clientY <= box.bottom + 8;
+        const at = position(event.clientX);
+        if (inside && at !== undefined) this.apply(at, false);
+        show();
+      }
+      pointer = undefined;
       this.dragging = false;
+      delete cell.dataset['active'];
     };
+
     field.addEventListener('pointerdown', down);
     field.addEventListener('pointermove', move);
     field.addEventListener('pointerup', end);

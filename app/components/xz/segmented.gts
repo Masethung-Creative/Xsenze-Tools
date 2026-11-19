@@ -6,6 +6,7 @@ import { htmlSafe } from '@ember/template';
 import type { ComponentLike } from '@glint/template';
 import { Hold } from 'xsenze-tools/lib/xz/hold';
 import './segmented.css';
+import press from 'xsenze-tools/modifiers/xz/press';
 
 export interface XzSegmentedSignature {
   Args: {
@@ -71,7 +72,7 @@ export default class XzSegmented extends Component<XzSegmentedSignature> {
       ...attributes
     >
       {{#each this.cells as |cell|}}
-        <label>
+        <label {{press}}>
           {{! aria-label only for icon cells, which have no visible text }}
           {{! template-lint-disable require-input-label }}
           <input

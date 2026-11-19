@@ -6,6 +6,7 @@ import { htmlSafe } from '@ember/template';
 import Icon from 'xsenze-tools/components/icon';
 import type XzToastService from 'xsenze-tools/services/xz-toast';
 import './code-block.css';
+import press from 'xsenze-tools/modifiers/xz/press';
 
 export interface XzCodeBlockSignature {
   Args: {
@@ -63,8 +64,10 @@ export default class XzCodeBlock extends Component<XzCodeBlockSignature> {
         {{/if}}
         <button
           type="button"
-          class="xz-btn xz-btn--ghost xz-btn--sm xz-codeblock__copy"
+          class="xz-btn xz-btn--ghost xz-btn--sm xz-codeblock__copy
+            {{if this.copied 'xz-codeblock__copy--copied'}}"
           aria-label="Copy code"
+          {{press}}
           {{on "click" this.copy}}
         >
           {{#if this.copied}}

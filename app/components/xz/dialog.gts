@@ -86,8 +86,14 @@ export default class XzDialog<
           }),
       pseudoElement: '::backdrop',
     });
-    // the kit's CSS plays the motion in on the box itself
-    if (entering) return [backdrop];
+    if (entering)
+      return [
+        dialog.animate(this.keyframes(), {
+          duration: dialogMotion.inMs,
+          easing: dialogMotion.inEasing,
+        }),
+        backdrop,
+      ];
     return [
       dialog.animate(this.keyframes(), {
         duration: dialogMotion.outMs,

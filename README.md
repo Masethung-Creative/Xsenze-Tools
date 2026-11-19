@@ -5,18 +5,18 @@ Every file is processed on the user's device.
 
 ## Stack
 
-| Layer              | Choice                                                                                                                 |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| Framework          | [Ember.js](https://emberjs.com) 7.1, Octane, strict-mode `.gts` components                                             |
-| Build              | [Vite](https://vite.dev) 8 + [Embroider](https://github.com/embroider-build/embroider)                                 |
-| Language           | TypeScript 6 + [Glint](https://typed-ember.gitbook.io/glint) (type-checked templates)                                  |
+| Layer              | Choice                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Framework          | [Ember.js](https://emberjs.com) 7.1, Octane, strict-mode `.gts` components                                          |
+| Build              | [Vite](https://vite.dev) 8 + [Embroider](https://github.com/embroider-build/embroider)                              |
+| Language           | TypeScript 6 + [Glint](https://typed-ember.gitbook.io/glint) (type-checked templates)                               |
 | Styles             | The Xsenze UI Kit (bundled in `vendor/xsenze-ui/`), SCSS via `sass-embedded`, plain co-located `.css` per component |
-| Icons              | [lucide-static](https://lucide.dev)                                                                                    |
-| Audio/video engine | [mediabunny](https://mediabunny.dev) (WebCodecs decode/encode, in-browser)                                             |
-| Local storage      | [Dexie](https://dexie.org) (IndexedDB), `browser-fs-access` for open/save                                              |
-| Lint/format        | ESLint, ember-template-lint, Stylelint, Prettier                                                                       |
-| Tests              | QUnit + ember-qunit                                                                                                    |
-| Hosting            | Static build (`dist/`) on Vercel (`vercel.json`); Cloudflare Workers assets also set up (`wrangler.jsonc`)             |
+| Icons              | [lucide-static](https://lucide.dev)                                                                                 |
+| Audio/video engine | [mediabunny](https://mediabunny.dev) (WebCodecs decode/encode, in-browser)                                          |
+| Local storage      | [Dexie](https://dexie.org) (IndexedDB), `browser-fs-access` for open/save                                           |
+| Lint/format        | ESLint, ember-template-lint, Stylelint, Prettier                                                                    |
+| Tests              | QUnit + ember-qunit                                                                                                 |
+| Hosting            | Static build (`dist/`) on Vercel (`vercel.json`); Cloudflare Workers assets also set up (`wrangler.jsonc`)          |
 
 ## Getting started
 

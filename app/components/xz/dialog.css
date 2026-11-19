@@ -38,3 +38,8 @@
 .xz-modal--alert .xz-dialog__message {
   padding: 0;
 }
+
+/* the dialog plays its own motion in (scale and fade), not the kit's pop */
+.xz-dialog[open] {
+  animation: none;
+}

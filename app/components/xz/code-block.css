@@ -17,5 +17,13 @@
 }
 
 .xz-codeblock__copy {
+  transition: color 200ms ease-out;
   flex: none;
+}
+
+/* "Copied" shows in the success colour for a moment */
+
+.xz-codeblock__copy--copied,
+.xz-codeblock__copy--copied:hover {
+  color: var(--xz-success-text);
 }

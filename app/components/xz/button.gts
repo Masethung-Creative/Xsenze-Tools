@@ -4,6 +4,7 @@ import type { ComponentLike } from '@glint/template';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import repeat from 'xsenze-tools/modifiers/xz/repeat';
 import './button.css';
+import press from 'xsenze-tools/modifiers/xz/press';
 
 export type XzButtonKind = 'primary' | 'secondary' | 'cell' | 'segment';
 
@@ -128,6 +129,7 @@ export default class XzButton extends Component<XzButtonSignature> {
       aria-label={{this.label}}
       ...attributes
       {{repeat this.fire @repeats}}
+      {{press}}
     >
       {{#let this.icon as |Icon|}}
         {{#if Icon}}

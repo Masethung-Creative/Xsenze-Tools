@@ -24,3 +24,43 @@
 .xz-slider-cell--trailing > .xz-slider {
   direction: rtl;
 }
+
+/* Pressed look: the handle widens on hover, focus and while held, as the
+   old slider's line thickened. */
+.xz-slider-cell > .xz-slider::-webkit-slider-thumb {
+  transition: width 150ms ease;
+}
+
+.xz-slider-cell > .xz-slider::-moz-range-thumb {
+  transition: width 150ms ease;
+}
+
+.xz-slider-cell[data-active] > .xz-slider::-webkit-slider-thumb,
+.xz-slider-cell > .xz-slider:focus-visible::-webkit-slider-thumb {
+  width: 0.625rem;
+}
+
+.xz-slider-cell[data-active] > .xz-slider::-moz-range-thumb,
+.xz-slider-cell > .xz-slider:focus-visible::-moz-range-thumb {
+  width: 0.625rem;
+}
+
+@media (hover: hover) {
+  .xz-slider-cell > .xz-slider:hover::-webkit-slider-thumb {
+    width: 0.625rem;
+  }
+
+  .xz-slider-cell > .xz-slider:hover::-moz-range-thumb {
+    width: 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xz-slider-cell > .xz-slider::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .xz-slider-cell > .xz-slider::-moz-range-thumb {
+    transition: none;
+  }
+}

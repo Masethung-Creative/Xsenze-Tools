@@ -7,6 +7,7 @@ import { modifier } from 'ember-modifier';
 import Icon from 'xsenze-tools/components/icon';
 import { accepts, stem } from 'xsenze-tools/lib/xz/files';
 import './drop-zone.css';
+import press from 'xsenze-tools/modifiers/xz/press';
 
 export interface XzDropZoneSignature {
   Args: {
@@ -171,6 +172,7 @@ export default class XzDropZone extends Component<XzDropZoneSignature> {
         <button
           type="button"
           class="xz-btn xz-drop__source"
+          {{press}}
           {{on "click" this.chooseFiles}}
         >
           <Icon @name="folder" />Files
@@ -179,6 +181,7 @@ export default class XzDropZone extends Component<XzDropZoneSignature> {
           <button
             type="button"
             class="xz-btn xz-drop__source"
+            {{press}}
             {{on "click" this.pasteImages}}
           >
             <Icon @name="clipboard" />Paste
