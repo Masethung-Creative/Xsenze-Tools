@@ -16,16 +16,17 @@
     <meta property="og:image" content="/favicon-512.png">
 
     <script>
-      // set html.dark / html.light before first paint so there is no theme flash
+      // set the theme before first paint so there is no flash: data-theme for
+      // the Xsenze UI Kit, html.dark / html.light for the older canon parts
       (function () {
+        var theme = 'dark';
         try {
-          var t = localStorage.getItem('theme');
           // dark is the brand default; light only when the visitor chose it
-          var dark = t !== 'light';
-          document.documentElement.classList.add(dark ? 'dark' : 'light');
-        } catch (e) {
-          document.documentElement.classList.add('dark');
-        }
+          if (localStorage.getItem('theme') === 'light') theme = 'light';
+        } catch (e) {}
+        var root = document.documentElement;
+        root.setAttribute('data-theme', theme);
+        root.classList.add(theme);
       })();
     </script>
 

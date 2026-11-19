@@ -1,7 +1,9 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
+import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
+import type RouterService from '@ember/routing/router-service';
 import { modifier } from 'ember-modifier';
 import BrandLogo from 'xsenze-tools/components/brand-logo';
 import Icon from 'xsenze-tools/components/icon';
@@ -12,6 +14,8 @@ interface Signature {
   Args: {
     /** Called after a link is followed, so the mobile drawer can close. */
     onNavigate?: () => void;
+    /** Shown in the drawer: adds a close button to the header. */
+    onClose?: () => void;
   };
   Element: HTMLElement;
 }
@@ -20,6 +24,8 @@ interface Signature {
 const focusOnCtrlK = modifier((input: HTMLInputElement) => {
   const onKey = (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      // the desktop sidebar is hidden while the drawer is in use
+      if (!input.checkVisibility()) return;
       e.preventDefault();
       input.focus();
       input.select();
@@ -29,7 +35,9 @@ const focusOnCtrlK = modifier((input: HTMLInputElement) => {
   return () => window.removeEventListener('keydown', onKey);
 });
 
+/** The kit's sidebar: logo, tool search, one section per category. */
 export default class AppSidebar extends Component<Signature> {
+  @service declare router: RouterService;
   @tracked query = '';
 
   get categories() {
@@ -48,6 +56,18 @@ export default class AppSidebar extends Component<Signature> {
     return this.categories.length > 0;
   }
 
+  /** The route the kit's aria-current="page" highlight goes on. */
+  get here(): string {
+    const route = this.router.currentRoute;
+    if (route?.name === 'tools.tool') {
+      const id = route.params?.['tool_id'];
+      return typeof id === 'string' ? id : '';
+    }
+    return route?.name === 'index' ? 'index' : '';
+  }
+
+  current = (id: string) => (this.here === id ? 'page' : undefined);
+
   updateQuery = (event: Event) => {
     this.query = (event.target as HTMLInputElement).value;
   };
@@ -63,85 +83,111 @@ export default class AppSidebar extends Component<Signature> {
     this.args.onNavigate?.();
   };
 
+  close = () => this.args.onClose?.();
+
   <template>
-    <nav class="sidebar" aria-label="Tools" ...attributes>
-      <LinkTo @route="index" class="brand" {{on "click" this.navigated}}>
-        <BrandLogo class="brand__mark" @size={{38}} />
-        <span class="brand__text">
-          <span class="brand__name">xsenze tools</span>
-          <span class="brand__tag">free creative tools</span>
-        </span>
-      </LinkTo>
+    <aside class="xz-sidebar app-sidebar" ...attributes>
+      <div class="xz-sidebar__header">
+        <LinkTo @route="index" class="xz-logo" {{on "click" this.navigated}}>
+          <BrandLogo class="xz-logo__mark" @size={{28}} />
+          <span>xsenze tools</span>
+        </LinkTo>
+        {{#if @onClose}}
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon xz-sidebar__toggle"
+            aria-label="Close menu"
+            {{on "click" this.close}}
+          >
+            <Icon @name="x" />
+          </button>
+        {{/if}}
+      </div>
 
-      <label class="sidebar__search">
-        <Icon @name="search" />
-        <span class="sr-only">Search tools</span>
-        <input
-          type="search"
-          placeholder="Search tools…"
-          value={{this.query}}
-          {{on "input" this.updateQuery}}
-          {{on "keydown" this.clearOnEscape}}
-          {{focusOnCtrlK}}
-        />
-        <kbd>Ctrl K</kbd>
-      </label>
+      <div class="app-sidebar__search">
+        <label class="xz-input-group">
+          <Icon @name="search" class="xz-input-group__icon" />
+          <span class="sr-only">Search tools</span>
+          <input
+            class="xz-input"
+            type="search"
+            placeholder="Search tools…"
+            value={{this.query}}
+            {{on "input" this.updateQuery}}
+            {{on "keydown" this.clearOnEscape}}
+            {{focusOnCtrlK}}
+          />
+          <kbd class="xz-kbd xz-input-group__kbd">Ctrl K</kbd>
+        </label>
+      </div>
 
-      <div class="sidebar__scroll">
-        <ul class="sidebar__list">
-          <li>
-            <LinkTo
-              @route="index"
-              class="sidebar__row"
-              {{on "click" this.navigated}}
-            >
-              <Icon @name="house" />
-              Home
-            </LinkTo>
-          </li>
-        </ul>
+      <nav class="app-sidebar__scroll" aria-label="Tools">
+        <div class="xz-sidebar__section">
+          <ul class="xz-sidebar__nav">
+            <li>
+              <LinkTo
+                @route="index"
+                class="xz-sidebar__link"
+                aria-current={{this.current "index"}}
+                {{on "click" this.navigated}}
+              >
+                <Icon @name="house" />
+                Home
+              </LinkTo>
+            </li>
+          </ul>
+        </div>
 
         {{#each this.categories as |cat|}}
-          <section class="sidebar__group">
-            <h2 class="sidebar__heading">{{cat.name}}</h2>
+          <div class="xz-sidebar__section">
+            <div class="xz-sidebar__heading" id="nav-{{cat.id}}">
+              {{cat.name}}
+            </div>
             {{#if cat.tools.length}}
-              <ul class="sidebar__list">
+              <ul class="xz-sidebar__nav" aria-labelledby="nav-{{cat.id}}">
                 {{#each cat.tools as |tool|}}
                   <li>
                     <LinkTo
                       @route="tools.tool"
                       @model={{tool.id}}
-                      class="sidebar__row"
+                      class="xz-sidebar__link"
                       title={{tool.description}}
+                      aria-current={{this.current tool.id}}
                       {{on "click" this.navigated}}
                     >
                       <Icon @name={{tool.icon}} />
-                      <span class="sidebar__name">{{tool.name}}</span>
-                      {{#if tool.beta}}<span class="badge">beta</span>{{/if}}
+                      <span class="xz-truncate">{{tool.name}}</span>
+                      {{#if tool.beta}}
+                        <span class="xz-badge xz-badge--highlight">beta</span>
+                      {{/if}}
                     </LinkTo>
                   </li>
                 {{/each}}
               </ul>
             {{else}}
-              <p class="sidebar__empty">
+              <p class="app-sidebar__empty">
                 <Icon @name={{cat.icon}} />
                 Coming soon
               </p>
             {{/if}}
-          </section>
+          </div>
         {{/each}}
 
         {{#unless this.hasResults}}
-          <p class="sidebar__empty">No tools match “{{this.query}}”</p>
+          <p class="app-sidebar__empty">No tools match “{{this.query}}”</p>
         {{/unless}}
-      </div>
+      </nav>
 
-      <footer class="sidebar__footer">
-        <LinkTo @route="privacy" {{on "click" this.navigated}}>
+      <div class="xz-sidebar__footer">
+        <LinkTo
+          @route="privacy"
+          class="xz-link xz-link--quiet app-sidebar__privacy"
+          {{on "click" this.navigated}}
+        >
           <Icon @name="shield-check" />
           Runs locally · no uploads
         </LinkTo>
-      </footer>
-    </nav>
+      </div>
+    </aside>
   </template>
 }

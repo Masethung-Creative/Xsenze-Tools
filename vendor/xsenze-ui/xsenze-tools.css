@@ -1,0 +1,632 @@
+/*! Xsenze UI Kit tools v0.10.0 | MIT */
+/* Load after xsenze.css. */
+/* ---- tools/panel ---- */
+/* Panel: a box of hairline rows, for settings, inspectors and tool screens.
+   Every child after the first gets a hairline above it, so rows, labels, stages and
+   action bars stack without extra markup. */
+.xz-panel {
+  --xz-panel-row: 3rem;
+  --xz-panel-pad: var(--xz-space-4);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--xz-surface);
+  border: 1px solid var(--xz-border);
+  border-radius: var(--xz-radius-surface);
+  overflow: clip;
+}
+.xz-panel > * + * { border-top: 1px solid var(--xz-border); }
+.xz-panel--compact { --xz-panel-row: 2.5rem; --xz-panel-pad: var(--xz-space-3); }
+.xz-panel--flat { border-radius: 0; border-inline: 0; }
+
+.xz-panel__head { display: flex; align-items: center; gap: var(--xz-space-2); min-height: 2.75rem; padding: 0 var(--xz-space-2) 0 var(--xz-panel-pad, var(--xz-space-4)); background: var(--xz-surface-2); }
+.xz-panel__head > .xz-icon { color: var(--xz-text-muted); }
+.xz-panel__title { flex: 1; min-width: 0; margin: 0; font-family: var(--xz-font-display); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-semibold); line-height: 1.3; }
+.xz-panel__tools { display: flex; align-items: center; gap: 2px; margin-inline-start: auto; }
+.xz-panel__label { margin: 0; padding: var(--xz-space-2) var(--xz-panel-pad, var(--xz-space-4)); background: var(--xz-surface-2); color: var(--xz-text-muted); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); letter-spacing: var(--xz-letter-spacing-label); text-transform: uppercase; }
+
+/* A row: a label at the start, a control or value at the end. A label element works as a row too. */
+.xz-panel__row { display: flex; align-items: center; gap: var(--xz-space-3); min-height: var(--xz-panel-row, 3rem); margin: 0; padding: var(--xz-space-2) var(--xz-panel-pad, var(--xz-space-4)); font-size: var(--xz-font-size-sm); }
+.xz-panel__row > :first-child { flex: 1 1 auto; min-width: 0; }
+.xz-panel__row > .xz-slider { flex: 1 1 8rem; }
+.xz-panel__row > :is(.xz-select, .xz-input) { flex: 0 1 auto; width: auto; max-width: 60%; }
+label.xz-panel__row { cursor: pointer; }
+label.xz-panel__row:has(input:disabled) { color: var(--xz-disabled-text); cursor: not-allowed; }
+.xz-panel__key { display: block; font-weight: var(--xz-font-weight-medium); }
+.xz-panel__hint { display: block; color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+.xz-panel__value { flex: none; margin-inline-start: auto; font-family: var(--xz-font-mono); font-size: var(--xz-font-size-sm); font-variant-numeric: tabular-nums; text-align: end; }
+.xz-panel__value small { color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+/* The row reads as a switch: the label at the start, the switch at the end. */
+.xz-panel__row.xz-toggle { display: flex; align-items: center; line-height: inherit; }
+
+/* Cells: rows side by side, two to a line unless --xz-cols says otherwise. One to a line on phones. */
+.xz-panel__cells { display: grid; grid-template-columns: repeat(var(--xz-cols, 2), minmax(0, 1fr)); gap: 1px; background: var(--xz-border); }
+.xz-panel__cells > * { min-width: 0; background: var(--xz-surface); }
+@media (max-width: 30rem) { .xz-panel__cells:not(.xz-panel__cells--keep) { grid-template-columns: minmax(0, 1fr); } }
+
+/* Stage: a large area for a preview, a picture or a readout. */
+.xz-panel__stage { display: grid; place-items: center; min-height: 9rem; padding: var(--xz-space-6) var(--xz-panel-pad, var(--xz-space-4)); background: var(--xz-surface-2); text-align: center; }
+.xz-panel__stage--plain { background: var(--xz-surface); }
+.xz-panel__empty { display: grid; place-items: center; min-height: 5rem; margin: 0; padding: var(--xz-space-6) var(--xz-panel-pad, var(--xz-space-4)); color: var(--xz-text-subtle); font-size: var(--xz-font-size-sm); text-align: center; }
+.xz-panel__foot { margin: 0; padding: var(--xz-space-2) var(--xz-panel-pad, var(--xz-space-4)); color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+
+/* Actions: full-width buttons in a strip of cells. */
+.xz-panel__actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; background: var(--xz-border); }
+.xz-panel__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--xz-space-2);
+  min-width: 0;
+  min-height: var(--xz-panel-row, 3rem);
+  padding: 0 var(--xz-space-3);
+  background: var(--xz-surface);
+  border: 0;
+  border-radius: 0;
+  color: var(--xz-text);
+  font-family: var(--xz-font-display);
+  font-size: var(--xz-font-size-sm);
+  font-weight: var(--xz-font-weight-semibold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--xz-duration-fast) var(--xz-ease-out), color var(--xz-duration-fast) var(--xz-ease-out);
+}
+.xz-panel__action:hover { background: var(--xz-surface-2); }
+.xz-panel__action:active { background: var(--xz-surface-3); }
+.xz-panel__action:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-panel__action--primary { background: var(--xz-accent); color: var(--xz-on-accent); }
+.xz-panel__action--primary:hover { background: var(--xz-accent-hover); }
+.xz-panel__action--primary:active { background: var(--xz-accent-active); }
+.xz-panel__action--primary:focus-visible { outline-color: var(--xz-on-accent); }
+.xz-panel__action--danger { color: var(--xz-danger-text); }
+.xz-panel__action[aria-pressed="true"] { background: var(--xz-accent-soft); box-shadow: inset 0 -2px 0 var(--xz-accent-2); }
+.xz-panel__action:disabled, .xz-panel__action[aria-disabled="true"] { background: var(--xz-surface); color: var(--xz-disabled-text); cursor: not-allowed; }
+@media (pointer: coarse) { .xz-panel__row, .xz-panel__action { min-height: max(var(--xz-panel-row, 3rem), var(--xz-control-touch)); } }
+
+/* Segments as cells: a full-width choice for panels, the chosen cell filled. */
+.xz-segmented--cells { display: flex; width: 100%; padding: 0; gap: 1px; overflow-x: auto; background: var(--xz-border); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); }
+.xz-segmented--cells label { flex: 1 0 auto; }
+.xz-segmented--cells span { min-height: var(--xz-panel-row, 3rem); padding-inline: var(--xz-space-3); background: var(--xz-surface); border-radius: 0; color: var(--xz-text-muted); font-weight: var(--xz-font-weight-medium); }
+.xz-segmented--cells input:hover + span { background: var(--xz-surface-2); }
+.xz-segmented--cells input:checked + span { background: var(--xz-accent); color: var(--xz-on-accent); box-shadow: none; }
+.xz-segmented--cells input:focus-visible + span { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-segmented--cells input:checked:focus-visible + span { outline-color: var(--xz-on-accent); }
+.xz-segmented--cells input:disabled + span { background: var(--xz-surface); color: var(--xz-disabled-text); }
+
+/* Fader: a slider drawn as a filled bar, for panels. The core script keeps --_fill and the output up to date.
+   Set --xz-fader-track to draw your own track, such as a colour ramp. */
+.xz-slider--fader { --_track: var(--xz-fader-track, linear-gradient(to right, var(--xz-accent) var(--_fill), var(--xz-surface-3) var(--_fill))); height: 2.25rem; border-radius: var(--xz-radius-control); }
+.xz-slider--fader::-webkit-slider-runnable-track { height: 2.25rem; border-radius: var(--xz-radius-control); background: var(--_track); box-shadow: inset 0 0 0 1px var(--xz-border); }
+.xz-slider--fader::-moz-range-track { height: 2.25rem; border-radius: var(--xz-radius-control); background: var(--_track); box-shadow: inset 0 0 0 1px var(--xz-border); }
+.xz-slider--fader::-moz-range-progress { height: 0; background: transparent; }
+.xz-slider--fader::-webkit-slider-thumb { width: 0.375rem; height: 2.75rem; margin-top: -0.25rem; background: var(--xz-accent-2); border: 1px solid var(--xz-surface); border-radius: var(--xz-radius-sm); box-shadow: 0 0 0 1px var(--xz-shadow-color); }
+.xz-slider--fader::-moz-range-thumb { box-sizing: border-box; width: 0.375rem; height: 2.75rem; background: var(--xz-accent-2); border: 1px solid var(--xz-surface); border-radius: var(--xz-radius-sm); box-shadow: 0 0 0 1px var(--xz-shadow-color); }
+.xz-slider--fader:hover::-webkit-slider-thumb, .xz-slider--fader:active::-webkit-slider-thumb { transform: none; }
+[dir="rtl"] .xz-slider--fader { --_track: var(--xz-fader-track, linear-gradient(to left, var(--xz-accent) var(--_fill), var(--xz-surface-3) var(--_fill))); }
+
+/* Number field: the stepper with a unit, flat for panels. --big puts a large number between the buttons. */
+.xz-numfield { display: inline-flex; align-items: stretch; min-height: var(--xz-control-md); background: var(--xz-surface); border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-control); }
+.xz-numfield:focus-within { border-color: var(--xz-focus); box-shadow: 0 0 0 1px var(--xz-focus); }
+.xz-numfield .xz-stepper__btn { width: var(--xz-control-md); background: transparent; border: 0; border-radius: 0; }
+.xz-numfield .xz-stepper__btn:first-child { border-inline-end: 1px solid var(--xz-border); }
+.xz-numfield .xz-stepper__btn:last-child { border-inline-start: 1px solid var(--xz-border); }
+.xz-numfield .xz-stepper__btn:focus-visible { outline-offset: -4px; }
+.xz-numfield__box { display: inline-flex; align-items: baseline; justify-content: center; gap: var(--xz-space-1); min-width: 0; padding: 0 var(--xz-space-2); cursor: text; }
+.xz-numfield__input { width: var(--xz-numfield-width, 4ch); min-width: 0; padding: 0; background: transparent; border: 0; color: var(--xz-text); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-sm); font-variant-numeric: tabular-nums; text-align: end; appearance: textfield; -moz-appearance: textfield; align-self: center; }
+.xz-numfield__input::-webkit-outer-spin-button, .xz-numfield__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.xz-numfield__input:focus { outline: none; }
+.xz-numfield__unit { color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); white-space: nowrap; align-self: center; }
+.xz-numfield--big { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; width: 100%; min-height: 5.5rem; }
+.xz-numfield--big .xz-stepper__btn { width: 3.5rem; height: auto; }
+.xz-numfield--big .xz-numfield__box { flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+.xz-numfield--big .xz-numfield__input { width: 100%; font-family: var(--xz-font-display); font-size: var(--xz-font-size-4xl); font-weight: var(--xz-font-weight-bold); line-height: 1.1; text-align: center; }
+.xz-numfield--big .xz-numfield__unit { align-self: center; font-family: var(--xz-font-display); font-weight: var(--xz-font-weight-semibold); letter-spacing: var(--xz-letter-spacing-label); text-transform: uppercase; }
+.xz-panel > .xz-numfield--big:focus-within { box-shadow: inset 0 0 0 2px var(--xz-focus); }
+
+/* Status: a short state with a dot, such as Allowed, Blocked or Stopped. */
+.xz-status { display: inline-flex; align-items: center; gap: 0.45em; color: var(--xz-text-muted); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-medium); white-space: nowrap; }
+.xz-status::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.xz-status--success { color: var(--xz-success-text); }
+.xz-status--warning { color: var(--xz-warning-text); }
+.xz-status--danger { color: var(--xz-danger-text); }
+.xz-status--info { color: var(--xz-info-text); }
+.xz-status--off::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+/* Value line: a label, a value in mono and a copy button. Stack several for a list of values. */
+.xz-valueline { display: grid; grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr) auto; align-items: center; gap: var(--xz-space-3); min-height: 2.75rem; padding: var(--xz-space-1) var(--xz-space-1) var(--xz-space-1) var(--xz-panel-pad, var(--xz-space-3)); }
+.xz-valueline + .xz-valueline { border-top: 1px solid var(--xz-border); }
+.xz-valueline__label { color: var(--xz-text-muted); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); letter-spacing: var(--xz-letter-spacing-label); text-transform: uppercase; white-space: nowrap; }
+.xz-valueline__value { min-width: 0; overflow: hidden; font-family: var(--xz-font-mono); font-size: var(--xz-font-size-sm); text-overflow: ellipsis; white-space: nowrap; user-select: all; }
+.xz-valueline--stack { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; padding-block: var(--xz-space-2); }
+.xz-valueline--stack .xz-valueline__label { grid-column: 1; }
+.xz-valueline--stack .xz-valueline__value { grid-column: 1; }
+.xz-valueline--stack > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+.xz-valuelines { margin: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); }
+
+/* File field: a compact "None / Choose" row. Until the script is ready the browser's own file input shows. */
+.xz-filefield { display: flex; align-items: center; gap: var(--xz-space-3); min-height: var(--xz-panel-row, 3rem); padding: var(--xz-space-1) var(--xz-space-1) var(--xz-space-1) var(--xz-panel-pad, var(--xz-space-3)); font-size: var(--xz-font-size-sm); cursor: pointer; }
+.xz-filefield__label { flex: 1 1 auto; min-width: 0; font-weight: var(--xz-font-weight-medium); }
+.xz-filefield__name { min-width: 0; max-width: 50%; overflow: hidden; color: var(--xz-text-muted); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); text-overflow: ellipsis; white-space: nowrap; }
+.xz-filefield__btn { flex: none; display: inline-flex; align-items: center; min-height: var(--xz-control-sm); padding: 0 var(--xz-space-3); border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-control); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); }
+.xz-filefield:hover .xz-filefield__btn { background: var(--xz-surface-2); }
+.xz-filefield:has(input:focus-visible) .xz-filefield__btn { outline: 2px solid var(--xz-focus); outline-offset: 2px; }
+.xz-filefield[data-xz-filefield-ready] input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); opacity: 0; }
+.xz-filefield:not([data-xz-filefield-ready]) :is(.xz-filefield__name, .xz-filefield__btn) { display: none; }
+.xz-filefield:not([data-xz-filefield-ready]) input[type="file"] { max-width: 55%; font-size: var(--xz-font-size-xs); }
+
+/* Parts with their own border drop it inside a panel, where the panel's hairlines take over. */
+.xz-panel > :is(.xz-segmented--cells, .xz-numfield--big, .xz-stage, .xz-readings, .xz-pagestrip, .xz-duallist, .xz-valuelines, .xz-swatches, .xz-colorpicker, .xz-mathpad, .xz-codeblock, .xz-beforeafter, .xz-contrast, .xz-shades) { border: 0; border-radius: 0; box-shadow: none; }
+.xz-panel > * + :is(.xz-segmented--cells, .xz-numfield--big, .xz-stage, .xz-readings, .xz-pagestrip, .xz-duallist, .xz-valuelines, .xz-swatches, .xz-colorpicker, .xz-mathpad, .xz-codeblock, .xz-beforeafter, .xz-contrast, .xz-shades) { border-top: 1px solid var(--xz-border); }
+
+/* ---- tools/split ---- */
+/* Split view: two panes with a handle between them that people drag, or move with the arrow keys.
+   Without the script the panes sit side by side at the starting size. On phones they stack. */
+.xz-split { --xz-split: 50%; display: grid; grid-template-columns: minmax(0, var(--xz-split)) minmax(0, 1fr); min-width: 0; min-height: 0; }
+.xz-split:has(> .xz-split__handle) { grid-template-columns: minmax(0, var(--xz-split)) auto minmax(0, 1fr); }
+.xz-split--rows { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, var(--xz-split)) minmax(0, 1fr); }
+.xz-split--rows:has(> .xz-split__handle) { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, var(--xz-split)) auto minmax(0, 1fr); }
+.xz-split__pane { min-width: 0; min-height: 0; overflow: auto; }
+.xz-split__pane + .xz-split__pane { border-inline-start: 1px solid var(--xz-border); }
+.xz-split--rows > .xz-split__pane + .xz-split__pane { border-inline-start: 0; border-top: 1px solid var(--xz-border); }
+.xz-split__handle + .xz-split__pane { border: 0; }
+
+.xz-split__handle { position: relative; z-index: 1; width: 1px; background: var(--xz-border); cursor: col-resize; touch-action: none; }
+.xz-split__handle::before { content: ""; position: absolute; inset: 0 -6px; }
+.xz-split__handle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 6px; height: 2rem; border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-full); background: var(--xz-surface); transform: translate(-50%, -50%); transition: border-color var(--xz-duration-fast) var(--xz-ease-out), background var(--xz-duration-fast) var(--xz-ease-out); }
+.xz-split__handle:hover, .xz-split.is-dragging > .xz-split__handle { background: var(--xz-accent-2); }
+.xz-split__handle:hover::after, .xz-split.is-dragging > .xz-split__handle::after { border-color: var(--xz-accent-2); background: var(--xz-accent-2); }
+.xz-split__handle:focus-visible { outline: none; background: var(--xz-focus); box-shadow: 0 0 0 1px var(--xz-focus); }
+.xz-split__handle:focus-visible::after { border-color: var(--xz-focus); background: var(--xz-focus); }
+.xz-split--rows > .xz-split__handle { width: auto; height: 1px; cursor: row-resize; }
+.xz-split--rows > .xz-split__handle::before { inset: -6px 0; }
+.xz-split--rows > .xz-split__handle::after { width: 2rem; height: 6px; }
+.xz-split.is-dragging { cursor: col-resize; user-select: none; }
+.xz-split--rows.is-dragging { cursor: row-resize; }
+.xz-split.is-dragging > .xz-split__pane { pointer-events: none; }
+.xz-split.is-collapsed > .xz-split__pane:first-child { visibility: hidden; }
+
+@media (max-width: 40rem) {
+  .xz-split:not(.xz-split--keep) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .xz-split:not(.xz-split--keep) > .xz-split__handle { display: none; }
+  .xz-split:not(.xz-split--keep) > .xz-split__pane + .xz-split__pane,
+  .xz-split:not(.xz-split--keep) > .xz-split__handle + .xz-split__pane { border-inline-start: 0; border-top: 1px solid var(--xz-border); }
+  .xz-split.is-collapsed:not(.xz-split--keep) > .xz-split__pane:first-child { visibility: visible; }
+}
+
+/* ---- tools/menubar ---- */
+/* Menu bar: File, Edit, View menus for editor screens. The menus reuse .xz-menu__list and .xz-menu__item,
+   and add tick and dot items, submenus and key labels. */
+.xz-menubar { display: flex; align-items: stretch; min-height: 2.5rem; margin: 0; padding: 0 var(--xz-space-1); overflow-x: auto; background: var(--xz-surface); border-bottom: 1px solid var(--xz-border); list-style: none; scrollbar-width: none; }
+.xz-menubar > li { display: flex; }
+.xz-menubar__trigger { display: inline-flex; align-items: center; gap: var(--xz-space-1); padding: 0 var(--xz-space-3); background: transparent; border: 0; border-radius: 0; color: var(--xz-text); font: inherit; font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-medium); white-space: nowrap; cursor: pointer; }
+.xz-menubar__trigger:hover, .xz-menubar__trigger[aria-expanded="true"] { background: var(--xz-surface-2); }
+.xz-menubar__trigger[aria-expanded="true"] { box-shadow: inset 0 -2px 0 var(--xz-accent-2); }
+.xz-menubar__trigger:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -3px; }
+@media (pointer: coarse) { .xz-menubar { min-height: var(--xz-control-touch); } }
+
+/* Menus opened from the bar. Without the script the lists stay hidden and the bar shows plain buttons. */
+.xz-menubar .xz-menu__list { position: fixed; min-width: 13rem; }
+.xz-menubar .xz-menu__list[hidden] { display: none; }
+.xz-menubar:not([data-xz-menubar-ready]) .xz-menu__list { display: none; }
+.xz-menu__item[role="menuitemcheckbox"], .xz-menu__item[role="menuitemradio"] { position: relative; padding-inline-start: 2rem; }
+.xz-menu__item[role="menuitemcheckbox"][aria-checked="true"]::before,
+.xz-menu__item[role="menuitemradio"][aria-checked="true"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0.625rem;
+  top: 50%;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: -0.4375rem;
+  background: currentColor;
+  -webkit-mask: var(--_mark) center / 100% no-repeat;
+  mask: var(--_mark) center / 100% no-repeat;
+}
+.xz-menu__item[role="menuitemcheckbox"] { --_mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='square'%3E%3Cpath d='m4 10.5 4 4L16 6'/%3E%3C/svg%3E"); }
+.xz-menu__item[role="menuitemradio"] { --_mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='4.5'/%3E%3C/svg%3E"); }
+.xz-menu__item[aria-haspopup="menu"]::after {
+  content: "";
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-inline-start: auto;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='m8 5 5 5-5 5'/%3E%3C/svg%3E") center / 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='m8 5 5 5-5 5'/%3E%3C/svg%3E") center / 100% no-repeat;
+}
+[dir="rtl"] .xz-menu__item[aria-haspopup="menu"]::after { transform: scaleX(-1); }
+.xz-menu__item[aria-expanded="true"] { background: var(--xz-surface-2); }
+.xz-menu__item .xz-menu__shortcut { margin-left: 0; margin-inline-start: auto; padding-left: 0; padding-inline-start: var(--xz-space-6); }
+.xz-menu__item[aria-haspopup="menu"] .xz-menu__shortcut { display: none; }
+.xz-menu__item[aria-disabled="true"] { color: var(--xz-disabled-text); cursor: not-allowed; background: transparent; }
+.xz-menu__group { margin: 0; padding: 0; list-style: none; }
+
+/* ---- tools/duallist ---- */
+/* Dual list: choose and order items, such as the columns a table shows or the learners in a batch.
+   It starts as a list of checkboxes, which works in a form without the script. */
+.xz-duallist { min-width: 0; margin: 0; padding: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-duallist > legend { float: left; width: 100%; padding: var(--xz-space-3) var(--xz-space-4); border-bottom: 1px solid var(--xz-border); font-family: var(--xz-font-display); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-semibold); }
+.xz-duallist > :not(legend) { clear: both; }
+.xz-duallist:not([data-xz-duallist-ready]) > label { display: flex; align-items: center; gap: var(--xz-space-3); min-height: 2.75rem; padding: 0 var(--xz-space-4); border-bottom: 1px solid var(--xz-border); font-size: var(--xz-font-size-sm); cursor: pointer; }
+.xz-duallist small, .xz-duallist__option small { margin-inline-start: auto; color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+.xz-duallist[data-xz-duallist-ready] > label { display: none; }
+
+.xz-duallist__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.xz-duallist__side { display: flex; flex-direction: column; min-width: 0; }
+.xz-duallist__side + .xz-duallist__side { border-inline-start: 1px solid var(--xz-border); }
+.xz-duallist__title { margin: 0; padding: var(--xz-space-2) var(--xz-space-4); background: var(--xz-surface-2); border-bottom: 1px solid var(--xz-border); color: var(--xz-text-muted); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); letter-spacing: var(--xz-letter-spacing-label); text-transform: uppercase; }
+.xz-duallist__title span { margin-inline-start: var(--xz-space-1); font-family: var(--xz-font-mono); letter-spacing: 0; }
+.xz-duallist__list { flex: none; height: var(--xz-duallist-height, 13.75rem); margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.xz-duallist__list:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -2px; }
+.xz-duallist__list:empty::after { content: attr(data-empty); display: grid; place-items: center; min-height: 8rem; padding: var(--xz-space-4); color: var(--xz-text-subtle); font-size: var(--xz-font-size-xs); text-align: center; }
+.xz-duallist__option { position: relative; display: flex; align-items: center; gap: var(--xz-space-3); min-height: 2.75rem; padding: 0 var(--xz-space-4); border-bottom: 1px solid var(--xz-border); font-size: var(--xz-font-size-sm); cursor: pointer; user-select: none; }
+.xz-duallist__option:hover { background: var(--xz-surface-2); }
+.xz-duallist__option[aria-selected="true"] { background: var(--xz-accent-soft); font-weight: var(--xz-font-weight-medium); }
+.xz-duallist__option[aria-selected="true"]::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 3px; background: var(--xz-accent-2); }
+.xz-duallist__list:focus-visible .xz-duallist__option.is-active { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-duallist__option[aria-disabled="true"] { color: var(--xz-disabled-text); cursor: not-allowed; }
+.xz-duallist__actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; background: var(--xz-border); border-top: 1px solid var(--xz-border); }
+.xz-duallist__actions .xz-panel__action { min-height: 2.75rem; }
+.xz-duallist__summary { margin: 0; padding: var(--xz-space-2) var(--xz-space-4); overflow: hidden; border-top: 1px solid var(--xz-border); color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 30rem) { .xz-duallist__actions .xz-panel__action span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); } }
+
+/* ---- tools/readout ---- */
+/* Readout: numbers drawn as lit segments, for timers and counters. The script draws the segments from the
+   text; screen readers and the page without the script get the text itself. */
+.xz-readout { --xz-readout-off: 0.09; display: inline-flex; align-items: center; color: var(--xz-text); font-family: var(--xz-font-mono); font-size: var(--xz-readout-size, 2.5rem); font-variant-numeric: tabular-nums; font-weight: var(--xz-font-weight-semibold); line-height: 1; letter-spacing: 0.02em; white-space: nowrap; }
+.xz-readout__digits { display: inline-flex; align-items: stretch; gap: 0.06em; height: 1em; }
+.xz-readout__char { display: block; flex: none; width: 0.56em; height: 1em; overflow: visible; }
+.xz-readout__char--narrow { width: 0.22em; }
+.xz-readout__seg { fill: currentColor; opacity: var(--xz-readout-off); transition: opacity var(--xz-duration-fast) linear; }
+.xz-readout__seg.is-on { opacity: 1; }
+.xz-readout--accent { color: var(--xz-accent-2-text); }
+.xz-readout--success { color: var(--xz-success-text); }
+.xz-readout--danger, .xz-readout.is-warning { color: var(--xz-danger-text); }
+.xz-readout--sm { --xz-readout-size: 1.5rem; }
+.xz-readout--lg { --xz-readout-size: 4rem; }
+[data-theme="dark"] .xz-readout__seg.is-on { filter: drop-shadow(0 0 0.06em currentColor); }
+
+/* Timer: a readout with start, pause and reset. */
+.xz-timer { display: inline-flex; flex-direction: column; align-items: center; gap: var(--xz-space-4); }
+.xz-timer__controls { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--xz-space-2); }
+.xz-panel .xz-timer { display: flex; gap: 0; align-items: stretch; }
+.xz-panel .xz-timer > .xz-readout { justify-content: center; padding: var(--xz-space-6) var(--xz-panel-pad, var(--xz-space-4)); }
+.xz-panel .xz-timer > * + * { border-top: 1px solid var(--xz-border); }
+
+/* Lamps: lights for live states, such as recording, microphone and camera. Each lamp says its state in words too. */
+.xz-lamps { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--xz-space-2) var(--xz-space-6); margin: 0; padding: 0; list-style: none; }
+.xz-lamp { display: inline-flex; flex-direction: column; align-items: center; gap: var(--xz-space-1); color: var(--xz-text-subtle); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-medium); transition: color var(--xz-duration-base) var(--xz-ease-out); }
+.xz-lamp .xz-icon { width: 1.75rem; height: 1.75rem; opacity: 0.45; transition: opacity var(--xz-duration-base) var(--xz-ease-out), filter var(--xz-duration-base) var(--xz-ease-out); }
+.xz-lamp.is-on { color: var(--xz-text); }
+.xz-lamp.is-on .xz-icon { opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, currentColor 45%, transparent)); }
+.xz-lamp--success.is-on { color: var(--xz-success-text); }
+.xz-lamp--danger.is-on { color: var(--xz-danger-text); }
+.xz-lamp--warning.is-on { color: var(--xz-warning-text); }
+.xz-lamp--accent.is-on { color: var(--xz-accent-2-text); }
+.xz-lamp--row { flex-direction: row; gap: var(--xz-space-2); font-size: var(--xz-font-size-sm); }
+.xz-lamp--row .xz-icon { width: 1.25rem; height: 1.25rem; }
+.xz-lamp.is-on.is-blinking .xz-icon { animation: xz-lamp-blink 1.2s steps(1, end) infinite; }
+@keyframes xz-lamp-blink { 50% { opacity: 0.3; filter: none; } }
+[data-xz-motion="off"] .xz-lamp.is-blinking .xz-icon { animation: none; }
+@media (prefers-reduced-motion: reduce) { .xz-lamp.is-blinking .xz-icon { animation: none !important; } }
+
+/* Readings: small labelled values in a grid, each with an optional level bar (--xz-level). */
+.xz-readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); gap: 1px; margin: 0; background: var(--xz-border); }
+.xz-readings__item { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--xz-space-3) var(--xz-panel-pad, var(--xz-space-4)) var(--xz-space-4); background: var(--xz-surface); }
+.xz-readings__item dt { color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+.xz-readings__item dd { margin: 0; overflow: hidden; font-family: var(--xz-font-mono); font-size: var(--xz-font-size-md); font-variant-numeric: tabular-nums; font-weight: var(--xz-font-weight-medium); text-overflow: ellipsis; white-space: nowrap; }
+.xz-readings__item::after { content: ""; position: absolute; inset-inline-start: 0; bottom: 0; width: var(--xz-level, 0%); height: 3px; background: var(--xz-accent); }
+.xz-readings__item--success { --xz-readings-bar: var(--xz-success); }
+.xz-readings__item--warning { --xz-readings-bar: var(--xz-warning); }
+.xz-readings__item--danger { --xz-readings-bar: var(--xz-danger); }
+.xz-readings__item[class*="--"]::after { background: var(--xz-readings-bar); }
+:not(.xz-panel) > .xz-readings { border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+
+/* Change bars: a before and after amount with the change between them, such as a file before and after compression. */
+.xz-delta { display: grid; gap: var(--xz-space-2); min-width: 0; }
+.xz-delta__change { margin: 0 0 var(--xz-space-1); font-family: var(--xz-font-display); font-size: var(--xz-font-size-4xl); font-weight: var(--xz-font-weight-bold); font-variant-numeric: tabular-nums; line-height: 1; text-align: end; }
+.xz-delta__change small { margin-inline-start: 0.1em; color: var(--xz-text-muted); font-size: 0.5em; }
+.xz-delta__change--down { color: var(--xz-success-text); }
+.xz-delta__change--up { color: var(--xz-danger-text); }
+.xz-delta__bar { display: flex; align-items: center; gap: var(--xz-space-2); width: var(--xz-value, 100%); min-width: max-content; max-width: 100%; min-height: 2rem; padding: 0 var(--xz-space-3); background: var(--xz-surface-3); color: var(--xz-text); font-size: var(--xz-font-size-xs); white-space: nowrap; }
+.xz-delta__bar strong { color: inherit; font-family: var(--xz-font-mono); font-weight: var(--xz-font-weight-semibold); }
+.xz-delta__bar--after { background: var(--xz-accent); color: var(--xz-on-accent); }
+
+/* Meter: the native meter element, coloured by its low, high and optimum values. */
+.xz-meter { display: block; width: 100%; height: 0.5rem; background: var(--xz-surface-3); border: 0; border-radius: var(--xz-radius-full); -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+.xz-meter::-webkit-meter-bar { height: 0.5rem; background: var(--xz-surface-3); border: 0; border-radius: var(--xz-radius-full); }
+.xz-meter::-webkit-meter-optimum-value { background: var(--xz-success); border-radius: var(--xz-radius-full); }
+.xz-meter::-webkit-meter-suboptimum-value { background: var(--xz-warning); border-radius: var(--xz-radius-full); }
+.xz-meter::-webkit-meter-even-less-good-value { background: var(--xz-danger); border-radius: var(--xz-radius-full); }
+.xz-meter::-moz-meter-bar { background: var(--xz-success); border-radius: var(--xz-radius-full); }
+.xz-meter:-moz-meter-sub-optimum::-moz-meter-bar { background: var(--xz-warning); }
+.xz-meter:-moz-meter-sub-sub-optimum::-moz-meter-bar { background: var(--xz-danger); }
+.xz-meter--neutral::-webkit-meter-optimum-value { background: var(--xz-accent); }
+.xz-meter--neutral::-moz-meter-bar { background: var(--xz-accent); }
+.xz-panel__row > .xz-meter { flex: 0 1 8rem; }
+
+/* ---- tools/loader ---- */
+/* Pixel loader: nine cells that light up in a pattern while something loads. CSS only.
+   With less motion, or the page's motion off, the cells hold a still pattern. */
+.xz-loader { --_cell: var(--xz-loader-cell, 0.375rem); --_step: var(--xz-loader-step, 120ms); display: inline-grid; grid-template-columns: repeat(3, var(--_cell)); gap: max(1px, calc(var(--_cell) / 3)); flex: none; color: var(--xz-text); vertical-align: middle; }
+.xz-loader > i { width: var(--_cell); height: var(--_cell); background: currentColor; opacity: 0.14; animation: xz-loader-ring calc(var(--_step) * 8) linear infinite both; animation-delay: calc(var(--_i, 0) * var(--_step) - var(--_step) * 8); }
+/* Ring order, clockwise from the top-left cell. The centre cell sits out of the ring patterns. */
+.xz-loader > :nth-child(1) { --_i: 0; --_r: 2; }
+.xz-loader > :nth-child(2) { --_i: 1; --_r: 1; }
+.xz-loader > :nth-child(3) { --_i: 2; --_r: 2; }
+.xz-loader > :nth-child(6) { --_i: 3; --_r: 1; }
+.xz-loader > :nth-child(9) { --_i: 4; --_r: 2; }
+.xz-loader > :nth-child(8) { --_i: 5; --_r: 1; }
+.xz-loader > :nth-child(7) { --_i: 6; --_r: 2; }
+.xz-loader > :nth-child(4) { --_i: 7; --_r: 1; }
+.xz-loader > :nth-child(5) { --_r: 0; animation: none; }
+/* snake (the default): three cells chase round the ring */
+@keyframes xz-loader-ring { 0%, 37.5% { opacity: 1; } 38%, 100% { opacity: 0.14; } }
+/* comet: one bright cell with a fading tail */
+.xz-loader--comet > i { animation-name: xz-loader-comet; }
+@keyframes xz-loader-comet { 0% { opacity: 1; } 60%, 100% { opacity: 0.14; } }
+/* dot: one cell at a time */
+.xz-loader--dot > i { animation-name: xz-loader-dot; }
+@keyframes xz-loader-dot { 0%, 12.4% { opacity: 1; } 12.5%, 100% { opacity: 0.14; } }
+/* twin: two opposite cells */
+.xz-loader--twin > i { animation-name: xz-loader-twin; animation-duration: calc(var(--_step) * 4); animation-delay: calc(var(--_i, 0) * var(--_step) - var(--_step) * 8); }
+@keyframes xz-loader-twin { 0%, 24.9% { opacity: 1; } 25%, 100% { opacity: 0.14; } }
+/* pulse: rings of light from the centre outwards */
+.xz-loader--pulse > i, .xz-loader--pulse > :nth-child(5) { animation: xz-loader-pulse calc(var(--_step) * 8) var(--xz-ease-in-out) infinite both; animation-delay: calc(var(--_r) * var(--_step) * 1.5 - var(--_step) * 8); }
+@keyframes xz-loader-pulse { 0%, 30% { opacity: 1; } 60%, 100% { opacity: 0.14; } }
+.xz-loader--lg { --xz-loader-cell: 0.625rem; }
+.xz-loader--accent { color: var(--xz-accent-2); }
+/* reverse: the ring patterns run anticlockwise */
+.xz-loader--reverse:not(.xz-loader--pulse) > i { animation-delay: calc(var(--_i, 0) * var(--_step) * -1); }
+
+[data-xz-motion="off"] .xz-loader > i { animation: none; }
+[data-xz-motion="off"] .xz-loader > :is(:nth-child(1), :nth-child(2), :nth-child(3), :nth-child(5)) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .xz-loader > i { animation: none !important; }
+  .xz-loader > :is(:nth-child(1), :nth-child(2), :nth-child(3), :nth-child(5)) { opacity: 1; }
+}
+
+/* ---- tools/measure ---- */
+/* Measure: width and height lines around a box, for print set-ups, image sizes and page previews. */
+.xz-measure { display: grid; grid-template-areas: ". x" "y box"; grid-template-columns: auto minmax(0, 1fr); align-items: stretch; min-width: 0; margin: 0; color: var(--xz-text-muted); }
+.xz-measure__x, .xz-measure__y { display: flex; align-items: center; gap: var(--xz-space-2); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
+.xz-measure__x { grid-area: x; margin-block-end: var(--xz-space-2); }
+.xz-measure__y { grid-area: y; flex-direction: column; margin-inline-end: var(--xz-space-2); }
+.xz-measure__x::before, .xz-measure__x::after { content: ""; flex: 1; height: 0.5rem; border-color: currentColor; border-style: solid; border-width: 0; background: linear-gradient(currentColor 0 0) center / 100% 1px no-repeat; }
+.xz-measure__x::before { border-inline-start-width: 1px; }
+.xz-measure__x::after { border-inline-end-width: 1px; }
+.xz-measure__y::before, .xz-measure__y::after { content: ""; flex: 1; width: 0.5rem; border-color: currentColor; border-style: solid; border-width: 0; background: linear-gradient(currentColor 0 0) center / 1px 100% no-repeat; }
+.xz-measure__y::before { border-top-width: 1px; }
+.xz-measure__y::after { border-bottom-width: 1px; }
+.xz-measure__y > span { writing-mode: vertical-rl; transform: rotate(180deg); }
+.xz-measure__box { grid-area: box; position: relative; display: grid; place-items: center; min-width: 0; aspect-ratio: var(--xz-ratio, auto); overflow: hidden; background: var(--xz-surface); border: 1px solid var(--xz-border); box-shadow: var(--xz-shadow-sm); color: var(--xz-text); transition: aspect-ratio var(--xz-duration-slow) var(--xz-ease-out); }
+.xz-measure--fit { justify-self: center; width: min(100%, var(--xz-measure-width, 16rem)); }
+
+/* Paper: size and orientation choices that reshape a measure box, for certificates, report cards and ID cards.
+   The stage keeps one size; the script fits the page inside it and the page changes shape smoothly. */
+.xz-paper__stage { display: grid; place-items: center; height: var(--xz-paper-stage, 21rem); padding: var(--xz-space-5) var(--xz-space-4); overflow: hidden; background: var(--xz-surface-2); }
+.xz-paper__stage .xz-measure__box { width: var(--xz-paper-w, 10rem); height: var(--xz-paper-h, 14rem); aspect-ratio: auto; }
+.xz-paper__stage.is-ready .xz-measure__box { transition: width var(--xz-duration-slow) var(--xz-ease-out), height var(--xz-duration-slow) var(--xz-ease-out); }
+[data-xz-motion="off"] .xz-paper__stage .xz-measure__box { transition: none; }
+
+/* Page strip: thumbnails of pages, slides or certificates to pick from. Built on radio buttons, so it needs no script. */
+.xz-pagestrip { display: flex; gap: var(--xz-space-4); margin: 0; padding: var(--xz-space-4); overflow-x: auto; border: 0; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.xz-pagestrip > legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.xz-pagestrip__page { position: relative; display: flex; flex: none; flex-direction: column; gap: var(--xz-space-1); width: var(--xz-page-width, 5.5rem); cursor: pointer; scroll-snap-align: start; }
+.xz-pagestrip__page input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.xz-pagestrip__sheet { display: grid; place-items: center; aspect-ratio: var(--xz-ratio, 210 / 297); overflow: hidden; background: var(--xz-surface); border: 1px solid var(--xz-border); color: var(--xz-text-subtle); font-size: var(--xz-font-size-xs); transition: box-shadow var(--xz-duration-fast) var(--xz-ease-out), border-color var(--xz-duration-fast) var(--xz-ease-out); }
+.xz-pagestrip__sheet > :is(img, video, svg:not(.xz-icon)) { width: 100%; height: 100%; object-fit: cover; }
+.xz-pagestrip__sheet--stack { box-shadow: 3px 3px 0 -1px var(--xz-surface), 3px 3px 0 0 var(--xz-border), 6px 6px 0 -1px var(--xz-surface), 6px 6px 0 0 var(--xz-border); }
+.xz-pagestrip__page:hover .xz-pagestrip__sheet { border-color: var(--xz-border-control); }
+.xz-pagestrip__page:has(input:checked) .xz-pagestrip__sheet { border-color: var(--xz-accent-2); box-shadow: 0 0 0 1px var(--xz-accent-2); }
+.xz-pagestrip__page:has(input:checked) .xz-pagestrip__sheet--stack { box-shadow: 0 0 0 1px var(--xz-accent-2), 3px 3px 0 -1px var(--xz-surface), 3px 3px 0 0 var(--xz-border), 6px 6px 0 -1px var(--xz-surface), 6px 6px 0 0 var(--xz-border); }
+.xz-pagestrip__page:has(input:focus-visible) .xz-pagestrip__sheet { outline: 2px solid var(--xz-focus); outline-offset: 3px; }
+.xz-pagestrip__num { margin-top: var(--xz-space-1); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); line-height: 1; }
+.xz-pagestrip__caption { overflow: hidden; color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.xz-pagestrip__page:has(input:checked) .xz-pagestrip__num { color: var(--xz-accent-2-text); }
+
+/* Stage: a preview area with a bar for its name and size. --checker shows transparent parts of a picture. */
+.xz-stage { display: flex; flex-direction: column; min-width: 0; margin: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-stage__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--xz-space-3); min-height: 2.25rem; padding: 0 var(--xz-space-3); background: var(--xz-surface-2); border-bottom: 1px solid var(--xz-border); color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); }
+.xz-stage__size { font-family: var(--xz-font-mono); font-weight: var(--xz-font-weight-regular); font-variant-numeric: tabular-nums; }
+.xz-stage__view { position: relative; display: grid; place-items: center; min-height: 10rem; padding: var(--xz-space-4); aspect-ratio: var(--xz-ratio, auto); overflow: hidden; }
+.xz-stage__view > :is(img, video, canvas, svg:not(.xz-icon)) { max-width: 100%; max-height: 100%; }
+.xz-stage__view--checker { background: repeating-conic-gradient(var(--xz-surface-2) 0 25%, var(--xz-surface) 0 50%) 0 0 / 16px 16px; }
+.xz-stage__view--fill { padding: 0; }
+.xz-stage__view--fill > :is(img, video, canvas, svg:not(.xz-icon)) { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- tools/beforeafter ---- */
+/* Before and after: two pictures in one frame with a line to drag between them.
+   The line is a range input, so arrow keys, Home and End move it too. Without the script the pictures sit side by side. */
+.xz-beforeafter { --xz-pos: 50%; position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--xz-space-2); min-width: 0; margin: 0; overflow: hidden; border-radius: var(--xz-radius-surface); }
+.xz-beforeafter > :is(img, picture, video, canvas, svg) { display: block; width: 100%; height: 100%; object-fit: cover; }
+.xz-beforeafter[data-xz-beforeafter-ready] { grid-template-columns: minmax(0, 1fr); gap: 0; background: var(--xz-surface-2); border: 1px solid var(--xz-border); touch-action: pan-y; user-select: none; }
+.xz-beforeafter[data-xz-beforeafter-ready] > .xz-beforeafter__before,
+.xz-beforeafter[data-xz-beforeafter-ready] > .xz-beforeafter__after { grid-area: 1 / 1; }
+.xz-beforeafter[data-xz-beforeafter-ready] > .xz-beforeafter__after { clip-path: inset(0 0 0 var(--xz-pos)); }
+[dir="rtl"] .xz-beforeafter[data-xz-beforeafter-ready] > .xz-beforeafter__after { clip-path: inset(0 var(--xz-pos) 0 0); }
+.xz-beforeafter[data-xz-beforeafter-ready] { cursor: ew-resize; }
+/* The line, the tags and the range sit in the pictures' cell, so a caption below stays clear. */
+.xz-beforeafter[data-xz-beforeafter-ready] > :is(.xz-beforeafter__range, .xz-beforeafter__line, .xz-beforeafter__tag) { grid-area: 1 / 1; }
+.xz-beforeafter__range { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.xz-beforeafter__line { position: absolute; z-index: 1; inset-block: 0; inset-inline-start: var(--xz-pos); width: 2px; margin-inline-start: -1px; background: var(--xz-surface); box-shadow: 0 0 0 1px var(--xz-shadow-color); pointer-events: none; }
+.xz-beforeafter__knob { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; background: var(--xz-surface); border: 1px solid var(--xz-border-strong); border-radius: var(--xz-radius-control); color: var(--xz-text); box-shadow: var(--xz-shadow-sm); transform: translate(-50%, -50%); }
+.xz-beforeafter:has(.xz-beforeafter__range:focus-visible) .xz-beforeafter__knob { outline: 2px solid var(--xz-focus); outline-offset: 2px; }
+.xz-beforeafter.is-dragging .xz-beforeafter__knob { background: var(--xz-accent); border-color: var(--xz-accent); color: var(--xz-on-accent); }
+.xz-beforeafter__tag { position: absolute; z-index: 1; top: var(--xz-space-3); padding: 2px var(--xz-space-2); background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-sm); color: var(--xz-text); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); pointer-events: none; }
+.xz-beforeafter__tag--before { inset-inline-start: var(--xz-space-3); }
+.xz-beforeafter__tag--after { inset-inline-end: var(--xz-space-3); }
+.xz-beforeafter:not([data-xz-beforeafter-ready]) .xz-beforeafter__tag { display: none; }
+.xz-beforeafter > figcaption { grid-column: 1 / -1; padding: var(--xz-space-2) var(--xz-space-3); background: var(--xz-surface); color: var(--xz-text-muted); font-size: var(--xz-font-size-xs); }
+.xz-beforeafter[data-xz-beforeafter-ready] > figcaption { grid-area: 2 / 1; border-top: 1px solid var(--xz-border); }
+
+/* ---- tools/color ---- */
+/* Colour field: a swatch that opens the system colour picker, a box that takes any CSS colour
+   (hex, rgb, hsl, oklch or a name) and, where the browser has one, an eyedropper. */
+.xz-colorfield { display: flex; align-items: stretch; min-width: 0; min-height: var(--xz-control-md); background: var(--xz-surface); border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-control); }
+.xz-colorfield:hover { border-color: var(--xz-text); }
+.xz-colorfield input[type="color"] { flex: none; width: 2.75rem; height: auto; margin: 0; padding: 0; background: none; border: 0; border-inline-end: 1px solid var(--xz-border); border-radius: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.xz-colorfield input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.xz-colorfield input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 0; }
+.xz-colorfield input[type="color"]::-moz-color-swatch { border: 0; border-radius: 0; }
+.xz-colorfield input[type="color"]:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-colorfield .xz-input { flex: 1 1 auto; min-width: 0; width: auto; min-height: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; font-family: var(--xz-font-mono); font-size: var(--xz-font-size-sm); text-transform: none; }
+.xz-colorfield .xz-input:focus { box-shadow: inset 0 0 0 2px var(--xz-focus); }
+.xz-colorfield .xz-input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--xz-danger); }
+.xz-colorfield__pick { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; padding: 0; background: transparent; border: 0; border-inline-start: 1px solid var(--xz-border); color: var(--xz-text-muted); cursor: pointer; }
+.xz-colorfield__pick:hover { background: var(--xz-surface-2); color: var(--xz-text); }
+.xz-colorfield__pick:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-panel > .xz-colorfield { border-width: 0; border-radius: 0; }
+.xz-panel > * + .xz-colorfield { border-top: 1px solid var(--xz-border); }
+.xz-panel__row > .xz-colorfield { flex: 0 1 12rem; }
+
+/* Swatches: a strip of colours; each one copies its value. The script picks black or white text for each. */
+.xz-swatches { display: flex; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); list-style: none; }
+.xz-swatches > li { display: flex; flex: 1 1 0; min-width: 0; }
+.xz-swatch { position: relative; display: flex; flex: 1; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 2px; min-width: 0; min-height: var(--xz-swatch-height, 3.5rem); padding: var(--xz-space-2); background: var(--xz-swatch, var(--xz-surface-3)); border: 0; border-radius: 0; color: var(--xz-swatch-text, #fff); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); line-height: 1.2; text-align: start; text-shadow: var(--xz-swatch-shadow, 0 0 2px rgba(0, 0, 0, 0.5)); cursor: pointer; }
+.xz-swatch[data-xz-swatch-ready] { --xz-swatch-shadow: none; }
+.xz-swatch:focus-visible { z-index: 1; outline: 2px solid var(--xz-swatch-text, #fff); outline-offset: -5px; box-shadow: inset 0 0 0 5px var(--xz-swatch); }
+.xz-swatch > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xz-swatch__name { font-family: var(--xz-font-display); font-weight: var(--xz-font-weight-semibold); }
+.xz-swatch.is-base::after { content: ""; position: absolute; top: var(--xz-space-2); inset-inline-end: var(--xz-space-2); width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.xz-swatches--tall .xz-swatch { --xz-swatch-height: 7rem; align-items: center; }
+.xz-swatches--tall .xz-swatch > span { writing-mode: vertical-rl; transform: rotate(180deg); }
+.xz-swatches--tall .xz-swatch.is-base::after { inset-inline-end: 50%; margin-inline-end: -0.25rem; }
+.xz-swatch .xz-copy { place-items: end start; max-width: 100%; }
+.xz-swatch .xz-copy__idle { flex-direction: column; align-items: flex-start; gap: 2px; max-width: 100%; }
+.xz-swatches--tall .xz-swatch .xz-copy { place-items: end center; }
+.xz-swatches--tall .xz-swatch .xz-copy__idle { flex-direction: row; align-items: flex-end; }
+
+/* Shades: steps from light to dark worked out from one colour, with an optional hue fader. */
+.xz-shades { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-shades > * + * { border-top: 1px solid var(--xz-border); }
+.xz-shades > .xz-swatches { border: 0; border-radius: 0; }
+.xz-shades > * + .xz-swatches { border-top: 1px solid var(--xz-border); }
+
+/* Contrast check: text on a background, the ratio, and which WCAG levels pass. */
+.xz-contrast { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-contrast > * + * { border-top: 1px solid var(--xz-border); }
+.xz-contrast__sample { display: flex; align-items: center; justify-content: space-between; gap: var(--xz-space-4); min-height: 7rem; padding: var(--xz-space-5) var(--xz-space-6); background: var(--xz-contrast-bg, var(--xz-surface)); color: var(--xz-contrast-fg, var(--xz-text)); }
+.xz-contrast__aa { font-family: var(--xz-font-display); font-size: var(--xz-font-size-5xl); font-weight: var(--xz-font-weight-bold); line-height: 1; }
+.xz-contrast__ratio { margin: 0; font-family: var(--xz-font-display); font-size: var(--xz-font-size-4xl); font-weight: var(--xz-font-weight-bold); font-variant-numeric: tabular-nums; line-height: 1; }
+.xz-contrast__ratio small { font-size: 0.45em; font-weight: var(--xz-font-weight-semibold); }
+.xz-contrast__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--xz-border); }
+.xz-contrast__fields > * { min-width: 0; padding: var(--xz-space-3) var(--xz-space-4); background: var(--xz-surface); }
+.xz-contrast__fields .xz-label { margin-bottom: var(--xz-space-1); }
+.xz-contrast__marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--xz-space-2) var(--xz-space-4); margin: 0; padding: var(--xz-space-3) var(--xz-space-4); list-style: none; font-size: var(--xz-font-size-xs); }
+.xz-contrast__marks > li { display: inline-flex; align-items: center; gap: var(--xz-space-1); font-weight: var(--xz-font-weight-semibold); }
+.xz-contrast__marks > li::before { content: ""; width: 0.875rem; height: 0.875rem; background: currentColor; -webkit-mask: var(--_mark) center / 100% no-repeat; mask: var(--_mark) center / 100% no-repeat; }
+.xz-contrast__marks > li.is-pass { color: var(--xz-success-text); --_mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='square'%3E%3Cpath d='m4 10.5 4 4L16 6'/%3E%3C/svg%3E"); }
+.xz-contrast__marks > li.is-fail { color: var(--xz-danger-text); --_mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='square'%3E%3Cpath d='m5 5 10 10M15 5 5 15'/%3E%3C/svg%3E"); }
+.xz-contrast__marks > li:first-child { margin-inline-end: auto; color: var(--xz-text-muted); font-weight: var(--xz-font-weight-medium); }
+.xz-contrast__marks > li:first-child::before { display: none; }
+.xz-contrast__marks .xz-contrast__ratio { color: var(--xz-text); font-family: var(--xz-font-mono); font-size: inherit; }
+@media (max-width: 30rem) { .xz-contrast__fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* Colour picker: a model (RGB, HSL or OKLCH), a fader for each channel and every notation to copy. */
+.xz-colorpicker { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-colorpicker > * + * { border-top: 1px solid var(--xz-border); }
+.xz-colorpicker > input[type="color"] { display: block; width: 100%; height: 5rem; margin: 0; padding: 0; background: none; border: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.xz-colorpicker > input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.xz-colorpicker > input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 0; }
+.xz-colorpicker > input[type="color"]::-moz-color-swatch { border: 0; border-radius: 0; }
+.xz-colorpicker > input[type="color"]:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-colorpicker__preview { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--xz-space-3); min-height: 5rem; padding: var(--xz-space-3) var(--xz-space-4); background: var(--xz-picked, var(--xz-surface-3)); color: var(--xz-picked-text, #fff); }
+.xz-colorpicker__preview strong { font-family: var(--xz-font-mono); font-size: var(--xz-font-size-md); }
+.xz-colorpicker__preview span { font-size: var(--xz-font-size-xs); }
+.xz-colorpicker__channel { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) 4.75rem; align-items: center; gap: var(--xz-space-3); min-height: 3rem; padding: var(--xz-space-2) var(--xz-space-4); font-size: var(--xz-font-size-sm); }
+.xz-colorpicker__channel .xz-slider--fader { --xz-fader-thumb: var(--xz-surface); }
+.xz-colorpicker__channel .xz-slider--fader::-webkit-slider-thumb { background: var(--xz-surface); border: 2px solid var(--xz-text); }
+.xz-colorpicker__channel .xz-slider--fader::-moz-range-thumb { background: var(--xz-surface); border: 2px solid var(--xz-text); }
+.xz-colorpicker__channel .xz-input { min-height: var(--xz-control-sm); padding-inline: var(--xz-space-2); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); text-align: end; }
+.xz-colorpicker .xz-valueline { padding-inline-start: var(--xz-space-4); }
+@media (max-width: 30rem) { .xz-colorpicker__channel { grid-template-columns: 3.5rem minmax(0, 1fr) 4rem; gap: var(--xz-space-2); } }
+
+/* ---- tools/math ---- */
+/* Maths: expressions typed as plain text, such as sqrt(x^2+1)/(2x), shown as real notation with MathML.
+   Without the script the text stays as typed, which still reads correctly. */
+.xz-math { font-size: 1.1em; }
+.xz-math math { font-size: inherit; }
+.xz-math--block { display: block; overflow-x: auto; padding: var(--xz-space-2) 0; font-size: var(--xz-font-size-2xl); text-align: center; }
+.xz-math--block math { display: block math; }
+.xz-math.is-error, .xz-mathfield__preview.is-error { color: var(--xz-danger-text); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-sm); }
+
+/* Maths field: a text box with the notation drawn under it as you type. */
+.xz-mathfield { display: flex; flex-direction: column; gap: var(--xz-space-2); min-width: 0; }
+.xz-mathfield__box { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-control); overflow: clip; }
+.xz-mathfield__box:focus-within { border-color: var(--xz-focus); box-shadow: 0 0 0 1px var(--xz-focus); }
+.xz-mathfield__preview { display: grid; place-items: center; min-height: 6.5rem; padding: var(--xz-space-3) var(--xz-space-4); overflow-x: auto; background: var(--xz-surface-2); font-size: var(--xz-font-size-xl); }
+.xz-mathfield__preview:empty::before { content: attr(data-empty); color: var(--xz-text-subtle); font-size: var(--xz-font-size-sm); }
+.xz-mathfield__bar { display: flex; align-items: center; gap: var(--xz-space-2); border-top: 1px solid var(--xz-border); }
+.xz-mathfield__input { flex: 1; min-width: 0; min-height: var(--xz-control-md); padding: 0 var(--xz-space-3); background: transparent; border: 0; color: var(--xz-text); font-family: var(--xz-font-mono); font-variant-ligatures: none; font-size: var(--xz-font-size-sm); }
+.xz-mathfield__input:focus { outline: none; }
+.xz-mathfield__bar .xz-btn { flex: none; margin-inline-end: var(--xz-space-1); }
+
+/* Maths keypad: keys in tabs (numbers, functions, sums, letters) that type into a maths field. */
+.xz-mathpad { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-mathpad[hidden] { display: none; }
+.xz-mathpad__tabs { display: flex; gap: 1px; background: var(--xz-border); border-bottom: 1px solid var(--xz-border); }
+.xz-mathpad__tab { flex: 1; min-height: 2.5rem; padding: 0 var(--xz-space-2); background: var(--xz-surface-2); border: 0; color: var(--xz-text-muted); font-family: var(--xz-font-display); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-semibold); cursor: pointer; }
+.xz-mathpad__tab[aria-selected="true"] { background: var(--xz-surface); color: var(--xz-text); box-shadow: inset 0 -2px 0 var(--xz-accent-2); }
+.xz-mathpad__tab:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-mathpad__keys { display: grid; grid-template-columns: repeat(var(--xz-mathpad-cols, 6), minmax(0, 1fr)); gap: 1px; background: var(--xz-border); }
+.xz-mathpad__keys[hidden] { display: none; }
+.xz-mathpad__key { display: grid; place-items: center; min-width: 0; min-height: 2.75rem; padding: 0 2px; background: var(--xz-surface); border: 0; color: var(--xz-text); font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", var(--xz-font-sans); font-size: var(--xz-font-size-lg); line-height: 1; cursor: pointer; touch-action: manipulation; user-select: none; }
+.xz-mathpad__key:hover { background: var(--xz-surface-2); }
+.xz-mathpad__key:active { background: var(--xz-surface-3); }
+.xz-mathpad__key:focus-visible { z-index: 1; outline: 2px solid var(--xz-focus); outline-offset: -4px; }
+.xz-mathpad__key--op { background: var(--xz-surface-2); }
+.xz-mathpad__key--op:hover { background: var(--xz-surface-3); }
+.xz-mathpad__key--fn { font-family: var(--xz-font-sans); font-size: var(--xz-font-size-sm); }
+.xz-mathpad__key--edit { background: var(--xz-surface-2); color: var(--xz-text-muted); font-family: var(--xz-font-display); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-semibold); }
+.xz-mathpad__key--done { background: var(--xz-accent); color: var(--xz-on-accent); font-family: var(--xz-font-display); font-size: var(--xz-font-size-sm); font-weight: var(--xz-font-weight-semibold); }
+.xz-mathpad__key--done:hover { background: var(--xz-accent-hover); }
+.xz-mathpad__key--done:focus-visible { outline-color: var(--xz-on-accent); }
+.xz-mathpad__key--wide { grid-column: span 2; }
+.xz-mathpad__key math { pointer-events: none; }
+.xz-mathpad__key .xz-icon { width: 1.25rem; height: 1.25rem; }
+@media (pointer: coarse) { .xz-mathpad__key { min-height: 3rem; } }
+
+/* ---- tools/text ---- */
+/* Code block: code with its language and a copy button, for lessons and setup guides. */
+.xz-codeblock { display: flex; flex-direction: column; min-width: 0; margin: 0; background: var(--xz-surface); border: 1px solid var(--xz-border); border-radius: var(--xz-radius-surface); overflow: clip; }
+.xz-codeblock__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--xz-space-3); min-height: 2.5rem; padding: 0 var(--xz-space-1) 0 var(--xz-space-4); background: var(--xz-surface-2); border-bottom: 1px solid var(--xz-border); }
+.xz-codeblock__lang { color: var(--xz-text-muted); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); font-weight: var(--xz-font-weight-semibold); text-transform: lowercase; }
+.xz-codeblock__pre { margin: 0; padding: var(--xz-space-4); overflow-x: auto; font-family: var(--xz-font-mono); font-variant-ligatures: none; font-size: var(--xz-font-size-sm); line-height: var(--xz-line-height-relaxed); tab-size: 2; }
+.xz-codeblock__pre:focus-visible { outline: 2px solid var(--xz-focus); outline-offset: -2px; }
+.xz-codeblock__pre code { font: inherit; }
+.xz-codeblock--lines .xz-codeblock__pre code { display: block; counter-reset: xz-line; }
+.xz-codeblock--lines .xz-codeblock__line { display: block; counter-increment: xz-line; }
+.xz-codeblock--lines .xz-codeblock__line::before { content: counter(xz-line); display: inline-block; width: 2.5ch; margin-inline-end: 2ch; color: var(--xz-text-subtle); text-align: end; user-select: none; }
+.xz-codeblock__line.is-marked { margin-inline: calc(var(--xz-space-4) * -1); padding-inline: var(--xz-space-4); background: var(--xz-accent-2-soft); box-shadow: inset 3px 0 0 var(--xz-accent-2); }
+
+/* Text box: a text area with a bar for paste, clear, copy and a live count. */
+.xz-textbox { display: flex; flex-direction: column; min-width: 0; background: var(--xz-surface); border: 1px solid var(--xz-border-control); border-radius: var(--xz-radius-control); overflow: clip; }
+.xz-textbox:focus-within { border-color: var(--xz-focus); box-shadow: 0 0 0 1px var(--xz-focus); }
+.xz-textbox .xz-textarea { min-height: 7rem; border: 0; border-radius: 0; box-shadow: none; }
+.xz-textbox .xz-textarea:focus { box-shadow: none; }
+.xz-textbox__bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--xz-space-1); padding: var(--xz-space-1); background: var(--xz-surface-2); border-top: 1px solid var(--xz-border); }
+.xz-textbox__count { margin-inline-end: auto; padding: 0 var(--xz-space-2); color: var(--xz-text-muted); font-family: var(--xz-font-mono); font-size: var(--xz-font-size-xs); font-variant-numeric: tabular-nums; }
+.xz-textbox__output { min-height: 5rem; margin: 0; padding: var(--xz-space-3); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xl); font-weight: var(--xz-font-weight-semibold); overflow-wrap: anywhere; white-space: pre-wrap; }
+[data-xz-share]:not([data-xz-share-ready]) { display: none; }
+
+/* Letter tiles: each letter of a word on its own tile, for spelling practice, codes and font samples.
+   Hindi, Tamil and other scripts split into whole letters, not loose marks. */
+.xz-glyphs { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--xz-space-1); min-height: 3rem; margin: 0; padding: 0; list-style: none; }
+.xz-glyphs__tile { display: grid; place-items: center; min-width: 2.25rem; height: 2.75rem; padding: 0 var(--xz-space-2); background: var(--xz-surface); border: 1px solid var(--xz-border-strong); border-radius: var(--xz-radius-control); font-family: var(--xz-font-display); font-size: var(--xz-font-size-xl); font-weight: var(--xz-font-weight-semibold); line-height: 1; animation: xz-glyph-in var(--xz-duration-base) var(--xz-ease-out) both; }
+.xz-glyphs__tile--space { min-width: 1rem; background: transparent; border-style: dashed; border-color: var(--xz-border); }
+.xz-glyphs--lg .xz-glyphs__tile { min-width: 3rem; height: 3.75rem; font-size: var(--xz-font-size-3xl); }
+@keyframes xz-glyph-in { from { opacity: 0; transform: translateY(4px); } }
+[data-xz-motion="off"] .xz-glyphs__tile { animation: none; }
+
+/* ---- tools/rail ---- */
+/* The rail itself (xz-sidebar--rail) is part of the main stylesheet since 0.10.0, with the button that folds
+   any sidebar into it. The tools pack adds lit rows. */
+
+/* A lit row: a coloured edge and tint for a live state, such as a class on air. */
+.xz-sidebar__link[data-tone] { box-shadow: inset 3px 0 0 var(--_tone); background: linear-gradient(to right, var(--_tone-soft), transparent 80%); }
+[dir="rtl"] .xz-sidebar__link[data-tone] { box-shadow: inset -3px 0 0 var(--_tone); background: linear-gradient(to left, var(--_tone-soft), transparent 80%); }
+.xz-sidebar__link[data-tone="success"] { --_tone: var(--xz-success); --_tone-soft: var(--xz-success-soft); }
+.xz-sidebar__link[data-tone="danger"] { --_tone: var(--xz-danger); --_tone-soft: var(--xz-danger-soft); }
+.xz-sidebar__link[data-tone="warning"] { --_tone: var(--xz-warning); --_tone-soft: var(--xz-warning-soft); }
+.xz-sidebar__link[data-tone="accent"] { --_tone: var(--xz-accent-2); --_tone-soft: var(--xz-accent-2-soft); }

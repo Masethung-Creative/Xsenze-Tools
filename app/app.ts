@@ -1,4 +1,5 @@
-import '@fontsource-variable/space-grotesk';
+// The Xsenze UI Kit (bundled copy, fonts included), then the site's own styles
+import '../vendor/xsenze-ui/xsenze.min.css';
 import './styles/app.scss';
 
 import Application from '@ember/application';

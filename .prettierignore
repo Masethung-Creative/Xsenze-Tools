@@ -14,3 +14,6 @@ ember-cli-update.json
 
 # vendor runtime files
 /public/mediainfo/
+
+# the bundled Xsenze UI Kit build
+/vendor/

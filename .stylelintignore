@@ -3,3 +3,6 @@
 
 # compiled output
 /dist/
+
+# the bundled Xsenze UI Kit build
+/vendor/

@@ -16,11 +16,12 @@ import { toolCategories } from 'xsenze-tools/lib/tools';
         <span class="hero__wordmark">xsenze<span>tools</span></span>
       </h2>
       <Omnibox />
-      <p class="hero__tagline">A collection of small, focused creative tools.</p>
-      <p class="hero__fine">
+      <p class="hero__tagline xz-lead">A collection of small, focused creative
+        tools.</p>
+      <p class="hero__fine xz-small xz-text-muted">
         No logins, no paywalls, no uploads, no tracking.<br />
         Everything runs on your device.
-        <LinkTo @route="privacy">How we handle privacy</LinkTo>.
+        <LinkTo @route="privacy" class="xz-link">How we handle privacy</LinkTo>.
       </p>
     </div>
   </section>

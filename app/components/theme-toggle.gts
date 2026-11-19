@@ -3,17 +3,23 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import Icon from 'xsenze-tools/components/icon';
 
-// index.html sets html.dark / html.light before first paint; this keeps it in sync
+/** Sets the theme on <html> the same way the script in index.html does. */
+export function applyTheme(theme: 'dark' | 'light') {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
+  root.classList.toggle('dark', theme === 'dark');
+  root.classList.toggle('light', theme === 'light');
+}
+
 export default class ThemeToggle extends Component<{
   Element: HTMLButtonElement;
 }> {
-  @tracked dark = document.documentElement.classList.contains('dark');
+  @tracked dark =
+    document.documentElement.getAttribute('data-theme') !== 'light';
 
   toggle = () => {
     this.dark = !this.dark;
-    const root = document.documentElement;
-    root.classList.toggle('dark', this.dark);
-    root.classList.toggle('light', !this.dark);
+    applyTheme(this.dark ? 'dark' : 'light');
     try {
       localStorage.setItem('theme', this.dark ? 'dark' : 'light');
     } catch {
@@ -28,6 +34,7 @@ export default class ThemeToggle extends Component<{
   <template>
     <button
       type="button"
+      class="xz-btn xz-btn--ghost xz-btn--icon"
       title={{this.label}}
       aria-label={{this.label}}
       ...attributes

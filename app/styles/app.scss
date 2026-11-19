@@ -1,93 +1,36 @@
-// Global styles: crayon utilities + reset, then Xsenze theme tokens and
-// shared building blocks. Component styles live next to their .gts file as
-// plain .css and use the CSS variables defined here.
-//
-// Brand: colours + font from the Masethung R portfolio
-// (Space Grotesk; orange #ff3800 on warm stone neutrals).
-// Layout: dense sidebar, top bar, square bordered grids.
+// Global styles on top of the Xsenze UI Kit (vendor/xsenze-ui, imported
+// before this file in app.ts). The kit owns the reset, fonts, type, colours
+// and its xz- components; this file keeps the site-wide pieces the kit does
+// not have. Component styles live next to their .gts file as plain .css and
+// use the kit's --xz-* variables.
 
-@use "crayon-config" as crayon;
 @use "canon";
 
-// ---------- theme tokens ----------
-// html.dark (default) / html.light is set by the inline script in index.html.
-
-:root,
-html.dark {
-  color-scheme: dark;
-
-  // portfolio tokens, verbatim
-  --surface-0: oklch(14.7% 0.004 49.25deg); // #0c0a09 background
-  --surface-1: oklch(21.6% 0.006 56.043deg); // #1c1917 card
-  --surface-2: oklch(26.8% 0.007 34.298deg); // #292524 muted
-  --line: oklch(100% 0 0deg / 10%);
-  --text: oklch(98.5% 0.001 106.423deg); // #fafaf9
-  --text-muted: oklch(70.9% 0.01 56.259deg); // #a6a09b
-  --ring: oklch(55.3% 0.013 58.071deg); // #79716b
-  --accent: oklch(65% 0.259 46.59deg); // #ff3800
-  --accent-text: oklch(65% 0.259 46.59deg);
-  --accent-contrast: oklch(21.6% 0.006 56.043deg);
-  --accent-soft: color-mix(in oklch, var(--accent) 22%, transparent);
-  --shadow-lg: 0 6px 24px oklch(0% 0 0deg / 40%);
-  --backdrop-opacity: 0.07;
-}
-
-// light theme built from the same warm stone + orange family
-html.light {
-  color-scheme: light;
-
-  --surface-0: oklch(98.5% 0.001 106.423deg); // #fafaf9
-  --surface-1: oklch(97% 0.001 106.424deg); // #f5f5f4
-  --surface-2: oklch(92.3% 0.003 48.717deg); // #e7e5e4
-  --line: oklch(86.9% 0.005 56.366deg); // #d6d3d1
-  --text: oklch(14.7% 0.004 49.25deg); // #0c0a09
-  --text-muted: oklch(44.4% 0.011 73.639deg); // #57534e
-  --ring: oklch(55.3% 0.013 58.071deg);
-  --accent: oklch(65% 0.259 46.59deg); // #ff3800 fills
-
-  // darker orange, readable as text on light
-  --accent-text: oklch(55% 0.22 42deg);
-  --accent-contrast: oklch(21.6% 0.006 56.043deg);
-  --accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
-  --shadow-lg: 0 6px 24px oklch(0% 0 0deg / 10%);
-  --backdrop-opacity: 0.09;
-}
+// ---------- theme ----------
+// index.html sets data-theme="dark" (default) or "light" before first paint.
+// The short names below are kept for the tools not yet moved to the kit.
 
 :root {
-  --bar-h: 52px;
+  --surface-0: var(--xz-bg);
+  --surface-1: var(--xz-surface);
+  --surface-2: var(--xz-surface-2);
+  --line: var(--xz-border);
+  --text: var(--xz-text);
+  --text-muted: var(--xz-text-muted);
+  --ring: var(--xz-focus);
+  --accent: var(--xz-accent);
+  --accent-text: var(--xz-accent-text);
+  --accent-contrast: var(--xz-on-accent);
+  --accent-soft: var(--xz-accent-soft);
+  --highlight: var(--xz-accent-2);
+  --highlight-text: var(--xz-accent-2-text);
+  --shadow-lg: 0 6px 24px var(--xz-shadow-color);
+  --backdrop-opacity: 0.09;
   --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-// ---------- base ----------
-
-body {
-  margin: 0;
-  background: var(--surface-0);
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3 {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-a {
-  color: var(--accent-text);
-}
-
-::selection {
-  background: color-mix(in oklch, var(--accent) 30%, transparent);
-  color: var(--text);
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+[data-theme="dark"] {
+  --backdrop-opacity: 0.07;
 }
 
 .sr-only {
@@ -97,24 +40,6 @@ a {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-.skip-link {
-  position: absolute;
-  left: 8px;
-  top: -40px;
-  z-index: 50;
-  padding: 8px 12px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-
-  &:focus {
-    top: 8px;
-  }
-}
-
-.page {
-  padding: 24px 16px 64px;
 }
 
 // ---------- logo (theme-swapped, see components/brand-logo.gts) ----------
@@ -129,15 +54,16 @@ a {
 }
 
 .brand-logo__light,
-html.light .brand-logo__dark {
+[data-theme="light"] .brand-logo__dark {
   display: none !important;
 }
 
-html.light .brand-logo__light {
+[data-theme="light"] .brand-logo__light {
   display: block !important;
 }
 
-// ---------- icons & buttons ----------
+// ---------- icons ----------
+// lucide svgs from components/icon.gts; kit buttons and links size them
 
 .icon {
   display: inline-flex;
@@ -149,41 +75,28 @@ html.light .brand-logo__light {
   }
 }
 
-.square-button {
-  display: grid;
-  place-items: center;
-  width: var(--bar-h);
-  height: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--surface-2);
-  }
-
-  .icon svg {
-    width: 20px;
-    height: 20px;
-  }
+.xz-btn .icon svg,
+.xz-sidebar__link .icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
+// old button classes, still used by a few tool screens
 .button,
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--text);
+  border: 1px solid var(--xz-border-control);
+  border-radius: var(--xz-radius-control);
   background: transparent;
-  color: var(--text);
+  color: var(--xz-text);
   font: inherit;
   text-decoration: none;
   cursor: pointer;
 
   &:hover {
-    border-color: var(--accent);
-    color: var(--accent-text);
+    border-color: var(--xz-border-strong);
   }
 }
 
@@ -202,7 +115,8 @@ html.light .brand-logo__light {
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 40px 16px 32px;
+  padding: 48px var(--xz-gutter) 40px;
+  border-bottom: 1px solid var(--xz-border);
 }
 
 .icon-backdrop {
@@ -213,7 +127,7 @@ html.light .brand-logo__light {
   grid-auto-rows: 46px;
   justify-content: center;
   pointer-events: none;
-  color: var(--text);
+  color: var(--xz-text);
   opacity: var(--backdrop-opacity);
   mask-image: linear-gradient(to bottom, #000 30%, transparent 95%);
 
@@ -239,6 +153,8 @@ html.light .brand-logo__light {
 
 .hero__inner {
   position: relative;
+  max-width: 44rem;
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -250,124 +166,89 @@ html.light .brand-logo__light {
   margin: 8px 0 28px;
 
   .hero__logo img {
-    width: clamp(84px, 14vw, 132px);
+    width: clamp(72px, 12vw, 112px);
     height: auto;
   }
 }
 
 .hero__wordmark {
-  font-size: clamp(48px, 9vw, 96px);
-  font-weight: 700;
+  font-family: var(--xz-font-display);
+  font-size: clamp(44px, 8vw, 88px);
+  font-weight: 800;
   line-height: 1;
   letter-spacing: -0.05em;
 
   span {
-    color: var(--accent);
+    color: var(--xz-accent-2-text);
   }
 }
 
 .hero__tagline {
   margin: 28px 0 8px;
-  font-size: 19px;
 }
 
 .hero__fine {
   margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-
-  a {
-    color: inherit;
-  }
 }
 
-// ---------- category strip + cell grid ----------
+// ---------- tool grid on the home page ----------
 
-.category {
-  margin-bottom: 24px;
-  border: 1px solid var(--line);
+.page {
+  padding: var(--xz-space-6) var(--xz-gutter) var(--xz-space-16, 64px);
 }
 
-.category__strip {
+.category + .category {
+  margin-top: var(--xz-space-10, 40px);
+}
+
+.category__head {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--xz-space-1) var(--xz-space-3);
+  margin: 0 0 var(--xz-space-4);
+}
+
+.category__head h2 {
   margin: 0;
-  padding: 8px 16px;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--line);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0;
-
-  .icon svg {
-    width: 14px;
-    height: 14px;
-  }
 }
 
-.category__desc {
-  margin-left: 8px;
-  color: var(--text-muted);
-  font-weight: 400;
-}
+.tool-cards {
+  --xz-grid-min: 260px;
 
-.cell-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  margin: 0 -1px -1px 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 
-  li {
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
+  > li {
+    display: grid;
   }
 }
 
-.cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  height: 100%;
-  padding: 20px 16px;
-  color: var(--text);
-  text-decoration: none;
-  transition: background-color 0.2s var(--ease-quart);
+.tool-card {
+  .xz-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--xz-space-1);
+  }
 
-  &:hover {
-    background: var(--accent-soft);
+  .icon {
+    margin-bottom: var(--xz-space-3);
+    color: var(--xz-accent-2-text);
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
   }
 }
 
-.cell__icon {
-  margin-bottom: 8px;
+.tool-card--soon {
+  border-style: dashed;
+  background: transparent;
 
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.cell__name {
-  color: var(--accent-text);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.cell__desc {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.cell--placeholder {
-  .cell__name {
-    color: var(--text);
-  }
-
-  &:hover {
-    background: none;
+  .icon {
+    color: var(--xz-text-muted);
   }
 }
 
@@ -375,15 +256,6 @@ html.light .brand-logo__light {
 
 .prose {
   max-width: 68ch;
-
-  h2 {
-    margin-top: 8px;
-    font-size: 28px;
-  }
-
-  li {
-    margin-bottom: 4px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

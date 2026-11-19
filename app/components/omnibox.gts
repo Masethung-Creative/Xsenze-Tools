@@ -180,7 +180,11 @@ export default class Omnibox extends Component {
       <div class="omnibox__message" role="status">
         <p>{{this.message}}</p>
         {{#each this.fileChoices as |tool|}}
-          <button type="button" class="chip" {{on "click" (fn this.open tool)}}>
+          <button
+            type="button"
+            class="xz-btn xz-btn--sm"
+            {{on "click" (fn this.open tool)}}
+          >
             <Icon @name={{tool.icon}} />
             {{tool.name}}
           </button>

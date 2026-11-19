@@ -1,12 +1,11 @@
-// The canon UI kit themed to the Xsenze palette.
-// The kit reads only --canon-* custom properties. Its own defaults use
-// `:root:not(.light)` inside a prefers-color-scheme query (0,2,0), so these
-// overrides use `html:root.x` (0,2,1) to always win.
+// The canon UI kit, kept for the tools not yet moved to the Xsenze UI Kit,
+// takes its colours and fonts from the Xsenze kit tokens. The canon kit's own
+// defaults use `:root:not(.light)` inside a prefers-color-scheme query
+// (0,2,0), so these use `html:root[data-theme]` (0,2,1) to always win.
 
-html:root {
-  --canon-font:
-    "Space Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --canon-mono-font: ui-monospace, "Cascadia Mono", menlo, consolas, monospace;
+html:root[data-theme] {
+  --canon-font: var(--xz-font-sans);
+  --canon-mono-font: var(--xz-font-mono);
   // the kit's segment readout font is not shipped; a mono keeps digits steady
   --canon-segment-font: var(--canon-mono-font);
   --canon-text-title2: 21px;
@@ -16,42 +15,21 @@ html:root {
   --canon-text-subheadline: 13px;
   --canon-text-footnote: 12px;
   --canon-text-caption: 11px;
-}
 
-html:root.dark {
-  --canon-background: oklch(14.7% 0.004 49.25deg);
-  --canon-foreground: oklch(98.5% 0.001 106.423deg);
-  --canon-card: oklch(21.6% 0.006 56.043deg);
-  --canon-muted: oklch(26.8% 0.007 34.298deg);
-  --canon-muted-foreground: oklch(70.9% 0.01 56.259deg);
-  --canon-secondary-foreground: oklch(92% 0.004 56deg);
-  --canon-accent-bg: color-mix(
-    in oklch,
-    oklch(65% 0.259 46.59deg) 18%,
-    oklch(21.6% 0.006 56.043deg)
-  );
-  --canon-border: oklch(33% 0.008 50deg);
-  --canon-primary: oklch(65% 0.259 46.59deg);
-  --canon-primary-foreground: oklch(21.6% 0.006 56.043deg);
-  --canon-destructive: oklch(65% 0.2 22deg);
-  --canon-copied: oklch(72% 0.17 150deg);
-  --canon-paper: oklch(21.6% 0.006 56.043deg);
-}
-
-html:root.light {
-  --canon-background: oklch(98.5% 0.001 106.423deg);
-  --canon-foreground: oklch(14.7% 0.004 49.25deg);
-  --canon-card: oklch(100% 0 0deg);
-  --canon-muted: oklch(94.5% 0.003 48.717deg);
-  --canon-muted-foreground: oklch(44.4% 0.011 73.639deg);
-  --canon-secondary-foreground: oklch(26.8% 0.007 34.298deg);
-  --canon-accent-bg: color-mix(in oklch, oklch(65% 0.259 46.59deg) 12%, white);
-  --canon-border: oklch(86.9% 0.005 56.366deg);
-  // a deeper orange: it is also used as text, which #ff3800 is too light for
-  --canon-primary: oklch(57% 0.23 41deg);
-  --canon-primary-foreground: oklch(100% 0 0deg);
-  --canon-destructive: oklch(55% 0.21 25deg);
-  --canon-copied: oklch(55% 0.15 150deg);
+  // colours from the Xsenze UI Kit, which follow its data-theme switch
+  --canon-background: var(--xz-bg);
+  --canon-foreground: var(--xz-text);
+  --canon-card: var(--xz-surface);
+  --canon-muted: var(--xz-surface-2);
+  --canon-muted-foreground: var(--xz-text-muted);
+  --canon-secondary-foreground: var(--xz-text);
+  --canon-accent-bg: var(--xz-accent-soft);
+  --canon-border: var(--xz-border);
+  --canon-primary: var(--xz-accent);
+  --canon-primary-foreground: var(--xz-on-accent);
+  --canon-destructive: var(--xz-danger-text);
+  --canon-copied: var(--xz-success-text);
+  --canon-paper: var(--xz-surface);
 }
 
 // ---------- tool container ----------

@@ -3,13 +3,23 @@
   width: 100%;
   max-width: 672px;
   margin: 0 auto;
-  border: 2px solid var(--accent);
-  background: var(--surface-0);
-  transition: box-shadow 0.2s var(--ease-quart);
+  overflow: hidden;
+  border: 1px solid var(--xz-border-strong);
+  border-radius: var(--xz-radius-surface);
+  background: var(--xz-surface);
+  box-shadow: 4px 4px 0 var(--xz-accent-2);
+  transition: box-shadow var(--xz-duration-fast) var(--xz-ease-out);
+}
+
+.omnibox:focus-within {
+  box-shadow:
+    4px 4px 0 var(--xz-accent-2),
+    0 0 0 3px var(--xz-accent-2-soft);
 }
 
 .omnibox--drag {
-  box-shadow: 0 0 0 6px var(--accent-soft);
+  border-color: var(--xz-accent-2);
+  box-shadow: 0 0 0 6px var(--xz-accent-2-soft);
 }
 
 .omnibox__field input {
@@ -19,21 +29,21 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--xz-text);
   font: inherit;
-  font-size: 20px;
+  font-size: var(--xz-font-size-lg);
   text-align: center;
 }
 
 .omnibox__field input::placeholder {
-  color: var(--text-muted);
+  color: var(--xz-text-muted);
 }
 
 .omnibox__actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--line);
-  background: var(--surface-1);
+  border-top: 1px solid var(--xz-border);
+  background: var(--xz-surface-2);
 }
 
 .omnibox__action {
@@ -44,20 +54,21 @@
   height: 44px;
   border: 0;
   background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 14px;
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-display);
+  font-size: var(--xz-font-size-sm);
+  font-weight: var(--xz-font-weight-medium);
   cursor: pointer;
 }
 
 .omnibox__action + .omnibox__action {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--xz-border);
 }
 
 .omnibox__action:hover,
 .omnibox__action:focus-within {
-  background: var(--surface-2);
-  color: var(--text);
+  background: var(--xz-surface-3);
+  color: var(--xz-text);
 }
 
 .omnibox__action .icon svg {
@@ -69,7 +80,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--xz-border);
 }
 
 .omnibox__results button {
@@ -80,7 +91,7 @@
   padding: 10px 20px;
   border: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--xz-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -88,17 +99,17 @@
 
 .omnibox__results button:hover,
 .omnibox__results li:first-child button {
-  background: var(--surface-2);
+  background: var(--xz-surface-2);
 }
 
 .omnibox__results span {
-  color: var(--text-muted);
+  color: var(--xz-text-muted);
   font-size: 13px;
 }
 
 .omnibox__none {
   padding: 12px 20px;
-  color: var(--text-muted);
+  color: var(--xz-text-muted);
   font-size: 14px;
 }
 
@@ -111,7 +122,7 @@
   max-width: 672px;
   margin: 12px auto 0;
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--xz-text-muted);
 }
 
 .omnibox__message p {
@@ -129,6 +140,6 @@
 
   .omnibox__action + .omnibox__action {
     border-left: 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--xz-border);
   }
 }

@@ -1,7 +1,7 @@
 # Xsenze Tools: notes for Claude
 
-Browser-only creative tools site (Ember 7 + Vite + Embroider, TS + Glint, SCSS + crayon-css,
-lucide-static). See README.md for the stack and the "Adding a tool" steps.
+Browser-only creative tools site (Ember 7 + Vite + Embroider, TS + Glint, SCSS, the user's own
+Xsenze UI Kit, lucide-static). See README.md for the stack and the "Adding a tool" steps.
 
 Rules:
 
@@ -9,9 +9,8 @@ Rules:
 - `app/lib/tools.ts` is the single source of truth for categories and tools.
 - Tool UIs are lazy-loaded via `app/lib/tool-components.ts`; import heavy libs (mediabunny, etc.)
   inside the tool component so they stay out of the main bundle.
-- Components are strict-mode `.gts`. Styles: theme tokens/shared blocks in `app/styles/app.scss`,
-  component styles as co-located plain `.css` using the CSS variables (do not `@use` crayon in
-  component files; it re-emits the whole utility sheet).
+- Components are strict-mode `.gts`. Styles: site-wide blocks in `app/styles/app.scss`, component
+  styles as co-located plain `.css` using the kit's `--xz-*` variables.
 - Transformers.js: always set `env.backends.onnx.wasm.wasmPaths` to the bundled `ort-wasm` URL (the
   library defaults to a CDN). Run long model work in a Web Worker (see `lib/nllb.worker.ts`).
 - Raw ONNX code (no Transformers.js) loads the runtime via `loadOrt()` in `lib/dub/ort.ts`: a
@@ -30,15 +29,19 @@ Rules:
 
 Design:
 
-- Dense full-bleed sidebar (Ctrl K search, active row filled with accent), top bar with page
-  title + square icon buttons, home omnibox over a faint icon backdrop, category strip + square
-  bordered cell grid. Square corners, 1px borders.
-- Colours + font come from the Masethung R portfolio (masethung-r-portfolio.vercel.app):
-  Space Grotesk (bundled via @fontsource-variable, no Google request); orange #ff3800 on warm
-  stone neutrals. Dark is the default theme; light theme uses the same family. Tokens live in
-  `app/styles/app.scss`. Use `--accent-text` (not `--accent`) for orange text on light.
-- Tool UIs use the canon UI kit (`delphicanon` package). Its `--canon-*` tokens are mapped to
-  our palette in `app/styles/_canon.scss`.
+- The UI is the user's own **Xsenze UI Kit** (docs: xsenze-ui.vercel.app/docs). Its built files
+  are bundled in `vendor/xsenze-ui/` (no CDN); `app/app.ts` imports `xsenze.min.css` (the
+  build runs out of memory on the readable `xsenze.css`, which is kept for reading class names).
+  Use its `xz-` classes and `--xz-*` tokens. Ember drives behaviour; the kit's script is not
+  loaded.
+- Kit defaults, as the user chose: main buttons black (light) or white (dark), orange
+  (`--xz-accent-2`, text `--xz-accent-2-text`) only for highlights, Plus Jakarta Sans headings,
+  Space Grotesk body, the kit's corner rounding. Dark is the default theme; `data-theme` on
+  <html> (plus the old `dark`/`light` class) is set in `index.html`.
+- Shell: the kit's `xz-shell` with `xz-sidebar` (drawer below 1024px), `xz-navbar` top bar; only
+  the content area scrolls. Home: omnibox over a faint icon backdrop, then `xz-card` tool cards.
+- The site is moving from the canon UI kit (`delphicanon`) to the Xsenze kit tool by tool. Until
+  a tool moves, its `--canon-*` tokens follow the Xsenze tokens (`app/styles/_canon.scss`).
 
 Tools (Audio, Video and Image categories, built one at a time, user reviews each; PDF, Dev Tools,
 Other Tools, Xsenze UI Kit, Paths and Roadmap are empty categories that show Coming soon, with
