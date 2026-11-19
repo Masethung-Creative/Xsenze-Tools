@@ -2,11 +2,11 @@
 .ss-types {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--canon-hairline);
+  gap: 1px;
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--canon-border);
+  background: var(--xz-border);
 }
 
 .ss-types li {
@@ -21,8 +21,8 @@
   inline-size: 100%;
   padding: 20px 16px;
   border: 0;
-  background: var(--canon-card);
-  color: var(--canon-foreground);
+  background: var(--xz-surface);
+  color: var(--xz-text);
   font: inherit;
   text-align: start;
   cursor: pointer;
@@ -30,22 +30,22 @@
 }
 
 .ss-type:hover {
-  background: var(--canon-accent-bg);
+  background: var(--xz-accent-2-soft);
 }
 
 .ss-type:focus-visible {
-  outline: 2px solid var(--canon-primary);
+  outline: 2px solid var(--xz-accent-2);
   outline-offset: -2px;
 }
 
 .ss-type--on {
-  background: var(--canon-accent-bg);
-  box-shadow: inset 3px 0 0 var(--canon-primary);
+  background: var(--xz-accent-2-soft);
+  box-shadow: inset 3px 0 0 var(--xz-accent-2);
 }
 
 .ss-type-icon {
   margin-block-end: 6px;
-  color: var(--canon-primary);
+  color: var(--xz-accent-2-text);
 }
 
 .ss-type-icon svg {
@@ -54,15 +54,15 @@
 }
 
 .ss-type-name {
-  color: var(--canon-primary);
+  color: var(--xz-accent-2-text);
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .ss-type-desc {
-  color: var(--canon-muted-foreground);
-  font-size: var(--canon-text-subheadline);
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
   line-height: 1.4;
 }
 
@@ -71,8 +71,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-inline-end: var(--canon-panel-padding);
-  color: var(--canon-muted-foreground);
+  padding-inline-end: var(--xz-panel-pad, var(--xz-space-4));
+  color: var(--xz-text-muted);
 }
 
 .ss-locked .icon svg {
@@ -84,8 +84,8 @@
 .ss-group {
   display: flex;
   flex-direction: column;
-  gap: var(--canon-hairline);
-  background: var(--canon-border);
+  gap: 1px;
+  background: var(--xz-border);
 }
 
 .ss-group-head {
@@ -93,8 +93,8 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 10px;
-  padding: 12px var(--canon-panel-padding);
-  background: var(--canon-card);
+  padding: 12px var(--xz-panel-pad, var(--xz-space-4));
+  background: var(--xz-surface);
   cursor: pointer;
 }
 
@@ -103,32 +103,32 @@
 }
 
 .ss-group-meta {
-  color: var(--canon-muted-foreground);
-  font-size: var(--canon-text-subheadline);
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
 }
 
 /* a bible item or a part: its rows, hairlines between */
 .ss-card {
   display: flex;
   flex-direction: column;
-  gap: var(--canon-hairline);
-  background: var(--canon-border);
+  gap: 1px;
+  background: var(--xz-border);
 }
 
 /* prompts are prose: wrap them rather than scroll sideways */
-.ss-prompt .canon-code-block-code {
+.ss-prompt .xz-codeblock__pre {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
 /* the story reads in the text font, not the code font */
 .story-studio .ss-story {
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-body);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-sm);
   line-height: 1.5;
 }
 
 /* Saved projects: a shorter drop area, so the list starts higher */
-.ss-projects .canon-drop-zone {
-  --canon-drop-height: 104px;
+.ss-projects .xz-dropzone {
+  --xz-drop-height: 104px;
 }

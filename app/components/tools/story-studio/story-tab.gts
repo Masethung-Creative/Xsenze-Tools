@@ -4,20 +4,20 @@ import { service } from '@ember/service';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
-import type CanonToastService from 'delphicanon/services/canon-toast';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCodeBlock from 'delphicanon/components/canon-code-block';
-import CanonDialog from 'delphicanon/components/canon-dialog';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
-import CanonTextArea from 'delphicanon/components/canon-text-area';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import type XzToastService from 'xsenze-tools/services/xz-toast';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCodeBlock from 'xsenze-tools/components/xz/code-block';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
+import XzTextArea from 'xsenze-tools/components/xz/text-area';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import PartsEditor, {
   type PartField,
 } from 'xsenze-tools/components/tools/story-studio/parts-editor';
@@ -62,7 +62,7 @@ export interface StoryTabSignature {
 
 /** The story, the chatbot steps that read it, and what they filled in. */
 export default class StoryTab extends Component<StoryTabSignature> {
-  @service('canon-toast') declare toast: CanonToastService;
+  @service('xz-toast') declare toast: XzToastService;
 
   @tracked passIndex = 0;
   @tracked showsPrompt = false;
@@ -304,100 +304,92 @@ export default class StoryTab extends Component<StoryTabSignature> {
   toBible = () => this.args.onTab(TAB.bible);
 
   <template>
-    <CanonSplit class="story-studio">
+    <XzSplit class="story-studio">
       <:sidebar>
         <TabBar @selected={{@tab}} @onChange={{@onTab}} />
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Read with a chatbot" />
-          <CanonStatus
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Read with a chatbot" />
+          <XzStatus
             @text="Copy the prompt into free ChatGPT, Gemini or Claude. Paste its whole answer below, then press Fill."
             @tone="muted"
             @row={{true}}
           />
-          <CanonRow @title="Step" @form="flush" as |titleId|>
-            <CanonMenuCell
+          <XzRow @title="Step" @form="flush" as |titleId|>
+            <XzMenuCell
               @items={{this.passItems}}
               @selected={{this.selectedPass}}
               @labelledBy={{titleId}}
               @onChange={{this.pickPass}}
             />
-          </CanonRow>
+          </XzRow>
           {{#if this.writing}}
-            <CanonRow @title="Your idea" @form="stacked" as |titleId|>
-              <CanonTextCell
+            <XzRow @title="Your idea" @form="stacked" as |titleId|>
+              <XzTextCell
                 @value={{this.idea}}
                 @placeholder="What the story is about, in one line"
                 @onChange={{this.setIdea}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
           {{#if this.needsStory}}
-            <CanonStatus
+            <XzStatus
               @text="Paste your story first, on the right."
               @tone="warn"
               @row={{true}}
             />
           {{/if}}
-          <CanonButton @text="Copy prompt" @onClick={{this.copyPrompt}} />
-          <CanonRow @title="Show the prompt" as |titleId|>
-            <CanonSwitch
+          <XzButton @text="Copy prompt" @onClick={{this.copyPrompt}} />
+          <XzRow @title="Show the prompt" as |titleId|>
+            <XzSwitch
               @on={{this.showsPrompt}}
               @onChange={{this.showPrompt}}
               aria-labelledby={{titleId}}
             />
-          </CanonRow>
+          </XzRow>
           {{#if this.showsPrompt}}
-            <CanonCodeBlock
+            <XzCodeBlock
               class="ss-prompt"
               @code={{this.prompt}}
               @maxHeight={{320}}
             />
           {{/if}}
-          <CanonHeading @text="The chatbot’s answer" />
-          <CanonTextArea
+          <XzHeading @text="The chatbot’s answer" />
+          <XzTextArea
             @value={{this.answer}}
             @placeholder="Paste the whole answer here"
             @height={{180}}
             @onChange={{this.setAnswer}}
             aria-label="The chatbot’s answer"
           />
-          <CanonGrid>
+          <XzGrid>
             <PasteClear @text={{this.answer}} @onChange={{this.setAnswer}} />
-            <CanonButton @kind="primary" @text="Fill" @onClick={{this.fill}} />
-          </CanonGrid>
+            <XzButton @kind="primary" @text="Fill" @onClick={{this.fill}} />
+          </XzGrid>
           {{#if this.error}}
-            <CanonStatus @text={{this.error}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{this.error}} @tone="warn" @row={{true}} />
           {{/if}}
           {{#if this.report}}
-            <CanonStatus
-              @text={{this.report.filled}}
-              @tone="ok"
-              @row={{true}}
-            />
+            <XzStatus @text={{this.report.filled}} @tone="ok" @row={{true}} />
             {{#each this.report.problems as |problem|}}
-              <CanonStatus @text={{problem}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{problem}} @tone="warn" @row={{true}} />
             {{/each}}
             {{#if this.nextStep}}
-              <CanonStatus
-                @text={{this.nextStep}}
-                @tone="muted"
-                @row={{true}}
-              />
+              <XzStatus @text={{this.nextStep}} @tone="muted" @row={{true}} />
             {{/if}}
           {{/if}}
           {{#if this.allRead}}
-            <CanonButton
+            <XzButton
               @text="Check the list on the Bible tab"
               @onClick={{this.toBible}}
             />
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Your story" />
-          <CanonTextArea
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Your story" />
+          <XzTextArea
             class="ss-story"
             @value={{@project.story}}
             @placeholder="Paste your story or script here, or drop a file: Word, PDF, text, script, subtitles, web page, e-book, or a recording"
@@ -407,67 +399,63 @@ export default class StoryTab extends Component<StoryTabSignature> {
             {{on "dragover" this.dragOver}}
             {{on "drop" this.dropped}}
           />
-          <CanonGrid>
+          <XzGrid>
             <PasteClear @text={{@project.story}} @onChange={{this.setStory}} />
-            <CanonButton
+            <XzButton
               @text="Open file"
               @icon={{FileIcon}}
               @disabled={{if this.reading true false}}
               @onClick={{this.openStoryFile}}
             />
-          </CanonGrid>
+          </XzGrid>
           {{#if this.reading}}
-            <CanonStatus @text={{this.reading}} @tone="muted" @row={{true}} />
+            <XzStatus @text={{this.reading}} @tone="muted" @row={{true}} />
           {{/if}}
           {{#if this.readNote}}
-            <CanonStatus @text={{this.readNote}} @tone="ok" @row={{true}} />
+            <XzStatus @text={{this.readNote}} @tone="ok" @row={{true}} />
           {{/if}}
           {{#if this.readProblem}}
-            <CanonStatus
-              @text={{this.readProblem}}
-              @tone="warn"
-              @row={{true}}
-            />
+            <XzStatus @text={{this.readProblem}} @tone="warn" @row={{true}} />
           {{/if}}
-          <CanonStatus @text={{this.storyStats}} @tone="muted" @row={{true}} />
-        </CanonRows>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Outline" />
+          <XzStatus @text={{this.storyStats}} @tone="muted" @row={{true}} />
+        </XzRows>
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Outline" />
           <PartsEditor @project={{@project}} @onChange={{this.setPart}} />
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
 
-    <CanonDialog
+    <XzDialog
       @open={{this.hasIncoming}}
       @title="You already have a story here"
       @message={{this.incomingText}}
       @onClose={{this.incomingClosed}}
     >
       <:footer as |close|>
-        <CanonButton @text="Add to the end" @onClick={{fn close "add"}} />
-        <CanonButton
+        <XzButton @text="Add to the end" @onClick={{fn close "add"}} />
+        <XzButton
           @kind="primary"
           @text="Replace"
           @onClick={{fn close "replace"}}
         />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
 
-    <CanonDialog
+    <XzDialog
       @open={{this.hasMedia}}
       @title="Hear the story in this recording?"
       @message={{this.mediaText}}
       @onClose={{this.mediaClosed}}
     >
       <:footer as |close|>
-        <CanonButton @text="Cancel" @onClick={{fn close ""}} />
-        <CanonButton
+        <XzButton @text="Cancel" @onClick={{fn close ""}} />
+        <XzButton
           @kind="primary"
           @text="Turn into text"
           @onClick={{fn close "listen"}}
         />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

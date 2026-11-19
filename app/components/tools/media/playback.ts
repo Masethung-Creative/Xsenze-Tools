@@ -1,6 +1,6 @@
 import { tracked } from '@glimmer/tracking';
 import { modifier } from 'ember-modifier';
-import type { CanonTransport } from 'delphicanon/components/canon-readout-band';
+import type { XzTransport } from 'xsenze-tools/components/xz/readout-band';
 
 /**
  * Play, Pause, Stop, Loop and
@@ -22,7 +22,7 @@ export default class Playback {
   #media?: HTMLMediaElement;
   #frame = 0;
 
-  get transport(): CanonTransport {
+  get transport(): XzTransport {
     return {
       playhead: this.playhead,
       playing: this.playing,

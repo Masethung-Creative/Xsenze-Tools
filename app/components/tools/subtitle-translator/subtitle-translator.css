@@ -4,11 +4,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: var(--canon-panel-padding);
+  column-gap: var(--xz-panel-pad, var(--xz-space-4));
   box-sizing: border-box;
   block-size: 100%;
   padding-block: 10px;
-  padding-inline: var(--canon-panel-padding);
+  padding-inline: var(--xz-panel-pad, var(--xz-space-4));
 }
 
 .st-timeline {
@@ -33,12 +33,12 @@
 
 .st-tick {
   display: inline-flex;
-  color: var(--canon-primary);
+  color: var(--xz-accent-2-text);
 }
 
 /* on the highlighted row the tick takes the row's text colour */
-.canon-command-item[data-active] .st-tick {
-  color: var(--canon-primary-foreground);
+.xz-command-palette__option[data-active] .st-tick {
+  color: var(--xz-on-accent-2);
 }
 
 .st-tick svg {
@@ -46,8 +46,8 @@
   block-size: 16px;
 }
 
-.st-language-pick .canon-button-title,
-.st-target .canon-row-title {
+.st-language-pick .xz-button__title,
+.st-target .xz-panel__key {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -58,14 +58,14 @@
   display: inline-flex;
   gap: 10px;
   align-items: center;
-  color: var(--canon-muted-foreground);
-  font-size: var(--canon-text-footnote);
-  font-weight: var(--canon-weight-semibold);
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
 .st-job-cell {
-  padding-inline: var(--canon-panel-padding);
+  padding-inline: var(--xz-panel-pad, var(--xz-space-4));
 }
 
 .st-bar {
@@ -73,21 +73,21 @@
 }
 
 /* queue rows: waiting and stopped languages read quieter */
-.st-job--waiting .canon-row-title,
-.st-job--stopped .canon-row-title {
-  color: var(--canon-muted-foreground);
+.st-job--waiting .xz-panel__key,
+.st-job--stopped .xz-panel__key {
+  color: var(--xz-text-muted);
 }
 
-.st-job--failed .canon-row-detail {
-  color: var(--canon-destructive, var(--canon-primary));
+.st-job--failed .xz-panel__hint {
+  color: var(--xz-danger-text);
 }
 
 /* the reviewed cues scroll inside the panel */
 .st-lines {
   display: flex;
   flex-direction: column;
-  gap: var(--canon-hairline);
+  gap: 1px;
   max-block-size: 520px;
   overflow-y: auto;
-  background: var(--canon-border);
+  background: var(--xz-border);
 }

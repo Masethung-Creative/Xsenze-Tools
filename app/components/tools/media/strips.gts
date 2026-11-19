@@ -3,7 +3,7 @@ import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
-import { readoutBandHeight } from 'delphicanon/components/canon-readout-band';
+import { readoutBandHeight } from 'xsenze-tools/components/xz/readout-band';
 import { drawWaveform, type WaveformPeaks } from 'xsenze-tools/lib/audio';
 import { formatTimestamp } from 'xsenze-tools/lib/subtitles';
 import { spread } from 'xsenze-tools/components/tools/media/frames';

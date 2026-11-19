@@ -2,7 +2,7 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import {
   digitsOf,
   fieldWidth,
@@ -82,7 +82,7 @@ export default class TimecodeField extends Component<TimecodeFieldSignature> {
   };
 
   <template>
-    <CanonTextCell
+    <XzTextCell
       class="tcc-field"
       inputmode="numeric"
       autocomplete="off"

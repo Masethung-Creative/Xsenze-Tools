@@ -2,16 +2,16 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import type Owner from '@ember/owner';
-import CanonCodeBlock from 'delphicanon/components/canon-code-block';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
-import CanonTiles, { type CanonTile } from 'delphicanon/components/canon-tiles';
+import XzCodeBlock from 'xsenze-tools/components/xz/code-block';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
+import XzTiles, { type XzTile } from 'xsenze-tools/components/xz/tiles';
 import TabBar from 'xsenze-tools/components/tools/story-studio/tab-bar';
 import type { ProjectStore } from 'xsenze-tools/lib/story/project-store';
 import {
@@ -120,7 +120,7 @@ export default class AssetsTab extends Component<AssetsTabSignature> {
       : this.all;
   }
 
-  get tiles(): CanonTile[] {
+  get tiles(): XzTile[] {
     const all = this.all;
     return [
       {
@@ -161,120 +161,120 @@ export default class AssetsTab extends Component<AssetsTabSignature> {
   };
 
   <template>
-    <CanonSplit class="story-studio">
+    <XzSplit class="story-studio">
       <:sidebar>
         <TabBar @selected={{@tab}} @onChange={{@onTab}} />
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Picture prompts" />
-          <CanonRow @title="Image model" @form="stacked">
-            <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Picture prompts" />
+          <XzRow @title="Image model" @form="stacked">
+            <XzSegmented
               aria-label="Image model"
               @items={{this.modelNames}}
               @selected={{this.modelIndex}}
               @onChange={{this.pickModel}}
             />
-          </CanonRow>
+          </XzRow>
           {{#if this.manyShapes}}
-            <CanonRow @title="Screen shape" @form="stacked">
-              <CanonSegmented
+            <XzRow @title="Screen shape" @form="stacked">
+              <XzSegmented
                 aria-label="Screen shape"
                 @items={{this.shapeNames}}
                 @selected={{this.shapeIndex}}
                 @onChange={{this.pickShape}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonRow @title="Show" @form="stacked">
-            <CanonSegmented
+          <XzRow @title="Show" @form="stacked">
+            <XzSegmented
               aria-label="Show"
               @items={{this.show}}
               @selected={{this.showIndex}}
               @onChange={{this.pickShow}}
             />
-          </CanonRow>
-          <CanonTiles @items={{this.tiles}} />
-          <CanonStatus
+          </XzRow>
+          <XzTiles @items={{this.tiles}} />
+          <XzStatus
             @text="Make the style frame first, then the characters, background people, places and props. After each picture, add its web link (Midjourney) or file name (Gemini, GPT): later prompts use it to keep everything the same."
             @tone="muted"
             @row={{true}}
           />
-          <CanonStatus
+          <XzStatus
             @text="Sheets are always 16:9 and props 1:1: they are references, not frames. Portraits, places and the style frame follow the screen shape."
             @tone="muted"
             @row={{true}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
         {{#if this.noList}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Pictures" />
-            <CanonEmptyRow
+          <XzRows @framed={{true}}>
+            <XzHeading @text="Pictures" />
+            <XzEmptyRow
               @text="Read the story on the Story tab first: the characters, places and props come from there."
             />
-          </CanonRows>
+          </XzRows>
         {{/if}}
         {{#if this.allDone}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Pictures" />
-            <CanonEmptyRow
+          <XzRows @framed={{true}}>
+            <XzHeading @text="Pictures" />
+            <XzEmptyRow
               @text="Every picture has a link or file name. Pick All to see them."
             />
-          </CanonRows>
+          </XzRows>
         {{/if}}
         {{#each this.cards key="id" as |card|}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text={{card.heading}} />
+          <XzRows @framed={{true}}>
+            <XzHeading @text={{card.heading}} />
             {{#if card.have}}
-              <CanonStatus
+              <XzStatus
                 @text="You have this picture. Add its link or file name, so later prompts can use it."
                 @tone="muted"
                 @row={{true}}
               />
             {{/if}}
             {{#each card.prompts key="key" as |p|}}
-              <CanonRow @title={{p.title}} @detail="Save as {{p.saveAs}}" />
-              <CanonCodeBlock class="ss-prompt" @code={{p.text}} />
+              <XzRow @title={{p.title}} @detail="Save as {{p.saveAs}}" />
+              <XzCodeBlock class="ss-prompt" @code={{p.text}} />
               {{#if p.attach.length}}
-                <CanonStatus
+                <XzStatus
                   @text="Attach: {{join p.attach}}"
                   @tone="muted"
                   @row={{true}}
                 />
               {{/if}}
               {{#each p.notes as |note|}}
-                <CanonStatus @text={{note}} @tone="warn" @row={{true}} />
+                <XzStatus @text={{note}} @tone="warn" @row={{true}} />
               {{/each}}
             {{/each}}
-            <CanonRow
+            <XzRow
               @title="Web link"
               @detail="For Midjourney --oref and --sref"
               @form="flush"
               as |titleId|
             >
-              <CanonTextCell
+              <XzTextCell
                 @value={{card.ref.link}}
                 @placeholder="https://…"
                 @onChange={{fn this.setRef card.id "link"}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
-            <CanonRow
+            </XzRow>
+            <XzRow
               @title="File name"
               @detail="For Gemini and GPT attachments"
               @form="flush"
               as |titleId|
             >
-              <CanonTextCell
+              <XzTextCell
                 @value={{card.ref.file}}
                 @placeholder={{card.filePlaceholder}}
                 @onChange={{fn this.setRef card.id "file"}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
-          </CanonRows>
+            </XzRow>
+          </XzRows>
         {{/each}}
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

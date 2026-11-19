@@ -4,18 +4,18 @@ import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import type Owner from '@ember/owner';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonColourWell from 'delphicanon/components/canon-colour-well';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonNumberField from 'delphicanon/components/canon-number-field';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTiles from 'delphicanon/components/canon-tiles';
-import { hex, parseHex, type Rgb } from 'delphicanon/lib/colour';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzColourWell from 'xsenze-tools/components/xz/colour-well';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzNumberField from 'xsenze-tools/components/xz/number-field';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
+import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob, downloadText } from 'xsenze-tools/lib/download';
@@ -262,7 +262,7 @@ export default class WaveformGenny extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="waveform-genny"
       @collapsesTo={{120}}
       {{filePaste this.intake.load accept=ACCEPT}}
@@ -271,7 +271,7 @@ export default class WaveformGenny extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @aspect={{this.ratio}} @background="var(--canon-muted)">
+        <XzCanvas @aspect={{this.ratio}} @background="var(--xz-surface-2)">
           <div class="wg-picture" style={{this.ratioStyle}}>
             <canvas
               class="wg-image"
@@ -280,25 +280,25 @@ export default class WaveformGenny extends Component {
               {{this.paint}}
             ></canvas>
           </div>
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="wg-source {{if this.intake.error 'wg-source--failed'}}"
               @title={{this.intake.fileName}}
               @detail={{this.detailText}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.intake.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="wg-slot"
@@ -310,15 +310,15 @@ export default class WaveformGenny extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.intake.error}}
-              <CanonStatus
+              <XzStatus
                 @text={{this.intake.error}}
                 @tone="warn"
                 @row={{true}}
               />
             {{/if}}
           {{/if}}
-          <CanonHeading @text="Size" />
-          <CanonSegmented
+          <XzHeading @text="Size" />
+          <XzSegmented
             class="wg-sizes"
             @items={{sizeLabels}}
             @selected={{this.size}}
@@ -326,13 +326,8 @@ export default class WaveformGenny extends Component {
             @onChange={{this.pickSize}}
           />
           {{#if this.isCustom}}
-            <CanonRow
-              class="wg-width"
-              @title="Width"
-              @form="flush"
-              as |titleId|
-            >
-              <CanonNumberField
+            <XzRow class="wg-width" @title="Width" @form="flush" as |titleId|>
+              <XzNumberField
                 @value={{this.customWidth}}
                 @min={{CUSTOM_MIN}}
                 @max={{CUSTOM_MAX}}
@@ -341,14 +336,9 @@ export default class WaveformGenny extends Component {
                 @labelledBy={{titleId}}
                 @onChange={{this.setCustomWidth}}
               />
-            </CanonRow>
-            <CanonRow
-              class="wg-height"
-              @title="Height"
-              @form="flush"
-              as |titleId|
-            >
-              <CanonNumberField
+            </XzRow>
+            <XzRow class="wg-height" @title="Height" @form="flush" as |titleId|>
+              <XzNumberField
                 @value={{this.customHeight}}
                 @min={{CUSTOM_MIN}}
                 @max={{CUSTOM_MAX}}
@@ -357,36 +347,36 @@ export default class WaveformGenny extends Component {
                 @labelledBy={{titleId}}
                 @onChange={{this.setCustomHeight}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonHeading @text="Detail" />
-          <CanonSegmented
+          <XzHeading @text="Detail" />
+          <XzSegmented
             class="wg-details"
             @items={{detailLabels}}
             @selected={{this.detail}}
             @onChange={{this.pickDetail}}
           />
-          <CanonHeading @text="Colours" />
-          <CanonColourWell
+          <XzHeading @text="Colours" />
+          <XzColourWell
             class="wg-wave"
             @label="Wave"
             @colour={{this.wave}}
             @onChange={{this.setWave}}
           />
-          <CanonColourWell
+          <XzColourWell
             class="wg-background"
             @label="Background"
             @colour={{this.background}}
             @onChange={{this.setBackground}}
           />
-          <CanonHeading @text="Format" />
-          <CanonSegmented
+          <XzHeading @text="Format" />
+          <XzSegmented
             class="wg-formats"
             @items={{FORMATS}}
             @selected={{this.format}}
             @onChange={{this.pickFormat}}
           />
-          <CanonButton
+          <XzButton
             class="wg-download"
             @kind="primary"
             @text={{this.exportLabel}}
@@ -395,16 +385,16 @@ export default class WaveformGenny extends Component {
             @disabled={{this.undecoded}}
             @onClick={{this.download}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows class="wg-readings" @framed={{true}}>
-          <CanonHeading @text="Audio" />
-          <CanonTiles class="wg-audio" @items={{this.audioTiles}} />
-          <CanonHeading @text="Image" />
-          <CanonTiles class="wg-image-tiles" @items={{this.imageTiles}} />
-        </CanonRows>
+        <XzRows class="wg-readings" @framed={{true}}>
+          <XzHeading @text="Audio" />
+          <XzTiles class="wg-audio" @items={{this.audioTiles}} />
+          <XzHeading @text="Image" />
+          <XzTiles class="wg-image-tiles" @items={{this.imageTiles}} />
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

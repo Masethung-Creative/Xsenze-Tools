@@ -1,0 +1,40 @@
+/* what the kit's modal lacks: a header slot, a message line, the close motion */
+.xz-dialog:focus {
+  outline: none;
+}
+
+.xz-dialog .xz-modal__header {
+  flex: none;
+}
+
+.xz-dialog__extra {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--xz-space-2);
+  padding: var(--xz-space-3) var(--xz-space-5);
+  border-bottom: 1px solid var(--xz-border);
+}
+
+.xz-dialog__message {
+  flex: none;
+  margin: 0;
+  padding: var(--xz-space-4) var(--xz-space-5) 0;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-sm);
+  line-height: var(--xz-line-height-snug);
+}
+
+.xz-dialog__message:last-child {
+  padding-bottom: var(--xz-space-4);
+}
+
+.xz-dialog .xz-modal__body {
+  min-block-size: 0;
+  overscroll-behavior: contain;
+}
+
+/* the alert's message sits in its body */
+.xz-modal--alert .xz-dialog__message {
+  padding: 0;
+}

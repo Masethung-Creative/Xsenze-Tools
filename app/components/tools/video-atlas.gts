@@ -3,15 +3,15 @@ import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { service } from '@ember/service';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import type CanonToastService from 'delphicanon/services/canon-toast';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import type XzToastService from 'xsenze-tools/services/xz-toast';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { VideoIntake } from 'xsenze-tools/lib/video';
@@ -56,7 +56,7 @@ const pipSupported = () =>
 
 /** The port of VideoAtlasViewController, on the web tool's MediaInfo report. */
 export default class VideoAtlas extends Component {
-  @service('canon-toast') declare toast: CanonToastService;
+  @service('xz-toast') declare toast: XzToastService;
 
   intake = new VideoIntake({ onLoad: (file) => this.#load(file) });
   drop = new Drop(ACCEPT, (file) => this.intake.load(file));
@@ -189,7 +189,7 @@ export default class VideoAtlas extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="video-atlas"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -199,8 +199,8 @@ export default class VideoAtlas extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.intake.duration this.intake.duration null}}
             @readout="below"
@@ -213,29 +213,29 @@ export default class VideoAtlas extends Component {
               @onScrub={{this.playback.scrub}}
               @blank={{if this.loaded false true}}
             />
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
         <Sections @sections={{this.shownInfo}} />
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="va-source"
               @title={{this.intake.fileName}}
               @detail={{this.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="va-slot"
@@ -247,10 +247,10 @@ export default class VideoAtlas extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.warning}}
-              <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
             {{/if}}
           {{/if}}
-          <CanonButton
+          <XzButton
             class="va-copy"
             @kind="primary"
             @text="Copy report"
@@ -258,13 +258,13 @@ export default class VideoAtlas extends Component {
             @disabled={{if this.tracks.length false true}}
             @onClick={{this.copy}}
           />
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="va-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background={{if this.loaded "#000" "var(--canon-muted)"}}
+          @background={{if this.loaded "#000" "var(--xz-surface-2)"}}
         >
           {{#if this.loaded}}
             {{! the transport is its control; user media lacks captions }}
@@ -281,7 +281,7 @@ export default class VideoAtlas extends Component {
               {{on "error" this.intake.failed}}
             ></video>
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
         {{#if this.loaded}}
           <OpenIn
             class="va-open"
@@ -299,7 +299,7 @@ export default class VideoAtlas extends Component {
       <:footer>
         <Transport @playback={{this.playback}} @ready={{this.ready}}>
           {{#if (pipSupported)}}
-            <CanonButton
+            <XzButton
               class="va-pip"
               @icon={{Pip}}
               @label="Picture in Picture"
@@ -307,7 +307,7 @@ export default class VideoAtlas extends Component {
               @onClick={{this.pictureInPicture}}
             />
           {{/if}}
-          <CanonButton
+          <XzButton
             class="va-full"
             @icon={{Full}}
             @label="Full Screen"
@@ -316,6 +316,6 @@ export default class VideoAtlas extends Component {
           />
         </Transport>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

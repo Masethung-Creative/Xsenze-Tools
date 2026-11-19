@@ -1,5 +1,5 @@
 import Component from '@glimmer/component';
-import CanonFigure from 'delphicanon/components/canon-figure';
+import XzFigure from 'xsenze-tools/components/xz/figure';
 import type { Cue } from 'xsenze-tools/lib/subtitles';
 import CueTimeline, {
   type CueLane,
@@ -51,12 +51,12 @@ export default class Picture extends Component<PictureSignature> {
         @label={{@label}}
       />
       {{#if @figure}}
-        <CanonFigure
+        <XzFigure
           class="st-figure"
           aria-hidden="true"
           @text={{@figure}}
           @unit={{@unit}}
-          @halo="var(--canon-muted)"
+          @halo="var(--xz-surface-2)"
         />
       {{/if}}
     </div>

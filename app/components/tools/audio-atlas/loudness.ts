@@ -1,4 +1,4 @@
-import type { CanonTile } from 'delphicanon/components/canon-tiles';
+import type { XzTile } from 'xsenze-tools/components/xz/tiles';
 
 /** Decibels a level bar covers, up to full scale. */
 const levelFloor = -60;
@@ -31,8 +31,8 @@ export function loudnessTiles(
   peak: number,
   rms: number,
   lufs: number | null,
-): CanonTile[] {
-  const tiles: CanonTile[] = [
+): XzTile[] {
+  const tiles: XzTile[] = [
     { label: 'Peak', value: dbfs(peak), level: levelShare(peak) },
     { label: 'RMS', value: dbfs(rms), level: levelShare(rms) },
   ];

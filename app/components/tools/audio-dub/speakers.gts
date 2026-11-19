@@ -1,15 +1,15 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonDialog from 'delphicanon/components/canon-dialog';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { PRESETS, type Preset } from 'xsenze-tools/lib/dub/engines';
 import {
@@ -179,23 +179,19 @@ export default class Speakers extends Component<SpeakersSignature> {
   };
 
   <template>
-    <CanonRows class="ad-speakers" @framed={{true}}>
-      <CanonHeading @text={{this.heading}} />
+    <XzRows class="ad-speakers" @framed={{true}}>
+      <XzHeading @text={{this.heading}} />
       {{#each this.rows key="index" as |row|}}
-        <CanonRow
-          class="ad-speaker"
-          @title={{row.title}}
-          @detail={{row.detail}}
-        >
+        <XzRow class="ad-speaker" @title={{row.title}} @detail={{row.detail}}>
           <span class="ad-job-actions">
-            <CanonButton
+            <XzButton
               class="ad-speaker-sample"
               @kind="cell"
               @icon={{Play}}
               @label="Play {{row.title}}"
               @onClick={{fn @onSample row.index}}
             />
-            <CanonButton
+            <XzButton
               class="ad-speaker-edit"
               @kind="cell"
               @text="Edit"
@@ -205,22 +201,22 @@ export default class Speakers extends Component<SpeakersSignature> {
               @onClick={{fn this.edit row.index}}
             />
           </span>
-        </CanonRow>
+        </XzRow>
       {{else}}
-        <CanonEmptyRow
+        <XzEmptyRow
           @text="Dub finds who speaks each line, or find them first to name them"
         />
       {{/each}}
-      <CanonButton
+      <XzButton
         class="ad-speakers-find"
         @text={{this.findText}}
         @icon={{Find}}
         @disabled={{this.cannotFind}}
         @onClick={{@onFind}}
       />
-    </CanonRows>
+    </XzRows>
 
-    <CanonDialog
+    <XzDialog
       class="ad-speaker-dialog"
       @open={{this.dialogOpen}}
       @title={{this.dialogTitle}}
@@ -228,21 +224,21 @@ export default class Speakers extends Component<SpeakersSignature> {
     >
       <:default>
         {{#if this.current}}
-          <CanonRow
+          <XzRow
             class="ad-speaker-name"
             @title="Name"
             @form="flush"
             as |titleId|
           >
-            <CanonTextCell
+            <XzTextCell
               aria-labelledby={{titleId}}
               @value={{this.current.name}}
               @placeholder="Teacher, Mom…"
               @onChange={{this.rename}}
             />
-          </CanonRow>
-          <CanonHeading @text="Voice type" />
-          <CanonSegmented
+          </XzRow>
+          <XzHeading @text="Voice type" />
+          <XzSegmented
             class="ad-speaker-type"
             aria-label="Voice type"
             @items={{TYPE_LABELS}}
@@ -250,8 +246,8 @@ export default class Speakers extends Component<SpeakersSignature> {
             @selected={{this.typeIndex}}
             @onChange={{this.pickType}}
           />
-          <CanonHeading @text="Voice" />
-          <CanonSegmented
+          <XzHeading @text="Voice" />
+          <XzSegmented
             class="ad-speaker-voice"
             aria-label="Voice"
             @items={{VOICE_LABELS}}
@@ -260,34 +256,30 @@ export default class Speakers extends Component<SpeakersSignature> {
             @disabled={{@singleVoice}}
             @onChange={{this.pickVoice}}
           />
-          <CanonStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
+          <XzStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
           {{#if this.others.length}}
-            <CanonHeading @text="Same person as" />
+            <XzHeading @text="Same person as" />
             {{#each this.others key="index" as |other|}}
-              <CanonRow class="ad-speaker-merge" @title={{other.title}}>
-                <CanonButton
+              <XzRow class="ad-speaker-merge" @title={{other.title}}>
+                <XzButton
                   @kind="cell"
                   @text="Merge"
                   @icon={{Merge}}
                   @label="Merge into {{other.title}}"
                   @onClick={{fn this.merge other.index}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/each}}
           {{/if}}
         {{/if}}
       </:default>
       <:footer as |close|>
-        <CanonButton
-          @text="Play sample"
-          @icon={{Play}}
-          @onClick={{this.sample}}
-        />
-        <CanonButton @kind="primary" @text="Done" @onClick={{close}} />
+        <XzButton @text="Play sample" @icon={{Play}} @onClick={{this.sample}} />
+        <XzButton @kind="primary" @text="Done" @onClick={{close}} />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
 
-    <CanonDialog
+    <XzDialog
       class="ad-move-dialog"
       @open={{this.moveOpen}}
       @title={{this.moveTitle}}
@@ -295,7 +287,7 @@ export default class Speakers extends Component<SpeakersSignature> {
       @onClose={{@onCloseMove}}
     >
       <:default as |close|>
-        <CanonSegmented
+        <XzSegmented
           class="ad-move"
           aria-label="Speaker"
           @items={{this.speakerLabels}}
@@ -303,8 +295,8 @@ export default class Speakers extends Component<SpeakersSignature> {
           @selected={{@movingFrom}}
           @onChange={{this.move}}
         />
-        <CanonButton @kind="primary" @text="Done" @onClick={{close}} />
+        <XzButton @kind="primary" @text="Done" @onClick={{close}} />
       </:default>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

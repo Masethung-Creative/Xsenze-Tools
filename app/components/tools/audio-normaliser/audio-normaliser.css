@@ -1,7 +1,7 @@
 .an-picture {
   position: absolute;
   inset: 0;
-  background: var(--canon-muted);
+  background: var(--xz-surface-2);
 }
 
 .an-wave {
@@ -13,11 +13,11 @@
 .an-figure {
   position: absolute;
   inset-block-end: 10px;
-  inset-inline-end: var(--canon-panel-padding);
+  inset-inline-end: var(--xz-panel-pad, var(--xz-space-4));
 }
 
 .an-player {
   display: block;
   inline-size: 100%;
-  block-size: var(--canon-control-height);
+  block-size: var(--xz-control-touch);
 }

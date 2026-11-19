@@ -1,8 +1,8 @@
 .tcc-picture {
   display: flex;
   justify-content: flex-end;
-  padding: 0 var(--canon-panel-padding) 8px;
-  background: var(--canon-card);
+  padding: 0 var(--xz-panel-pad, var(--xz-space-4)) 8px;
+  background: var(--xz-surface);
 }
 
 .tcc-sum {
@@ -12,7 +12,7 @@
   gap: 6px;
 }
 
-.tcc-sum .canon-timecode {
+.tcc-sum .xz-timecode {
   line-height: 1.2;
 }
 
@@ -27,26 +27,26 @@
 }
 
 .tcc-sign {
-  color: var(--canon-muted-foreground);
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-title2);
-  font-weight: var(--canon-weight-bold);
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-xl);
+  font-weight: var(--xz-font-weight-bold);
 }
 
 .tcc-rule {
   align-self: stretch;
-  block-size: var(--canon-frame);
+  block-size: 2px;
   margin-block-end: 4px;
-  background: var(--canon-primary);
+  background: var(--xz-accent-2);
 }
 
 /* first and large: the typed timecodes drive the sum */
-.timecode-calc .canon-text-cell.tcc-field {
+.timecode-calc .xz-text-cell.tcc-field {
   inline-size: 100%;
-  min-block-size: var(--canon-primary-height);
-  padding-inline: var(--canon-panel-padding);
-  font-size: var(--canon-text-big-number);
+  min-block-size: var(--xz-control-lg);
+  padding-inline: var(--xz-panel-pad, var(--xz-space-4));
+  font-size: var(--xz-font-size-3xl);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--canon-weight-semibold);
+  font-weight: var(--xz-font-weight-semibold);
   text-align: end;
 }

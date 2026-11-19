@@ -1,0 +1,11 @@
+.xz-bar {
+  inline-size: 100%;
+  block-size: 0.25rem;
+  background: var(--xz-bar-track, var(--xz-surface-3));
+}
+
+.xz-bar__fill {
+  block-size: 100%;
+  inline-size: calc(var(--xz-bar-share) * 100%);
+  background: var(--xz-bar-fill, var(--xz-accent));
+}

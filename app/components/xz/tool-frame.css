@@ -1,0 +1,34 @@
+/*
+ * Tool page wrapper: a tool (an XzSplit, or any single block) fills the area
+ * under the top bar. Class: xz-tool-frame. The portrait wide rules that the
+ * old wrapper repeated now live in split.css.
+ */
+.xz-tool-frame {
+  position: relative;
+  display: grid;
+  block-size: 100%;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  justify-items: center;
+  container-type: inline-size;
+  background: var(--xz-bg);
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
+
+  > * {
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: 1200px;
+  }
+}
+
+/* hairlines once the column stops short of the edges */
+@container (width > 1200px) {
+  .xz-tool-frame > * {
+    border-inline: 1px solid var(--xz-border);
+  }
+}
+
+.xz-tool-frame__pending {
+  align-self: center;
+  color: var(--xz-text-muted);
+}

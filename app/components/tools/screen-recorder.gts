@@ -3,15 +3,15 @@ import { cached, tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { downloadBlob } from 'xsenze-tools/lib/download';
 import {
@@ -156,7 +156,7 @@ export default class ScreenRecorder extends Component {
   }
 
   get previewBackground() {
-    return this.capture.active || this.current ? '#000' : 'var(--canon-muted)';
+    return this.capture.active || this.current ? '#000' : 'var(--xz-surface-2)';
   }
 
   @cached
@@ -458,72 +458,72 @@ export default class ScreenRecorder extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="screen-recorder"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
+        <XzCanvas @height={{bandHeight}}>
           <RecorderBand
             @capture={{this.capture}}
             @playback={{this.playback}}
             @take={{this.current}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
+        <XzRows @framed={{true}}>
           {{#if this.error}}
-            <CanonStatus
+            <XzStatus
               class="sr-error"
               @text={{this.error}}
               @tone="warn"
               @row={{true}}
             />
           {{/if}}
-          <CanonRow
+          <XzRow
             class="sr-mic"
             @title="Microphone"
             @detail={{MIC_LABEL}}
             as |titleId|
           >
-            <CanonSwitch
+            <XzSwitch
               aria-labelledby={{titleId}}
               @on={{this.micMixIn}}
               @disabled={{this.capture.active}}
               @onChange={{this.setMicMixIn}}
             />
-          </CanonRow>
+          </XzRow>
           {{#if this.micMixIn}}
-            <CanonRow class="sr-echo" @title="Echo cancellation" as |titleId|>
-              <CanonSwitch
+            <XzRow class="sr-echo" @title="Echo cancellation" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.echoCancellation}}
                 @onChange={{this.setEchoCancellation}}
               />
-            </CanonRow>
-            <CanonRow class="sr-noise" @title="Noise suppression" as |titleId|>
-              <CanonSwitch
+            </XzRow>
+            <XzRow class="sr-noise" @title="Noise suppression" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.noiseSuppression}}
                 @onChange={{this.setNoiseSuppression}}
               />
-            </CanonRow>
-            <CanonRow class="sr-gain" @title="Auto gain" as |titleId|>
-              <CanonSwitch
+            </XzRow>
+            <XzRow class="sr-gain" @title="Auto gain" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.autoGainControl}}
                 @onChange={{this.setAutoGainControl}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonHeading @text="Takes" />
+          <XzHeading @text="Takes" />
           {{#each this.takes key="id" as |take|}}
             <div
               class="sr-take {{if (this.isPlaying take) 'sr-take--playing'}}"
             >
-              <CanonButton
+              <XzButton
                 class="sr-take-play"
                 @kind="cell"
                 @label={{if (this.isPlaying take) "Stop" "Play"}}
@@ -535,14 +535,14 @@ export default class ScreenRecorder extends Component {
                 <span class="sr-take-name">{{take.name}}</span>
                 <span class="sr-take-detail">{{take.detail}}</span>
               </div>
-              <CanonButton
+              <XzButton
                 class="sr-take-save"
                 @kind="cell"
                 @label={{passAlong "Download"}}
                 @icon={{SaveIcon}}
                 @onClick={{fn this.save take}}
               />
-              <CanonButton
+              <XzButton
                 class="sr-take-delete"
                 @kind="cell"
                 @label="Delete"
@@ -551,11 +551,11 @@ export default class ScreenRecorder extends Component {
               />
             </div>
           {{else}}
-            <CanonEmptyRow @text="No takes" />
+            <XzEmptyRow @text="No takes" />
           {{/each}}
           {{#if (capturing)}}
             {{#if this.newest}}
-              <CanonButton
+              <XzButton
                 class="sr-pass"
                 @kind="primary"
                 @text={{passAlong "Download"}}
@@ -564,11 +564,11 @@ export default class ScreenRecorder extends Component {
               />
             {{/if}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
         <p class="sr-aside">{{ASIDE}}</p>
       </:sidebar>
       <:main>
-        <CanonCanvas
+        <XzCanvas
           class="sr-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
@@ -614,13 +614,13 @@ export default class ScreenRecorder extends Component {
               <span class="media-slot-prompt">{{EMPTY_HINT}}</span>
             </button>
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
         {{#if this.current}}
           {{#unless this.capture.active}}
-            <CanonCanvas
+            <XzCanvas
               class="sr-overview"
               @height={{overviewHeight}}
-              @background="var(--canon-muted)"
+              @background="var(--xz-surface-2)"
             >
               <Strips
                 @thumbnails={{this.current.frames}}
@@ -631,7 +631,7 @@ export default class ScreenRecorder extends Component {
                 @playhead={{this.playback.playhead}}
                 @onScrub={{this.playback.scrub}}
               />
-            </CanonCanvas>
+            </XzCanvas>
           {{/unless}}
         {{/if}}
       </:main>
@@ -647,6 +647,6 @@ export default class ScreenRecorder extends Component {
           @onPause={{this.togglePause}}
         />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

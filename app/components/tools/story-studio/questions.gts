@@ -1,12 +1,12 @@
 import Component from '@glimmer/component';
 import { fn } from '@ember/helper';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonNumberField from 'delphicanon/components/canon-number-field';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzNumberField from 'xsenze-tools/components/xz/number-field';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import {
   CUSTOM,
   choice,
@@ -159,22 +159,22 @@ export default class Questions extends Component<QuestionsSignature> {
   <template>
     {{#each this.rows key="id" as |row|}}
       {{#if row.choice}}
-        <CanonRow @title={{row.title}} @form="flush" as |titleId|>
-          <CanonMenuCell
+        <XzRow @title={{row.title}} @form="flush" as |titleId|>
+          <XzMenuCell
             @items={{row.choice.items}}
             @selected={{row.choice.selected}}
             @labelledBy={{titleId}}
             @onChange={{fn this.pick row}}
           />
-        </CanonRow>
+        </XzRow>
         {{#if row.choice.customNumber}}
-          <CanonRow
+          <XzRow
             class="ss-custom"
             @title={{row.choice.customNumber.title}}
             @form="flush"
             as |titleId|
           >
-            <CanonNumberField
+            <XzNumberField
               @value={{row.choice.customNumber.value}}
               @min={{row.choice.customNumber.min}}
               @max={{row.choice.customNumber.max}}
@@ -182,51 +182,46 @@ export default class Questions extends Component<QuestionsSignature> {
               @labelledBy={{titleId}}
               @onChange={{fn this.setCustom row}}
             />
-          </CanonRow>
+          </XzRow>
         {{/if}}
         {{#if row.choice.customText}}
-          <CanonRow
-            class="ss-custom"
-            @title="Custom"
-            @form="flush"
-            as |titleId|
-          >
-            <CanonTextCell
+          <XzRow class="ss-custom" @title="Custom" @form="flush" as |titleId|>
+            <XzTextCell
               @value={{row.choice.customText.value}}
               @placeholder={{row.choice.customText.placeholder}}
               @onChange={{fn this.setCustom row}}
               aria-labelledby={{titleId}}
             />
-          </CanonRow>
+          </XzRow>
         {{/if}}
         {{#if row.choice.note}}
-          <CanonStatus @text={{row.choice.note}} @tone="muted" @row={{true}} />
+          <XzStatus @text={{row.choice.note}} @tone="muted" @row={{true}} />
         {{/if}}
       {{else if row.switches}}
         {{#if row.showsTitle}}
-          <CanonHeading @text={{row.title}} />
+          <XzHeading @text={{row.title}} />
         {{/if}}
         {{#each row.switches key="id" as |option|}}
-          <CanonRow @title={{option.label}} as |titleId|>
-            <CanonSwitch
+          <XzRow @title={{option.label}} as |titleId|>
+            <XzSwitch
               @on={{option.on}}
               @disabled={{option.locked}}
               @onChange={{fn this.flip row option.id}}
               aria-labelledby={{titleId}}
             />
-          </CanonRow>
+          </XzRow>
         {{/each}}
       {{else if row.text}}
-        <CanonRow @title={{row.title}} @form="stacked" as |titleId|>
-          <CanonTextCell
+        <XzRow @title={{row.title}} @form="stacked" as |titleId|>
+          <XzTextCell
             @value={{row.text.value}}
             @placeholder={{row.text.placeholder}}
             @onChange={{fn this.type row}}
             aria-labelledby={{titleId}}
           />
-        </CanonRow>
+        </XzRow>
         {{#if row.text.note}}
-          <CanonStatus @text={{row.text.note}} @tone="muted" @row={{true}} />
+          <XzStatus @text={{row.text.note}} @tone="muted" @row={{true}} />
         {{/if}}
       {{/if}}
     {{/each}}

@@ -1,10 +1,10 @@
 import Component from '@glimmer/component';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCodeBlock from 'delphicanon/components/canon-code-block';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCodeBlock from 'xsenze-tools/components/xz/code-block';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import TabBar from 'xsenze-tools/components/tools/story-studio/tab-bar';
 import { downloadText } from 'xsenze-tools/lib/download';
 import {
@@ -55,41 +55,41 @@ export default class ExportTab extends Component<ExportTabSignature> {
     );
 
   <template>
-    <CanonSplit class="story-studio">
+    <XzSplit class="story-studio">
       <:sidebar>
         <TabBar @selected={{@tab}} @onChange={{@onTab}} />
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Export" />
-          <CanonStatus
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Export" />
+          <XzStatus
             @text="Markdown: the plan, the story summary, the list, the outline, every picture prompt and the story."
             @tone="muted"
             @row={{true}}
           />
-          <CanonButton
+          <XzButton
             @kind="primary"
             @text="Download Markdown"
             @onClick={{this.saveMarkdown}}
           />
-          <CanonStatus @text={{this.csvNote}} @tone="muted" @row={{true}} />
-          <CanonButton @text="Download CSV" @onClick={{this.saveCsv}} />
-          <CanonStatus
+          <XzStatus @text={{this.csvNote}} @tone="muted" @row={{true}} />
+          <XzButton @text="Download CSV" @onClick={{this.saveCsv}} />
+          <XzStatus
             @text="Shots and their frame and video prompts join the export in a later phase."
             @tone="muted"
             @row={{true}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Preview" />
-          <CanonCodeBlock
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Preview" />
+          <XzCodeBlock
             class="ss-prompt"
             @code={{this.markdown}}
             @language="Markdown"
             @maxHeight={{640}}
           />
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

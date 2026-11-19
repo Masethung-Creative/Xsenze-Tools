@@ -6,21 +6,21 @@ import { htmlSafe } from '@ember/template';
 import type Owner from '@ember/owner';
 import { eq, or } from 'ember-truth-helpers';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonColourWell from 'delphicanon/components/canon-colour-well';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import type { CanonLamp } from 'delphicanon/components/canon-lamps';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSlider from 'delphicanon/components/canon-slider';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import { hex, parseHex, type Rgb } from 'delphicanon/lib/colour';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzColourWell from 'xsenze-tools/components/xz/colour-well';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import type { XzLamp } from 'xsenze-tools/components/xz/lamps';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSlider from 'xsenze-tools/components/xz/slider';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import CueRow from 'xsenze-tools/components/tools/media/cue-row';
 import CueTimeline, {
@@ -97,7 +97,7 @@ const tallestPreview = 420;
 const BLANK_BOARD = htmlSafe(`--ss-aspect: ${16 / 9}`);
 /** Opacity of the next cue between cues. */
 const GHOST = 0.45;
-const LAMPS: CanonLamp[] = ['play', 'pause'];
+const LAMPS: XzLamp[] = ['play', 'pause'];
 const [SIZE_MIN, SIZE_MAX] = SIZE_RANGE;
 const [WIDTH_MIN, WIDTH_MAX] = WIDTH_RANGE;
 
@@ -862,7 +862,7 @@ export default class SubtitleStudioTool extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="subtitle-studio"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -871,8 +871,8 @@ export default class SubtitleStudioTool extends Component {
       {{on "drop" this.dropAnywhere}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.intake.duration this.intake.duration null}}
             @readout="below"
@@ -896,13 +896,13 @@ export default class SubtitleStudioTool extends Component {
                 @onCue={{if this.playable this.seekCue}}
               />
             </div>
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows class="ss-look" @framed={{true}}>
-          <CanonHeading @text="Font" />
-          <CanonSegmented
+        <XzRows class="ss-look" @framed={{true}}>
+          <XzHeading @text="Font" />
+          <XzSegmented
             class="ss-font"
             aria-label="Font"
             @items={{FONT_LABELS}}
@@ -911,7 +911,7 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{this.burning}}
             @onChange={{this.pickFont}}
           />
-          <CanonSegmented
+          <XzSegmented
             class="ss-weight"
             aria-label="Weight"
             @items={{WEIGHTS}}
@@ -919,8 +919,8 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{this.burning}}
             @onChange={{this.pickWeight}}
           />
-          <CanonRow class="ss-size" @title="Size" @form="flush" as |titleId|>
-            <CanonSlider
+          <XzRow class="ss-size" @title="Size" @form="flush" as |titleId|>
+            <XzSlider
               @value={{this.style.size}}
               @min={{SIZE_MIN}}
               @max={{SIZE_MAX}}
@@ -928,9 +928,9 @@ export default class SubtitleStudioTool extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setSize}}
             />
-          </CanonRow>
-          <CanonRow class="ss-width" @title="Width" @form="flush" as |titleId|>
-            <CanonSlider
+          </XzRow>
+          <XzRow class="ss-width" @title="Width" @form="flush" as |titleId|>
+            <XzSlider
               @value={{this.style.width}}
               @min={{WIDTH_MIN}}
               @max={{WIDTH_MAX}}
@@ -938,9 +938,9 @@ export default class SubtitleStudioTool extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setWidth}}
             />
-          </CanonRow>
-          <CanonHeading @text="Style" />
-          <CanonSegmented
+          </XzRow>
+          <XzHeading @text="Style" />
+          <XzSegmented
             class="ss-text"
             aria-label="Style"
             @items={{TEXT_LABELS}}
@@ -949,24 +949,24 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{this.burning}}
             @onChange={{this.pickText}}
           />
-          <CanonColourWell
+          <XzColourWell
             class="ss-colour"
             @label="Text"
             @colour={{this.colour}}
             @onChange={{this.setColour}}
           />
           {{#unless this.isPlain}}
-            <CanonColourWell
+            <XzColourWell
               class="ss-backing"
               @label="Backing"
               @colour={{this.backing}}
               @onChange={{this.setBacking}}
             />
           {{/unless}}
-          <CanonHeading @text="Position" />
-          <CanonGrid class="ss-place">
+          <XzHeading @text="Position" />
+          <XzGrid class="ss-place">
             {{#each PLACES as |item index|}}
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text={{item.text}}
                 @icon={{item.icon}}
@@ -974,11 +974,11 @@ export default class SubtitleStudioTool extends Component {
                 @onClick={{fn this.place index}}
               />
             {{/each}}
-          </CanonGrid>
-        </CanonRows>
-        <CanonRows class="ss-export" @framed={{true}}>
-          <CanonHeading @text="Format" />
-          <CanonSegmented
+          </XzGrid>
+        </XzRows>
+        <XzRows class="ss-export" @framed={{true}}>
+          <XzHeading @text="Format" />
+          <XzSegmented
             class="ss-format"
             aria-label="Format"
             @items={{this.formatLabels}}
@@ -1001,11 +1001,11 @@ export default class SubtitleStudioTool extends Component {
             @onCancel={{this.cancel}}
             @onSave={{this.save}}
           />
-        </CanonRows>
+        </XzRows>
         <Sections @sections={{this.info}} />
       </:sidebar>
       <:main>
-        <CanonCanvas
+        <XzCanvas
           class="ss-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
@@ -1047,24 +1047,24 @@ export default class SubtitleStudioTool extends Component {
               <span class="ss-picture ss-blank"></span>
             </div>
           {{/if}}
-        </CanonCanvas>
-        <CanonRows class="ss-source" @framed={{true}}>
-          <CanonHeading @text="Source" />
+        </XzCanvas>
+        <XzRows class="ss-source" @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="ss-video"
               @title={{this.intake.fileName}}
               @detail={{this.videoDetail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @disabled={{this.burning}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="ss-video-slot"
@@ -1076,29 +1076,29 @@ export default class SubtitleStudioTool extends Component {
               @onFiles={{this.readFiles}}
             />
             {{#if this.intake.error}}
-              <CanonStatus
+              <XzStatus
                 @text={{this.intake.error}}
                 @tone="warn"
                 @row={{true}}
               />
             {{/if}}
           {{/if}}
-          <CanonHeading @text="Subtitles" />
+          <XzHeading @text="Subtitles" />
           {{#if this.cues.length}}
-            <CanonRow
+            <XzRow
               class="ss-subs"
               @title={{this.subsName}}
               @detail={{this.cueCount}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @disabled={{this.burning}}
                 @onClick={{this.clearSubs}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="ss-subs-drop"
@@ -1111,17 +1111,17 @@ export default class SubtitleStudioTool extends Component {
             />
           {{/if}}
           {{#if this.subsFailed}}
-            <CanonStatus
+            <XzStatus
               class="ss-subs-error"
               @text={{SUBS_ERROR}}
               @tone="warn"
               @row={{true}}
             />
           {{/if}}
-        </CanonRows>
+        </XzRows>
         {{#if this.cues.length}}
-          <CanonRows class="ss-cues" @framed={{true}}>
-            <CanonHeading @text="Subtitles" />
+          <XzRows class="ss-cues" @framed={{true}}>
+            <XzHeading @text="Subtitles" />
             {{#each this.cues key="@index" as |cue index|}}
               <CueRow
                 @index={{index}}
@@ -1132,24 +1132,24 @@ export default class SubtitleStudioTool extends Component {
                 @onSelect={{fn this.seekCue index}}
               />
             {{/each}}
-          </CanonRows>
+          </XzRows>
         {{else}}
-          <CanonRows class="ss-cues" @framed={{true}}>
-            <CanonHeading @text="Subtitles" />
-            <CanonEmptyRow class="ss-cues-blank" @text="" />
-          </CanonRows>
+          <XzRows class="ss-cues" @framed={{true}}>
+            <XzHeading @text="Subtitles" />
+            <XzEmptyRow class="ss-cues-blank" @text="" />
+          </XzRows>
         {{/if}}
       </:main>
       <:footer>
-        <CanonGrid class="ss-transport">
-          <CanonButton
+        <XzGrid class="ss-transport">
+          <XzButton
             class="ss-previous"
             @label="Previous cue"
             @icon={{PreviousCue}}
             @disabled={{off this.jumps}}
             @onClick={{fn this.jump -1}}
           />
-          <CanonButton
+          <XzButton
             class="ss-back"
             @label="Back one frame"
             @icon={{BackFrame}}
@@ -1157,7 +1157,7 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{off this.playable}}
             @onClick={{fn this.step -1}}
           />
-          <CanonButton
+          <XzButton
             class="ss-play"
             @kind="primary"
             @text={{if this.playback.playing "Pause" "Play"}}
@@ -1165,7 +1165,7 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{off this.playable}}
             @onClick={{this.toggle}}
           />
-          <CanonButton
+          <XzButton
             class="ss-forward"
             @label="Forward one frame"
             @icon={{ForwardFrame}}
@@ -1173,15 +1173,15 @@ export default class SubtitleStudioTool extends Component {
             @disabled={{off this.playable}}
             @onClick={{fn this.step 1}}
           />
-          <CanonButton
+          <XzButton
             class="ss-next"
             @label="Next cue"
             @icon={{NextCue}}
             @disabled={{off this.jumps}}
             @onClick={{fn this.jump 1}}
           />
-        </CanonGrid>
+        </XzGrid>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

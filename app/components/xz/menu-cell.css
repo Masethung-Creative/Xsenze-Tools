@@ -1,0 +1,13 @@
+.xz-menu-cell {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.xz-menu-cell > .xz-select {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}

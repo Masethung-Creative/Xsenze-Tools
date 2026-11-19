@@ -18,24 +18,24 @@
 
 .cue-timeline-label {
   align-self: center;
-  color: var(--canon-muted-foreground);
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-footnote);
-  font-weight: var(--canon-weight-semibold);
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
 }
 
 .cue-timeline-label--lit {
-  color: var(--canon-primary);
+  color: var(--xz-accent-2-text);
 }
 
 .cue-timeline-lane {
   position: relative;
   overflow: hidden;
-  color: color-mix(in srgb, var(--canon-muted-foreground) 45%, transparent);
+  color: color-mix(in srgb, var(--xz-text-muted) 45%, transparent);
 }
 
 .cue-timeline-lane--lit {
-  color: var(--canon-primary);
+  color: var(--xz-accent-2-text);
 }
 
 .cue-timeline-cue {
@@ -46,14 +46,14 @@
 }
 
 .cue-timeline-cue--active {
-  background: var(--canon-primary);
+  background: var(--xz-accent-2);
 }
 
 .cue-timeline-head {
   position: absolute;
   inset-block: 0;
-  inline-size: var(--canon-frame);
-  margin-inline-start: calc(-1 * var(--canon-frame) / 2);
-  background: var(--canon-foreground);
+  inline-size: 2px;
+  margin-inline-start: calc(-1 * 2px / 2);
+  background: var(--xz-text);
   pointer-events: none;
 }

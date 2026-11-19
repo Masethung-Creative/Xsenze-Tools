@@ -1,0 +1,26 @@
+.xz-slider-cell {
+  display: flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  gap: var(--xz-space-3);
+  min-width: 0;
+}
+
+.xz-slider-cell > .xz-slider {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.xz-slider-cell__readout {
+  min-width: 3.5em;
+  margin-inline-start: 0;
+}
+
+/* a trailing fill is the kit's right-to-left fader, so the wrapper reads right to left */
+.xz-slider-cell--trailing {
+  direction: ltr;
+}
+
+.xz-slider-cell--trailing > .xz-slider {
+  direction: rtl;
+}

@@ -1,6 +1,6 @@
 import Component from '@glimmer/component';
 import { modifier } from 'ember-modifier';
-import CanonFigure from 'delphicanon/components/canon-figure';
+import XzFigure from 'xsenze-tools/components/xz/figure';
 import type { WaveformPeaks } from 'xsenze-tools/lib/audio';
 import { dbToGain } from 'xsenze-tools/lib/normalise';
 
@@ -36,14 +36,14 @@ function paint(
   if (!context || !width || !height) return;
   const style = getComputedStyle(canvas);
   const colour = (name: string) => style.getPropertyValue(name).trim();
-  const muted = colour('--canon-muted-foreground');
+  const muted = colour('--xz-text-muted');
   const mid = height / 2;
   const half = height / 2;
 
-  context.fillStyle = colour('--canon-border');
+  context.fillStyle = colour('--xz-border');
   context.fillRect(0, mid, width, ratio);
 
-  context.strokeStyle = limited ? colour('--canon-destructive') : muted;
+  context.strokeStyle = limited ? colour('--xz-danger-text') : muted;
   context.globalAlpha = 0.7;
   context.lineWidth = ratio;
   context.setLineDash([4 * ratio, 4 * ratio]);
@@ -85,11 +85,7 @@ function paint(
     after.rect(x, mid - top * half, w, Math.max(1, (top - bottom) * half));
   }
   const source: [Path2D, string, number] = [before, muted, 0.55];
-  const result: [Path2D, string, number] = [
-    after,
-    colour('--canon-primary'),
-    1,
-  ];
+  const result: [Path2D, string, number] = [after, colour('--xz-accent-2'), 1];
   // the smaller wave in front
   for (const [path, fill, alpha] of gain >= 1
     ? [result, source]
@@ -110,10 +106,8 @@ export default class Picture extends Component<PictureSignature> {
   }
 
   get colour() {
-    if (this.args.blank) return 'var(--canon-muted-foreground)';
-    return this.args.limited
-      ? 'var(--canon-destructive)'
-      : 'var(--canon-primary)';
+    if (this.args.blank) return 'var(--xz-text-muted)';
+    return this.args.limited ? 'var(--xz-danger-text)' : 'var(--xz-accent-2)';
   }
 
   draw = modifier(
@@ -146,11 +140,11 @@ export default class Picture extends Component<PictureSignature> {
       ></canvas>
       {{#if this.figure}}
         <output class="an-figure" aria-label="Gain">
-          <CanonFigure
+          <XzFigure
             @text={{this.figure}}
             @unit="dB"
             @colour={{this.colour}}
-            @halo="var(--canon-muted)"
+            @halo="var(--xz-surface-2)"
           />
         </output>
       {{/if}}

@@ -1,0 +1,42 @@
+@property --xz-pos {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+/* fills its box; the kit's own block is as tall as its pictures */
+.xz-compare {
+  block-size: 100%;
+  border-radius: 0;
+  transition: --xz-pos var(--xz-compare-transition, 0s);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.xz-compare > img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.xz-compare--comparing {
+  cursor: ew-resize;
+}
+
+.xz-compare--failed > .xz-beforeafter__before {
+  opacity: 0.25;
+}
+
+.xz-compare__failure {
+  position: absolute;
+  inset: var(--xz-space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-sm);
+  text-align: center;
+}

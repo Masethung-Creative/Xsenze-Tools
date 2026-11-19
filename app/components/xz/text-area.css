@@ -1,0 +1,6 @@
+.xz-textarea.xz-text-area {
+  min-height: 0;
+  padding-block: var(--xz-space-3);
+  font-family: var(--xz-font-mono);
+  resize: none;
+}

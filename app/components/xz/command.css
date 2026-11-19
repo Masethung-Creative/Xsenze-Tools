@@ -1,0 +1,94 @@
+/* the kit's command palette, embedded in a page or a dialog instead of being a dialog itself */
+.xz-command-palette.xz-command-palette--inline {
+  display: flex;
+  flex-direction: column;
+  inline-size: auto;
+  max-inline-size: none;
+  max-block-size: none;
+  min-block-size: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+.xz-command-palette--framed {
+  border: 1px solid var(--xz-border-strong);
+}
+
+.xz-command-palette--inline .xz-command-palette__search:has(:focus-visible) {
+  outline: 2px solid var(--xz-focus);
+  outline-offset: -2px;
+}
+
+.xz-command-palette--inline .xz-command-palette__list {
+  flex: 0 1 auto;
+  max-block-size: var(--xz-command-list-height, 20rem);
+}
+
+.xz-command-palette--inline .xz-command-palette__list[hidden] {
+  display: none;
+}
+
+.xz-command-palette__icon {
+  display: flex;
+  flex: none;
+  inline-size: var(--xz-icon-md);
+  block-size: var(--xz-icon-md);
+  color: var(--xz-text-muted);
+}
+
+.xz-command-palette__icon > *,
+.xz-command-palette__icon svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.xz-command-palette__option.is-active .xz-command-palette__icon {
+  color: var(--xz-text);
+}
+
+.xz-command-palette__option[aria-disabled="true"] {
+  color: var(--xz-disabled-text);
+  cursor: not-allowed;
+}
+
+.xz-command-palette__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-inline-size: 0;
+}
+
+.xz-command-palette__detail {
+  overflow: hidden;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xz-command-palette__keys {
+  display: flex;
+  flex: none;
+  gap: 3px;
+}
+
+.xz-command-palette__option--answer .xz-command-palette__label {
+  font-weight: var(--xz-font-weight-semibold);
+}
+
+.xz-command-palette__search-icon {
+  display: flex;
+  flex: none;
+  inline-size: var(--xz-icon-md);
+  block-size: var(--xz-icon-md);
+  color: var(--xz-text-muted);
+}
+
+.xz-command-palette__search-icon svg {
+  inline-size: 100%;
+  block-size: 100%;
+}

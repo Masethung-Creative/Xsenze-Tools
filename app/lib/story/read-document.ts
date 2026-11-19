@@ -5,7 +5,7 @@
  * video are heard by Whisper instead (`transcribeStory`). Everything runs in
  * the browser; nothing is uploaded.
  */
-import { decodeText } from 'delphicanon/lib/files';
+import { decodeText } from 'xsenze-tools/lib/xz/files';
 import type JSZip from 'jszip';
 import { parseSubtitles } from 'xsenze-tools/lib/subtitles';
 

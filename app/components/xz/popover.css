@@ -1,0 +1,15 @@
+/* the kit's panel, anchored by lib/xz/popover.ts (anchor, area and gap inline) */
+.xz-popover__panel[popover] {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+  overflow: visible;
+  color: var(--xz-text);
+
+  /* lib/xz/motion.ts plays the pop in */
+  animation: none;
+}

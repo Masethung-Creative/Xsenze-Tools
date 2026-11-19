@@ -1,0 +1,72 @@
+/* A ruled band for a picture or preview: the stage of the kit, edge to edge. */
+.xz-canvas {
+  --xz-canvas-frame: 1px;
+
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-block: var(--xz-canvas-frame);
+  overflow: hidden;
+  background: var(--xz-border);
+  container-type: inline-size;
+}
+
+.xz-canvas__content {
+  position: relative;
+  flex: none;
+  block-size: calc(
+    min(
+        var(--xz-canvas-natural),
+        var(--xz-canvas-max, 100000px),
+        var(--xz-canvas-cap, 100000px)
+      ) -
+      2 * var(--xz-canvas-frame)
+  );
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--xz-canvas-background, var(--xz-surface-2));
+}
+
+/* the tool's symbol, tiled faintly under whatever the content draws */
+.xz-canvas--pattern > .xz-canvas__content::before,
+.xz-tool-split__banner .xz-canvas__content::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--xz-text);
+  opacity: 0.04;
+  content: "";
+  mask: var(--xz-pattern, linear-gradient(transparent, transparent)) 0 0 / 92px
+    92px repeat;
+}
+
+.xz-canvas--unless-wide {
+  padding-inline: var(--xz-canvas-frame);
+}
+
+.xz-canvas--fitting > .xz-canvas__content {
+  block-size: var(--xz-canvas-fitted, auto);
+}
+
+.xz-canvas--collapsed {
+  padding-block: 0;
+}
+
+.xz-canvas--eases,
+.xz-canvas--eases > .xz-canvas__content {
+  transition-duration: var(--xz-duration-slow);
+  transition-property: block-size, padding-block;
+  transition-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xz-canvas--eases,
+  .xz-canvas--eases > .xz-canvas__content {
+    transition: none;
+  }
+}
+
+[data-xz-motion="off"] .xz-canvas--eases,
+[data-xz-motion="off"] .xz-canvas--eases > .xz-canvas__content {
+  transition: none;
+}

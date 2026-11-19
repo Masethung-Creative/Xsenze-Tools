@@ -30,8 +30,8 @@ Rules:
 Design:
 
 - The UI is the user's own **Xsenze UI Kit** (docs: xsenze-ui.vercel.app/docs). Its built files
-  are bundled in `vendor/xsenze-ui/` (no CDN); `app/app.ts` imports `xsenze.min.css` (the
-  build runs out of memory on the readable `xsenze.css`, which is kept for reading class names).
+  are bundled in `vendor/xsenze-ui/` (no CDN); `app/app.ts` imports `xsenze.min.css`; the readable `xsenze.css` is
+  kept for looking up class names.
   Use its `xz-` classes and `--xz-*` tokens. Ember drives behaviour; the kit's script is not
   loaded.
 - Kit defaults, as the user chose: main buttons black (light) or white (dark), orange
@@ -40,8 +40,12 @@ Design:
   <html> (plus the old `dark`/`light` class) is set in `index.html`.
 - Shell: the kit's `xz-shell` with `xz-sidebar` (drawer below 1024px), `xz-navbar` top bar; only
   the content area scrolls. Home: omnibox over a faint icon backdrop, then `xz-card` tool cards.
-- The site is moving from the canon UI kit (`delphicanon`) to the Xsenze kit tool by tool. Until
-  a tool moves, its `--canon-*` tokens follow the Xsenze tokens (`app/styles/_canon.scss`).
+- Tool UIs use the kit parts in `app/components/xz/` (XzSplit, XzRows, XzRow, XzButton, XzSegmented,
+  XzSlider, XzDropZone, XzDialog…), with shared helpers in `lib/xz/`, `modifiers/xz/` and the
+  `xz-toast` service (`<XzToast />` is mounted in `templates/application.gts`). Tool pages sit in
+  `.xz-tool-frame`. Own classes must not reuse a kit base name (`xz-grid`, `xz-row`, `xz-tiles`,
+  `xz-split` are the kit's layout helpers): the parts use `xz-cellgrid`, `xz-prow`,
+  `xz-tilegroup`, `xz-tool-split`.
 
 Tools (Audio, Video and Image categories, built one at a time, user reviews each; PDF, Dev Tools,
 Other Tools, Xsenze UI Kit, Paths and Roadmap are empty categories that show Coming soon, with

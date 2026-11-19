@@ -3,19 +3,19 @@ import { cached, tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
-import CanonBar from 'delphicanon/components/canon-bar';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDropZone from 'delphicanon/components/canon-drop-zone';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonLoader from 'delphicanon/components/canon-loader';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
+import XzBar from 'xsenze-tools/components/xz/bar';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzLoader from 'xsenze-tools/components/xz/loader';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import CueRow from 'xsenze-tools/components/tools/media/cue-row';
 import DownloadAll from 'xsenze-tools/components/tools/media/download-all';
@@ -585,17 +585,14 @@ export default class SubtitleTranslatorTool extends Component {
     });
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="subtitle-translator"
       @collapsesTo={{72}}
       @mainLeadsStacked={{true}}
       {{filePaste this.readFile accept=ACCEPT}}
     >
       <:banner>
-        <CanonCanvas
-          @height={{this.bandHeight}}
-          @background="var(--canon-muted)"
-        >
+        <XzCanvas @height={{this.bandHeight}} @background="var(--xz-surface-2)">
           <Picture
             @cues={{this.cues}}
             @source={{this.sourceLabel}}
@@ -604,30 +601,30 @@ export default class SubtitleTranslatorTool extends Component {
             @unit={{this.unit}}
             @label={{this.pictureLabel}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows class="st-controls" @framed={{true}}>
-          <CanonHeading @text="Languages" />
+        <XzRows class="st-controls" @framed={{true}}>
+          <XzHeading @text="Languages" />
           <LanguageSelect
             @title="From"
             @selected={{this.fromSelected}}
             @disabled={{this.busy}}
             @onChange={{this.pickFrom}}
           />
-          <CanonRow
+          <XzRow
             class="st-multiple"
             @title="Multiple languages"
             @detail="Translate into several, one by one"
             as |titleId|
           >
-            <CanonSwitch
+            <XzSwitch
               aria-labelledby={{titleId}}
               @on={{this.multiple}}
               @disabled={{this.busy}}
               @onChange={{this.setMultiple}}
             />
-          </CanonRow>
+          </XzRow>
           <LanguageSelect
             @title="To"
             @selected={{this.targets}}
@@ -638,12 +635,8 @@ export default class SubtitleTranslatorTool extends Component {
           />
           {{#if this.multiple}}
             {{#each this.targetRows key="code" as |row|}}
-              <CanonRow
-                class="st-target"
-                @title={{row.name}}
-                @icon={{row.icon}}
-              >
-                <CanonButton
+              <XzRow class="st-target" @title={{row.name}} @icon={{row.icon}}>
+                <XzButton
                   class="st-target-remove"
                   @kind="cell"
                   @icon={{Remove}}
@@ -651,13 +644,13 @@ export default class SubtitleTranslatorTool extends Component {
                   @disabled={{this.busy}}
                   @onClick={{fn this.removeTarget row.code}}
                 />
-              </CanonRow>
+              </XzRow>
             {{else}}
-              <CanonEmptyRow @text="Pick languages above" />
+              <XzEmptyRow @text="Pick languages above" />
             {{/each}}
           {{/if}}
-          <CanonHeading @text="Engine" />
-          <CanonSegmented
+          <XzHeading @text="Engine" />
+          <XzSegmented
             class="st-engine"
             aria-label="Engine"
             @items={{ENGINE_LABELS}}
@@ -665,9 +658,9 @@ export default class SubtitleTranslatorTool extends Component {
             @disabled={{this.busy}}
             @onChange={{this.pickEngine}}
           />
-          <CanonStatus @text={{this.engineNote}} @tone="muted" @row={{true}} />
-          <CanonHeading @text="Format" />
-          <CanonSegmented
+          <XzStatus @text={{this.engineNote}} @tone="muted" @row={{true}} />
+          <XzHeading @text="Format" />
+          <XzSegmented
             class="st-format"
             aria-label="Format"
             @items={{FORMAT_LABELS}}
@@ -675,8 +668,8 @@ export default class SubtitleTranslatorTool extends Component {
             @selected={{this.formatIndex}}
             @onChange={{this.pickFormat}}
           />
-          <CanonStatus @text={{this.formatNote}} @tone="muted" @row={{true}} />
-          <CanonButton
+          <XzStatus @text={{this.formatNote}} @tone="muted" @row={{true}} />
+          <XzButton
             class="st-run"
             @kind="primary"
             @text={{this.runText}}
@@ -685,10 +678,10 @@ export default class SubtitleTranslatorTool extends Component {
             @disabled={{this.cannotRun}}
             @onClick={{this.translate}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows class="st-input" @framed={{true}}>
+        <XzRows class="st-input" @framed={{true}}>
           <Source
             @heading="Subtitles"
             @text={{this.input}}
@@ -696,14 +689,14 @@ export default class SubtitleTranslatorTool extends Component {
             @onChange={{this.setInput}}
           />
           {{#if this.fileName}}
-            <CanonRow
+            <XzRow
               class="st-file"
               @title={{this.fileName}}
               @icon={{FileIcon}}
             />
           {{else}}
             {{#unless this.hasInput}}
-              <CanonDropZone
+              <XzDropZone
                 class="st-drop"
                 @prompt="SRT or VTT"
                 @icon={{FileIcon}}
@@ -715,28 +708,28 @@ export default class SubtitleTranslatorTool extends Component {
             {{/unless}}
           {{/if}}
           {{#if this.noCues}}
-            <CanonStatus
+            <XzStatus
               @text="No subtitle lines found."
               @tone="warn"
               @row={{true}}
             />
           {{/if}}
-        </CanonRows>
+        </XzRows>
 
-        <CanonRows class="st-output" @framed={{true}}>
-          <CanonHeading @text="Translation" />
+        <XzRows class="st-output" @framed={{true}}>
+          <XzHeading @text="Translation" />
           {{#if this.busy}}
-            <CanonRow class="st-busy" @title={{this.status}}>
+            <XzRow class="st-busy" @title={{this.status}}>
               <span class="st-busy-cell">
-                <CanonLoader @cell={{5}} @gap={{1}} />
+                <XzLoader @cell={{5}} @gap={{1}} />
                 <span role="status">{{if
                     this.downloading
                     this.percent
                     this.sharePercent
                   }}%</span>
               </span>
-            </CanonRow>
-            <CanonBar
+            </XzRow>
+            <XzBar
               class="st-bar"
               role="progressbar"
               aria-label="Progress"
@@ -745,7 +738,7 @@ export default class SubtitleTranslatorTool extends Component {
               aria-valuenow={{this.sharePercent}}
               @share={{this.share}}
             />
-            <CanonButton
+            <XzButton
               class="st-cancel"
               @text="Cancel"
               @icon={{Cancel}}
@@ -753,13 +746,13 @@ export default class SubtitleTranslatorTool extends Component {
             />
           {{/if}}
           {{#if this.error}}
-            <CanonStatus @text={{this.error}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{this.error}} @tone="warn" @row={{true}} />
           {{/if}}
 
           {{#if this.showsQueue}}
-            <CanonHeading @text="Languages" />
+            <XzHeading @text="Languages" />
             {{#each this.queueRows key="code" as |row|}}
-              <CanonRow
+              <XzRow
                 class="st-job st-job--{{row.state}}"
                 @title={{row.name}}
                 @detail={{row.detail}}
@@ -767,10 +760,10 @@ export default class SubtitleTranslatorTool extends Component {
               >
                 {{#if row.running}}
                   <span class="st-busy-cell st-job-cell">
-                    <CanonLoader @cell={{4}} @gap={{1}} />
+                    <XzLoader @cell={{4}} @gap={{1}} />
                   </span>
                 {{else if row.done}}
-                  <CanonButton
+                  <XzButton
                     class="st-job-download"
                     @kind="cell"
                     @text="Download"
@@ -778,13 +771,13 @@ export default class SubtitleTranslatorTool extends Component {
                     @onClick={{fn this.downloadOne row.code}}
                   />
                 {{/if}}
-              </CanonRow>
+              </XzRow>
             {{/each}}
           {{/if}}
 
           {{#if this.shown}}
             {{#if this.showsTabs}}
-              <CanonSegmented
+              <XzSegmented
                 class="st-tabs"
                 aria-label="Review language"
                 @items={{this.tabs}}
@@ -793,7 +786,7 @@ export default class SubtitleTranslatorTool extends Component {
                 @onChange={{this.pickTab}}
               />
             {{/if}}
-            <CanonRow
+            <XzRow
               class="st-stats"
               @title={{this.resultStats}}
               @detail={{this.resultEngine}}
@@ -819,7 +812,7 @@ export default class SubtitleTranslatorTool extends Component {
                 @zipName={{this.zipName}}
               />
             {{else}}
-              <CanonButton
+              <XzButton
                 class="st-download"
                 @kind="primary"
                 @text="Download"
@@ -829,10 +822,10 @@ export default class SubtitleTranslatorTool extends Component {
               />
             {{/if}}
           {{else if this.noResult}}
-            <CanonEmptyRow @text="None yet" />
+            <XzEmptyRow @text="None yet" />
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

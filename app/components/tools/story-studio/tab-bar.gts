@@ -1,6 +1,6 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
 
 /** Shots holds each shot's frame and video prompts. */
 export const TABS = ['Plan', 'Story', 'Bible', 'Assets', 'Shots', 'Export'];
@@ -19,8 +19,8 @@ const LATER = [TAB.shots];
 const TabBar: TOC<{
   Args: { selected: number; onChange: (index: number) => void };
 }> = <template>
-  <CanonRows @framed={{true}}>
-    <CanonSegmented
+  <XzRows @framed={{true}}>
+    <XzSegmented
       class="ss-tabs"
       aria-label="Steps"
       @items={{TABS}}
@@ -29,7 +29,7 @@ const TabBar: TOC<{
       @disabledIndices={{LATER}}
       @onChange={{@onChange}}
     />
-  </CanonRows>
+  </XzRows>
 </template>;
 
 export default TabBar;

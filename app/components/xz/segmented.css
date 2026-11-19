@@ -1,0 +1,47 @@
+/* Unboxed: the enclosing panel draws the outer line. */
+.xz-segmented--cells.xz-segmented--flush {
+  border-width: 0;
+  border-radius: 0;
+}
+
+/* A symbol in a cell is sized by the cell, not styled as one. */
+.xz-segmented--cells > label > span > :is(span, svg) {
+  flex: none;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.xz-segmented--cells > label > span svg {
+  width: var(--xz-icon-sm);
+  height: var(--xz-icon-sm);
+}
+
+/* columns: cells wrap, the last short row stretches to fill. */
+.xz-segmented--cells.xz-segmented--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.xz-segmented--cells.xz-segmented--wrap > label {
+  flex: 1 0 calc((100% - (var(--xz-seg-cols) - 1) * 1px) / var(--xz-seg-cols));
+  min-width: 0;
+}
+
+/* Equal cells that share the row and shrink together; a long title ends in
+   an ellipsis rather than pushing the last cell out of the panel. */
+.xz-segmented--cells:not(.xz-segmented--wrap) > label {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.xz-segmented--cells > label > span:not(:has(svg)) {
+  display: block;
+  overflow: hidden;
+  padding-inline: var(--xz-space-2);
+  line-height: var(--xz-panel-row, 3rem);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

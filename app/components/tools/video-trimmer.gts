@@ -1,17 +1,17 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDecimalField from 'delphicanon/components/canon-decimal-field';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDecimalField from 'xsenze-tools/components/xz/decimal-field';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -423,7 +423,7 @@ export default class VideoTrimmer extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="video-trimmer"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -433,8 +433,8 @@ export default class VideoTrimmer extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.selected this.length null}}
             @readout="below"
@@ -448,13 +448,13 @@ export default class VideoTrimmer extends Component {
               @onScrub={{this.playback.scrub}}
               @blank={{if this.loaded false true}}
             />
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Container" />
-          <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Container" />
+          <XzSegmented
             class="vt-containers"
             @items={{containerLabels}}
             @selected={{this.containerIndex}}
@@ -462,8 +462,8 @@ export default class VideoTrimmer extends Component {
             @disabled={{this.locked}}
             @onChange={{this.pickContainer}}
           />
-          <CanonHeading @text="Cut" />
-          <CanonSegmented
+          <XzHeading @text="Cut" />
+          <XzSegmented
             class="vt-modes"
             @items={{modeLabels}}
             @selected={{this.modeIndex}}
@@ -484,26 +484,26 @@ export default class VideoTrimmer extends Component {
             @onSave={{this.save}}
             @onPreview={{this.preview}}
           />
-        </CanonRows>
+        </XzRows>
         <Sections @sections={{this.info}} />
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="vt-source"
               @title={{this.intake.fileName}}
               @detail={{if this.warning this.warning this.meta}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="vt-slot"
@@ -515,16 +515,16 @@ export default class VideoTrimmer extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.warning}}
-              <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
             {{/if}}
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="vt-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background={{if this.loaded "#000" "var(--canon-muted)"}}
+          @background={{if this.loaded "#000" "var(--xz-surface-2)"}}
         >
           {{#if this.loaded}}
             {{! the transport is its control; user media lacks captions }}
@@ -541,12 +541,12 @@ export default class VideoTrimmer extends Component {
               {{on "error" this.intake.failed}}
             ></video>
           {{/if}}
-        </CanonCanvas>
-        <CanonCanvas
+        </XzCanvas>
+        <XzCanvas
           class="vt-editor"
           @height={{editorHeight}}
           @boxing="unlessWide"
-          @background="var(--canon-muted)"
+          @background="var(--xz-surface-2)"
         >
           <Trim
             @duration={{this.duration}}
@@ -563,31 +563,31 @@ export default class VideoTrimmer extends Component {
               @blank={{if this.loaded false true}}
             />
           </Trim>
-        </CanonCanvas>
-        <CanonRows @framed={{true}}>
-          <CanonRow
+        </XzCanvas>
+        <XzRows @framed={{true}}>
+          <XzRow
             class="vt-start"
             @title="Start"
             @detail={{this.startText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.start}}
               @max={{this.startMax}}
               @labelledBy={{titleId}}
               @disabled={{this.unselected}}
               @onChange={{this.selectStart}}
             />
-          </CanonRow>
-          <CanonRow
+          </XzRow>
+          <XzRow
             class="vt-end"
             @title="End"
             @detail={{this.endText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.end}}
               @min={{this.endMin}}
               @max={{this.duration}}
@@ -595,29 +595,29 @@ export default class VideoTrimmer extends Component {
               @disabled={{this.unselected}}
               @onChange={{this.selectEnd}}
             />
-          </CanonRow>
-          <CanonGrid>
-            <CanonButton
+          </XzRow>
+          <XzGrid>
+            <XzButton
               class="vt-set-in"
               @text="Set in"
               @icon={{SetIn}}
               @disabled={{this.unselected}}
               @onClick={{this.setIn}}
             />
-            <CanonButton
+            <XzButton
               class="vt-set-out"
               @text="Set out"
               @icon={{SetOut}}
               @disabled={{this.unselected}}
               @onClick={{this.setOut}}
             />
-          </CanonGrid>
-        </CanonRows>
+          </XzGrid>
+        </XzRows>
       </:main>
       <:footer>
         <Transport @playback={{this.playback}} @ready={{this.selected}}>
           <:before>
-            <CanonButton
+            <XzButton
               class="vt-back"
               @label="Back one frame"
               @icon={{Back}}
@@ -627,7 +627,7 @@ export default class VideoTrimmer extends Component {
             />
           </:before>
           <:default>
-            <CanonButton
+            <XzButton
               class="vt-forward"
               @label="Forward one frame"
               @icon={{Forward}}
@@ -638,6 +638,6 @@ export default class VideoTrimmer extends Component {
           </:default>
         </Transport>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

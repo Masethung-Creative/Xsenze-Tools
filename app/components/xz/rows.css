@@ -1,0 +1,9 @@
+/* The kit's panel does the rows; framed adds a padded rule around them. */
+.xz-panel--framed {
+  padding: 1px;
+  background: var(--xz-border);
+}
+
+.xz-panel--framed > * {
+  background: var(--xz-surface);
+}

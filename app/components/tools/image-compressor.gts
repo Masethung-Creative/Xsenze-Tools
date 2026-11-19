@@ -2,20 +2,20 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonCompressionScale from 'delphicanon/components/canon-compression-scale';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonImageCompare from 'delphicanon/components/canon-image-compare';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSlider from 'delphicanon/components/canon-slider';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzCompressionScale from 'xsenze-tools/components/xz/compression-scale';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzImageCompare from 'xsenze-tools/components/xz/image-compare';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSlider from 'xsenze-tools/components/xz/slider';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -514,7 +514,7 @@ export default class ImageCompressor extends Component {
   }
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="image-compressor"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -524,7 +524,7 @@ export default class ImageCompressor extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{scaleHeight}}>
+        <XzCanvas @height={{scaleHeight}}>
           {{#if this.busy}}
             <WorkBanner
               @title={{this.bannerTitle}}
@@ -532,39 +532,39 @@ export default class ImageCompressor extends Component {
               @onCancel={{this.cancel}}
             />
           {{else}}
-            <CanonCompressionScale
+            <XzCompressionScale
               @before={{this.sourceBytes}}
               @after={{this.resultBytes}}
               @format={{this.scaleFormat}}
             />
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Compress by" />
-          <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Compress by" />
+          <XzSegmented
             @items={{MODES}}
             @selected={{this.mode}}
             @disabled={{this.busy}}
             @onChange={{this.pickMode}}
           />
           {{#if this.mode}}
-            <CanonHeading @text="Target size, each image" />
-            <CanonSegmented
+            <XzHeading @text="Target size, each image" />
+            <XzSegmented
               @items={{TARGETS}}
               @selected={{this.target}}
               @disabled={{this.busy}}
               @onChange={{this.pickTarget}}
             />
           {{else if this.showsQuality}}
-            <CanonRow
+            <XzRow
               class="ic-quality"
               @title="Quality"
               @form="flush"
               as |titleId|
             >
-              <CanonSlider
+              <XzSlider
                 @value={{this.quality}}
                 @min={{0.05}}
                 @max={{1}}
@@ -573,37 +573,37 @@ export default class ImageCompressor extends Component {
                 @labelledBy={{titleId}}
                 @onChange={{this.setQuality}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonHeading @text="Format" />
-          <CanonSegmented
+          <XzHeading @text="Format" />
+          <XzSegmented
             @items={{FORMATS}}
             @selected={{this.formatIndex}}
             @disabledIndices={{this.blockedFormats}}
             @disabled={{this.busy}}
             @onChange={{this.pickFormat}}
           />
-          <CanonEmptyRow @text={{this.formatNote}} />
+          <XzEmptyRow @text={{this.formatNote}} />
           {{#if this.showsColours}}
-            <CanonRow @title="Reduce colours" as |titleId|>
-              <CanonSwitch
+            <XzRow @title="Reduce colours" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.reduceColours}}
                 @disabled={{this.busy}}
                 @onChange={{this.setColours}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonHeading @text="Longest side" />
-          <CanonSegmented
+          <XzHeading @text="Longest side" />
+          <XzSegmented
             @items={{SIZES}}
             @selected={{this.sizeIndex}}
             @disabledIndices={{this.blockedSizes}}
             @disabled={{this.busy}}
             @onChange={{this.pickSize}}
           />
-          <CanonHeading @text="Output" />
-          <CanonTiles @items={{this.tiles}} />
+          <XzHeading @text="Output" />
+          <XzTiles @items={{this.tiles}} />
           {{! progress shows in the banner; here the button just says so }}
           <Job
             @title={{this.runTitle}}
@@ -625,19 +625,19 @@ export default class ImageCompressor extends Component {
               />
             {{/unless}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Images" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Images" />
           {{#each this.rows as |row|}}
-            <CanonRow
+            <XzRow
               class="ic-item {{if row.on 'ic-item--on'}}"
               @title={{row.item.file.name}}
               @detail={{row.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 class="ic-view"
                 @kind="cell"
                 @text={{if row.on "Viewing" "View"}}
@@ -645,7 +645,7 @@ export default class ImageCompressor extends Component {
                 @disabled={{row.item.broken}}
                 @onClick={{fn this.select row.item.id}}
               />
-              <CanonButton
+              <XzButton
                 class="ic-remove"
                 @kind="cell"
                 @text="Remove"
@@ -653,7 +653,7 @@ export default class ImageCompressor extends Component {
                 @disabled={{this.busy}}
                 @onClick={{fn this.remove row.item.id}}
               />
-            </CanonRow>
+            </XzRow>
           {{/each}}
           <Slot
             class="ic-slot"
@@ -670,7 +670,7 @@ export default class ImageCompressor extends Component {
             @onFiles={{this.add}}
           />
           {{#if this.items.length}}
-            <CanonButton
+            <XzButton
               class="ic-clear"
               @kind="cell"
               @text="Clear all"
@@ -680,32 +680,32 @@ export default class ImageCompressor extends Component {
             />
           {{/if}}
           {{#if this.warning}}
-            <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
           {{/if}}
           {{#if this.resultUrl}}
-            <CanonSegmented
+            <XzSegmented
               @items={{VIEWS}}
               @selected={{this.view}}
               @onChange={{this.pickView}}
             />
-            <CanonRow @title="Compare quality" as |titleId|>
-              <CanonSwitch
+            <XzRow @title="Compare quality" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.compareOn}}
                 @onChange={{this.setCompare}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="ic-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background="var(--canon-muted)"
+          @background="var(--xz-surface-2)"
         >
           {{#if this.comparing}}
-            <CanonImageCompare
+            <XzImageCompare
               @before={{this.selected.url}}
               @after={{this.resultUrl}}
               @beforeTitle="Original"
@@ -714,9 +714,9 @@ export default class ImageCompressor extends Component {
           {{else if this.shownUrl}}
             <img class="ic-image" src={{this.shownUrl}} alt="" />
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }
 

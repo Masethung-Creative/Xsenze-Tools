@@ -2,14 +2,14 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import type { ComponentLike } from '@glint/template';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCommand, {
-  type CanonCommandItem,
-} from 'delphicanon/components/canon-command';
-import CanonDialog, {
-  type CanonDialogClose,
-} from 'delphicanon/components/canon-dialog';
-import CanonRow from 'delphicanon/components/canon-row';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCommand, {
+  type XzCommandItem,
+} from 'xsenze-tools/components/xz/command';
+import XzDialog, {
+  type XzDialogClose,
+} from 'xsenze-tools/components/xz/dialog';
+import XzRow from 'xsenze-tools/components/xz/row';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { LANGUAGES } from 'xsenze-tools/lib/transcribe';
 
@@ -45,7 +45,7 @@ const item = (
   code: string,
   name: string,
   group?: string,
-): CanonCommandItem => ({
+): XzCommandItem => ({
   id,
   title: name,
   group,
@@ -54,7 +54,7 @@ const item = (
   detail: group === 'All languages' ? code : undefined,
 });
 
-const autoItem: CanonCommandItem = {
+const autoItem: XzCommandItem = {
   id: 'auto',
   title: AUTO,
   keywords: ['auto', 'detect'],
@@ -101,7 +101,7 @@ export default class LanguagePick extends Component<LanguagePickSignature> {
 
   search = (query: string) => (this.query = query);
 
-  pick = (close: CanonDialogClose, picked: CanonCommandItem) => {
+  pick = (close: XzDialogClose, picked: XzCommandItem) => {
     this.args.onChange(
       picked.id === 'auto' ? '' : picked.id.replace(/^common-/, ''),
     );
@@ -109,8 +109,8 @@ export default class LanguagePick extends Component<LanguagePickSignature> {
   };
 
   <template>
-    <CanonRow class="as-language" @title="Language" @form="flush" as |titleId|>
-      <CanonButton
+    <XzRow class="as-language" @title="Language" @form="flush" as |titleId|>
+      <XzButton
         class="as-language-pick"
         @kind="cell"
         @text={{this.text}}
@@ -120,15 +120,15 @@ export default class LanguagePick extends Component<LanguagePickSignature> {
         aria-haspopup="dialog"
         @onClick={{this.show}}
       />
-    </CanonRow>
-    <CanonDialog
+    </XzRow>
+    <XzDialog
       class="as-language-dialog"
       @open={{this.open}}
       @onClose={{this.closed}}
       aria-label="Language"
     >
       <:default as |close|>
-        <CanonCommand
+        <XzCommand
           @items={{this.items}}
           @placeholder="Search languages…"
           @label="Language"
@@ -137,6 +137,6 @@ export default class LanguagePick extends Component<LanguagePickSignature> {
           @onQuery={{this.search}}
         />
       </:default>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

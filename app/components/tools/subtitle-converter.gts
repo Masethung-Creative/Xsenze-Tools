@@ -3,20 +3,20 @@ import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonCodeBlock from 'delphicanon/components/canon-code-block';
-import CanonDecimalField from 'delphicanon/components/canon-decimal-field';
-import CanonDropZone from 'delphicanon/components/canon-drop-zone';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonFromTo from 'delphicanon/components/canon-from-to';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzCodeBlock from 'xsenze-tools/components/xz/code-block';
+import XzDecimalField from 'xsenze-tools/components/xz/decimal-field';
+import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzFromTo from 'xsenze-tools/components/xz/from-to';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import CueTimeline, {
   type CueLane,
@@ -289,7 +289,7 @@ export default class SubtitleConverterTool extends Component {
   });
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="subtitle-converter"
       @collapsesTo={{72}}
       @mainLeadsStacked={{true}}
@@ -299,31 +299,26 @@ export default class SubtitleConverterTool extends Component {
       {{on "drop" this.dropAnywhere}}
     >
       <:banner>
-        <CanonCanvas @height={{BAND_HEIGHT}} @background="var(--canon-muted)">
+        <XzCanvas @height={{BAND_HEIGHT}} @background="var(--xz-surface-2)">
           <CueTimeline
             class="sc-timeline"
             @lanes={{this.lanes}}
             @label={{this.timelineLabel}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Target" />
-          <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Target" />
+          <XzSegmented
             class="sc-target"
             aria-label="Target"
             @items={{FORMAT_LABELS}}
             @selected={{this.targetIndex}}
             @onChange={{this.pickTarget}}
           />
-          <CanonRow
-            class="sc-shift"
-            @title="Shift (s)"
-            @form="flush"
-            as |titleId|
-          >
-            <CanonDecimalField
+          <XzRow class="sc-shift" @title="Shift (s)" @form="flush" as |titleId|>
+            <XzDecimalField
               @value={{this.shiftSeconds}}
               @signed={{true}}
               @min={{-86400}}
@@ -331,14 +326,9 @@ export default class SubtitleConverterTool extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setShift}}
             />
-          </CanonRow>
-          <CanonRow
-            class="sc-scale"
-            @title="Scale (×)"
-            @form="flush"
-            as |titleId|
-          >
-            <CanonDecimalField
+          </XzRow>
+          <XzRow class="sc-scale" @title="Scale (×)" @form="flush" as |titleId|>
+            <XzDecimalField
               @value={{this.scaleFactor}}
               @unit="×"
               @step={{0.001}}
@@ -348,9 +338,9 @@ export default class SubtitleConverterTool extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setScale}}
             />
-          </CanonRow>
-          <CanonHeading @text="Rate" />
-          <CanonFromTo
+          </XzRow>
+          <XzHeading @text="Rate" />
+          <XzFromTo
             class="sc-rate"
             @items={{RATE_LABELS}}
             @from={{this.rateFrom}}
@@ -361,8 +351,8 @@ export default class SubtitleConverterTool extends Component {
             @onToChange={{this.pickRateTo}}
           />
           {{#if this.isVtt}}
-            <CanonHeading @text="Kind" />
-            <CanonSegmented
+            <XzHeading @text="Kind" />
+            <XzSegmented
               class="sc-kind"
               aria-label="Kind"
               @items={{KIND_LABELS}}
@@ -370,13 +360,13 @@ export default class SubtitleConverterTool extends Component {
               @selected={{this.kindIndex}}
               @onChange={{this.pickKind}}
             />
-            <CanonRow
+            <XzRow
               class="sc-language"
               @title="Language"
               @form="flush"
               as |titleId|
             >
-              <CanonTextCell
+              <XzTextCell
                 class="sc-language-cell"
                 @value={{this.vttLanguage}}
                 @placeholder="en"
@@ -386,12 +376,12 @@ export default class SubtitleConverterTool extends Component {
                 spellcheck="false"
                 @onChange={{this.setLanguage}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows class="sc-input" @framed={{true}}>
+        <XzRows class="sc-input" @framed={{true}}>
           <Source
             @heading={{this.inputHeading}}
             @text={{this.input}}
@@ -399,14 +389,14 @@ export default class SubtitleConverterTool extends Component {
             @onChange={{this.setInput}}
           />
           {{#if this.fileName}}
-            <CanonRow
+            <XzRow
               class="sc-file"
               @title={{this.fileName}}
               @icon={{FileIcon}}
             />
           {{else}}
             {{#unless this.hasInput}}
-              <CanonDropZone
+              <XzDropZone
                 class="sc-drop"
                 @prompt="SRT or VTT"
                 @icon={{FileIcon}}
@@ -417,14 +407,14 @@ export default class SubtitleConverterTool extends Component {
               />
             {{/unless}}
           {{/if}}
-        </CanonRows>
-        <CanonRows class="sc-output" @framed={{true}}>
-          <CanonHeading @text="Output" />
+        </XzRows>
+        <XzRows class="sc-output" @framed={{true}}>
+          <XzHeading @text="Output" />
           {{#if this.stats}}
-            <CanonRow class="sc-stats" @title={{this.stats}} />
+            <XzRow class="sc-stats" @title={{this.stats}} />
           {{/if}}
           {{#if this.noCues}}
-            <CanonStatus
+            <XzStatus
               class="sc-warning"
               @text="No cues found."
               @tone="warn"
@@ -432,13 +422,13 @@ export default class SubtitleConverterTool extends Component {
             />
           {{/if}}
           {{#if this.output}}
-            <CanonCodeBlock
+            <XzCodeBlock
               class="sc-code"
               aria-label="Converted output"
               @code={{this.output}}
               @maxHeight={{420}}
             />
-            <CanonButton
+            <XzButton
               class="sc-download"
               @kind="primary"
               @text={{this.downloadText}}
@@ -448,11 +438,11 @@ export default class SubtitleConverterTool extends Component {
             />
           {{else}}
             {{#unless this.noCues}}
-              <CanonEmptyRow @text="None" />
+              <XzEmptyRow @text="None" />
             {{/unless}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

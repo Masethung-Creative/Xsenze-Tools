@@ -10,10 +10,10 @@
 }
 
 .vc-compare,
-.vc-compare .canon-image-compare {
+.vc-compare .xz-compare {
   block-size: 100%;
 }
 
 .vc-source--on {
-  box-shadow: inset 3px 0 0 var(--canon-primary);
+  box-shadow: inset 3px 0 0 var(--xz-accent-2);
 }

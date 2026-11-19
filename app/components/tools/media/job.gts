@@ -1,13 +1,13 @@
 import Component from '@glimmer/component';
 import type { TOC } from '@ember/component/template-only';
 import type { ComponentLike } from '@glint/template';
-import CanonBar from 'delphicanon/components/canon-bar';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonLoader from 'delphicanon/components/canon-loader';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzBar from 'xsenze-tools/components/xz/bar';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzLoader from 'xsenze-tools/components/xz/loader';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { downloadIcon, passAlong } from 'xsenze-tools/lib/flow-hooks';
 
@@ -56,17 +56,17 @@ export class JobProgress extends Component<{
   }
 
   <template>
-    <CanonRow class="media-job-progress" @title="Processing…">
+    <XzRow class="media-job-progress" @title="Processing…">
       <span class="media-job-percent">
-        <CanonLoader @cell={{5}} @gap={{1}} />
+        <XzLoader @cell={{5}} @gap={{1}} />
         <span role="status">{{this.percent}}</span>
       </span>
-    </CanonRow>
+    </XzRow>
     {{#if this.percent}}
-      <CanonBar class="media-job-bar" @share={{this.share}} />
+      <XzBar class="media-job-bar" @share={{this.share}} />
     {{/if}}
     {{#if @onCancel}}
-      <CanonButton
+      <XzButton
         class="media-job-cancel"
         @text="Cancel"
         @icon={{Cancel}}
@@ -77,7 +77,7 @@ export class JobProgress extends Component<{
 }
 
 /**
- * Rows for a CanonRows: the export button,
+ * Rows for a XzRows: the export button,
  * progress with Cancel, then the finished file with Download (a workflow
  * passes it along) in place of Preview and Share.
  */
@@ -85,7 +85,7 @@ const Job: TOC<JobSignature> = <template>
   {{#if @busy}}
     <JobProgress @progress={{@progress}} @onCancel={{@onCancel}} />
   {{else}}
-    <CanonButton
+    <XzButton
       class="media-job-run"
       @kind="primary"
       @text={{@title}}
@@ -95,33 +95,33 @@ const Job: TOC<JobSignature> = <template>
       @onClick={{@onRun}}
     />
     {{#if @failed}}
-      <CanonStatus @text={{@failure}} @tone="warn" @row={{true}} />
+      <XzStatus @text={{@failure}} @tone="warn" @row={{true}} />
     {{/if}}
     {{#if @result}}
-      <CanonHeading @text="Result" />
-      <CanonRow
+      <XzHeading @text="Result" />
+      <XzRow
         class="media-job-result"
         @title={{@result.name}}
         @detail={{@result.detail}}
       />
       {{#if @onPreview}}
-        <CanonGrid>
-          <CanonButton
+        <XzGrid>
+          <XzButton
             class="media-job-preview"
             @text="Preview"
             @icon={{Eye}}
             @onClick={{@onPreview}}
           />
-          <CanonButton
+          <XzButton
             class="media-job-save"
             @kind="primary"
             @text={{passAlong "Download"}}
             @icon={{Save}}
             @onClick={{@onSave}}
           />
-        </CanonGrid>
+        </XzGrid>
       {{else}}
-        <CanonButton
+        <XzButton
           class="media-job-save"
           @kind="primary"
           @text={{passAlong "Download"}}

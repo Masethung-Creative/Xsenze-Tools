@@ -15,22 +15,22 @@
   inset-inline-start: 0;
   inline-size: var(--media-recorder-level, 0%);
   block-size: 4px;
-  background: var(--canon-primary);
+  background: var(--xz-accent-2);
 }
 
 .media-recorder-transport {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--canon-hairline);
-  min-block-size: var(--canon-primary-height);
-  background: var(--canon-border);
+  gap: 1px;
+  min-block-size: var(--xz-control-lg);
+  background: var(--xz-border);
 }
 
 .media-recorder-transport--active {
   grid-template-columns: 64px minmax(0, 1fr) 64px;
 }
 
-.media-recorder-transport .canon-button {
+.media-recorder-transport .xz-button {
   block-size: 100%;
 }
 
@@ -38,11 +38,11 @@
 .media-recorder-platter {
   --media-recorder-ink: color-mix(
     in srgb,
-    var(--canon-muted-foreground) 15%,
+    var(--xz-text-muted) 15%,
     transparent
   );
 
-  background-color: var(--canon-card);
+  background-color: var(--xz-surface);
   background-image: repeating-linear-gradient(
     135deg,
     var(--media-recorder-ink) 0 1.06px,
@@ -58,7 +58,7 @@
 .media-recorder-platter--running {
   --media-recorder-ink: color-mix(
     in srgb,
-    var(--canon-muted-foreground) 35%,
+    var(--xz-text-muted) 35%,
     transparent
   );
 }

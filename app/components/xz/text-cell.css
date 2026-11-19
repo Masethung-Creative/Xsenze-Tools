@@ -1,0 +1,5 @@
+/* Fills the room its row leaves (the kit caps a direct input in a row at 60%). */
+.xz-input.xz-text-cell {
+  flex: 1 1 8rem;
+  min-width: 0;
+}

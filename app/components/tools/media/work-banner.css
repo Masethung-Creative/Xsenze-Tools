@@ -5,9 +5,9 @@
   gap: 12px;
   box-sizing: border-box;
   block-size: 100%;
-  padding-inline: var(--canon-panel-padding, 16px);
-  color: var(--canon-foreground);
-  font-family: var(--canon-font);
+  padding-inline: var(--xz-panel-pad, var(--xz-space-4));
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
 }
 
 .work-banner-head,
@@ -40,7 +40,7 @@
 }
 
 .work-banner-eta {
-  color: var(--canon-muted-foreground);
+  color: var(--xz-text-muted);
 }
 
 .work-banner-percent {

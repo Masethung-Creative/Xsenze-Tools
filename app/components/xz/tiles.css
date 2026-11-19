@@ -1,0 +1,5 @@
+/* The kit's xz-readings, with the column count set from the width. */
+.xz-tilegroup > .xz-readings {
+  grid-template-columns: repeat(var(--xz-cols, 2), minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+}

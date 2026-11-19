@@ -1,9 +1,9 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import { normalId, ranges } from 'xsenze-tools/lib/story/analysis';
 import {
   choice,
@@ -160,90 +160,90 @@ export default class PartsEditor extends Component<PartsEditorSignature> {
         </summary>
         {{#each group.parts key="id" as |p|}}
           <div class="ss-card">
-            <CanonRow @title={{p.label}} @form="flush" as |titleId|>
-              <CanonTextCell
+            <XzRow @title={{p.label}} @form="flush" as |titleId|>
+              <XzTextCell
                 @value={{p.part.title}}
                 @placeholder="Title"
                 @onChange={{fn this.set p.id "title"}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
-            <CanonRow @title="What happens" @form="stacked" as |titleId|>
-              <CanonTextCell
+            </XzRow>
+            <XzRow @title="What happens" @form="stacked" as |titleId|>
+              <XzTextCell
                 @value={{p.part.summary}}
                 @placeholder="A sentence or two"
                 @onChange={{fn this.set p.id "summary"}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
+            </XzRow>
             {{#if this.course}}
-              <CanonRow @title="Goal" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzRow @title="Goal" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{p.part.goal}}
                   @placeholder="What it teaches"
                   @onChange={{fn this.set p.id "goal"}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
             {{#if this.showsTools}}
-              <CanonRow @title="AI tool" @form="flush" as |titleId|>
-                <CanonMenuCell
+              <XzRow @title="AI tool" @form="flush" as |titleId|>
+                <XzMenuCell
                   @items={{this.toolItems}}
                   @selected={{p.toolIndex}}
                   @labelledBy={{titleId}}
                   @onChange={{fn this.pickTool p.id}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
             {{#if this.showsTask}}
-              <CanonRow @title="Try it" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzRow @title="Try it" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{p.part.task}}
                   @placeholder="The try-it task"
                   @onChange={{fn this.set p.id "task"}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
             {{#if this.showsRecap}}
-              <CanonRow @title="Recap" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzRow @title="Recap" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{p.part.recap}}
                   @placeholder="One recap line"
                   @onChange={{fn this.set p.id "recap"}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
             {{#if this.showsQuiz}}
-              <CanonRow @title="Quiz" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzRow @title="Quiz" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{p.part.quiz}}
                   @placeholder="One quiz question"
                   @onChange={{fn this.set p.id "quiz"}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
             {{#if this.showsBeat}}
-              <CanonRow @title="Beat" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzRow @title="Beat" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{p.part.beat}}
                   @placeholder="The beat it covers"
                   @onChange={{fn this.set p.id "beat"}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
+              </XzRow>
             {{/if}}
-            <CanonRow @title="In it" @form="flush" as |titleId|>
-              <CanonTextCell
+            <XzRow @title="In it" @form="flush" as |titleId|>
+              <XzTextCell
                 @value={{p.cast}}
                 @placeholder="IDs, such as C1, P2, M1"
                 @onChange={{fn this.setCast p.id}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
+            </XzRow>
           </div>
         {{/each}}
       </details>

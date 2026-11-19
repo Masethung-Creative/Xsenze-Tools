@@ -1,19 +1,19 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDecimalField from 'delphicanon/components/canon-decimal-field';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonNumberField from 'delphicanon/components/canon-number-field';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSlider from 'delphicanon/components/canon-slider';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDecimalField from 'xsenze-tools/components/xz/decimal-field';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzNumberField from 'xsenze-tools/components/xz/number-field';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSlider from 'xsenze-tools/components/xz/slider';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadUrl } from 'xsenze-tools/lib/download';
@@ -403,7 +403,7 @@ export default class VideoToGif extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="video-to-gif"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -413,8 +413,8 @@ export default class VideoToGif extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.selected this.length null}}
             @readout="below"
@@ -431,14 +431,14 @@ export default class VideoToGif extends Component {
               />
               <Marks @dim={{this.frameMarks}} @duration={{this.duration}} />
             </div>
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Range" />
-          <CanonRow class="vg-fps" @title="FPS" @form="flush" as |titleId|>
-            <CanonSlider
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Range" />
+          <XzRow class="vg-fps" @title="FPS" @form="flush" as |titleId|>
+            <XzSlider
               @value={{this.fps}}
               @min={{1}}
               @max={{50}}
@@ -447,9 +447,9 @@ export default class VideoToGif extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setFps}}
             />
-          </CanonRow>
-          <CanonRow class="vg-width" @title="Width" @form="flush" as |titleId|>
-            <CanonNumberField
+          </XzRow>
+          <XzRow class="vg-width" @title="Width" @form="flush" as |titleId|>
+            <XzNumberField
               @value={{this.width}}
               @min={{16}}
               @max={{1920}}
@@ -459,18 +459,18 @@ export default class VideoToGif extends Component {
               @disabled={{this.widthLocked}}
               @onChange={{this.setWidth}}
             />
-          </CanonRow>
-          <CanonTiles class="vg-budget" @items={{this.budget}} />
+          </XzRow>
+          <XzTiles class="vg-budget" @items={{this.budget}} />
           {{#if this.overCap}}
-            <CanonStatus
+            <XzStatus
               class="vg-over"
               @text={{TOO_MANY_FRAMES}}
               @tone="warn"
               @row={{true}}
             />
           {{/if}}
-        </CanonRows>
-        <CanonRows @framed={{true}}>
+        </XzRows>
+        <XzRows @framed={{true}}>
           <Job
             @title="Create GIF"
             @icon={{Clapper}}
@@ -487,25 +487,25 @@ export default class VideoToGif extends Component {
           {{#if this.gifUrl}}
             <img class="vg-gif" src={{this.gifUrl}} alt="Encoded GIF" />
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="vg-source"
               @title={{this.intake.fileName}}
               @detail={{if this.warning this.warning this.meta}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="vg-slot"
@@ -517,16 +517,16 @@ export default class VideoToGif extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.warning}}
-              <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
             {{/if}}
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="vg-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background={{if this.loaded "#000" "var(--canon-muted)"}}
+          @background={{if this.loaded "#000" "var(--xz-surface-2)"}}
         >
           {{#if this.loaded}}
             {{! the transport is its control; user media lacks captions }}
@@ -543,12 +543,12 @@ export default class VideoToGif extends Component {
               {{on "error" this.intake.failed}}
             ></video>
           {{/if}}
-        </CanonCanvas>
-        <CanonCanvas
+        </XzCanvas>
+        <XzCanvas
           class="vg-editor"
           @height={{editorHeight}}
           @boxing="unlessWide"
-          @background="var(--canon-muted)"
+          @background="var(--xz-surface-2)"
         >
           <Trim
             @duration={{this.duration}}
@@ -565,31 +565,31 @@ export default class VideoToGif extends Component {
               @blank={{if this.loaded false true}}
             />
           </Trim>
-        </CanonCanvas>
-        <CanonRows @framed={{true}}>
-          <CanonRow
+        </XzCanvas>
+        <XzRows @framed={{true}}>
+          <XzRow
             class="vg-start"
             @title="Start"
             @detail={{this.startText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.start}}
               @max={{this.startMax}}
               @labelledBy={{titleId}}
               @disabled={{this.unselected}}
               @onChange={{this.selectStart}}
             />
-          </CanonRow>
-          <CanonRow
+          </XzRow>
+          <XzRow
             class="vg-end"
             @title="End"
             @detail={{this.endText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.end}}
               @min={{this.endMin}}
               @max={{this.duration}}
@@ -597,29 +597,29 @@ export default class VideoToGif extends Component {
               @disabled={{this.unselected}}
               @onChange={{this.selectEnd}}
             />
-          </CanonRow>
-          <CanonGrid>
-            <CanonButton
+          </XzRow>
+          <XzGrid>
+            <XzButton
               class="vg-set-in"
               @text="Set in"
               @icon={{SetIn}}
               @disabled={{this.unselected}}
               @onClick={{this.setIn}}
             />
-            <CanonButton
+            <XzButton
               class="vg-set-out"
               @text="Set out"
               @icon={{SetOut}}
               @disabled={{this.unselected}}
               @onClick={{this.setOut}}
             />
-          </CanonGrid>
-        </CanonRows>
+          </XzGrid>
+        </XzRows>
       </:main>
       <:footer>
         <Transport @playback={{this.playback}} @ready={{this.selected}}>
           <:before>
-            <CanonButton
+            <XzButton
               class="vg-back"
               @label="Back one frame"
               @icon={{Back}}
@@ -629,7 +629,7 @@ export default class VideoToGif extends Component {
             />
           </:before>
           <:default>
-            <CanonButton
+            <XzButton
               class="vg-forward"
               @label="Forward one frame"
               @icon={{Forward}}
@@ -640,6 +640,6 @@ export default class VideoToGif extends Component {
           </:default>
         </Transport>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

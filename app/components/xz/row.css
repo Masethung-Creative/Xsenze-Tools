@@ -1,0 +1,98 @@
+/*
+ * The break between side by side and stacked depends on the label's and the
+ * control's own widths, so it is a wrapping flex line: the label grows 999
+ * times faster, which keeps a side-by-side control at its own width and lets
+ * a wrapped one fill its line.
+ */
+.xz-prow {
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  line-height: 1.3;
+}
+
+.xz-prow > .xz-prow__label {
+  display: flex;
+  flex: 999 1 auto;
+  align-items: center;
+  gap: var(--xz-space-3);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.xz-prow__icon {
+  display: flex;
+  flex: none;
+  inline-size: 1.25rem;
+  color: var(--xz-text-muted);
+}
+
+.xz-prow__icon svg {
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.xz-prow__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.xz-prow__sizer {
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.xz-prow__control {
+  display: flex;
+  flex: 0 1 auto;
+  min-inline-size: 0;
+}
+
+.xz-prow--plain {
+  gap: var(--xz-space-2) var(--xz-space-3);
+}
+
+.xz-prow--plain > .xz-prow__label {
+  padding-block: var(--xz-space-1);
+}
+
+/* flush and stacked: the control meets the row's edges behind a hairline */
+.xz-prow.xz-prow--flush,
+.xz-prow.xz-prow--stacked {
+  align-items: stretch;
+  gap: 1px;
+  padding: 0;
+  background: var(--xz-border);
+}
+
+.xz-prow--flush > .xz-prow__label,
+.xz-prow--stacked > .xz-prow__label {
+  padding: var(--xz-space-3) var(--xz-space-3) var(--xz-space-3)
+    var(--xz-panel-pad, var(--xz-space-4));
+  background: var(--xz-surface);
+}
+
+.xz-prow--flush > .xz-prow__control,
+.xz-prow--stacked > .xz-prow__control {
+  flex-grow: 1;
+  align-items: center;
+  background: var(--xz-surface);
+}
+
+.xz-prow--flush > .xz-prow__control > *,
+.xz-prow--stacked > .xz-prow__control > * {
+  flex: 1 1 auto;
+}
+
+.xz-prow.xz-prow--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* bars and sliders shrink beside the title; the row stacks only below the basis */
+.xz-prow__control:has(> .xz-bar, > .xz-slider, > .xz-slider-cell, > .xz-meter) {
+  flex: 999 1 var(--xz-row-shrink-basis, 8rem);
+  justify-content: flex-end;
+}

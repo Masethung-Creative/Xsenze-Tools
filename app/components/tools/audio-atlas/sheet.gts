@@ -3,7 +3,7 @@ import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
-import CanonLoader from 'delphicanon/components/canon-loader';
+import XzLoader from 'xsenze-tools/components/xz/loader';
 import { drawWaveform, type WaveformPeaks } from 'xsenze-tools/lib/audio';
 import {
   frequencies,
@@ -332,7 +332,7 @@ export default class Sheet extends Component<SheetSignature> {
           >{{frequency.text}}</span>
         {{/each}}
         {{#if this.rendering}}
-          <CanonLoader class="aa-loader" @cell={{5}} @gap={{1}} />
+          <XzLoader class="aa-loader" @cell={{5}} @gap={{1}} />
         {{/if}}
       </div>
       {{#if this.headStyle}}

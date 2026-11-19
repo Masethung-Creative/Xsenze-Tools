@@ -1,16 +1,16 @@
 /* the source is the tool's main field: tall, body size */
-.canon-text-area.tt-source {
+.xz-text-area.tt-source {
   block-size: 220px;
-  font-size: var(--canon-text-body);
+  font-size: var(--xz-font-size-sm);
 }
 
 .tt-result-text {
   display: block;
-  padding: 14px var(--canon-panel-padding);
-  background: var(--canon-card);
-  color: var(--canon-foreground);
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-body);
+  padding: 14px var(--xz-panel-pad, var(--xz-space-4));
+  background: var(--xz-surface);
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-sm);
   line-height: 1.4;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -18,7 +18,7 @@
 }
 
 .tt-result-text::selection {
-  background: color-mix(in srgb, var(--canon-primary) 30%, transparent);
+  background: color-mix(in srgb, var(--xz-accent-2) 30%, transparent);
 }
 
 .tt-result-text--marked {

@@ -4,21 +4,21 @@ import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
 import { service } from '@ember/service';
-import CanonBar from 'delphicanon/components/canon-bar';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDialog from 'delphicanon/components/canon-dialog';
-import CanonDropZone from 'delphicanon/components/canon-drop-zone';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonLoader from 'delphicanon/components/canon-loader';
-import CanonPopover from 'delphicanon/components/canon-popover';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import type CanonToastService from 'delphicanon/services/canon-toast';
+import XzBar from 'xsenze-tools/components/xz/bar';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzLoader from 'xsenze-tools/components/xz/loader';
+import XzPopover from 'xsenze-tools/components/xz/popover';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import type XzToastService from 'xsenze-tools/services/xz-toast';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import CueRow from 'xsenze-tools/components/tools/media/cue-row';
 import { peakBuckets } from 'xsenze-tools/components/tools/media/frames';
@@ -98,7 +98,7 @@ const flag = (query: URLSearchParams, key: string) => {
  * the model, language and format the sidebar.
  */
 export default class AutoSubtitleTool extends Component {
-  @service('canon-toast') declare toast: CanonToastService;
+  @service('xz-toast') declare toast: XzToastService;
 
   @tracked file: File | null = null;
   @tracked peaks: WaveformPeaks | null = null;
@@ -383,7 +383,7 @@ export default class AutoSubtitleTool extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="auto-subtitle"
       @collapsesTo={{72}}
       @mainLeadsStacked={{true}}
@@ -393,7 +393,7 @@ export default class AutoSubtitleTool extends Component {
       {{on "drop" this.dropAnywhere}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}} @background="var(--canon-muted)">
+        <XzCanvas @height={{bandHeight}} @background="var(--xz-surface-2)">
           <Picture
             @peaks={{this.peaks}}
             @duration={{this.duration}}
@@ -403,13 +403,13 @@ export default class AutoSubtitleTool extends Component {
             @unit={{this.unit}}
             @label={{this.pictureLabel}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows class="as-controls" @framed={{true}}>
-          <CanonHeading @text="Model" />
+        <XzRows class="as-controls" @framed={{true}}>
+          <XzHeading @text="Model" />
           {{#each this.modeKeys key="@identity"}}
-            <CanonSegmented
+            <XzSegmented
               class="as-mode"
               aria-label="Model"
               @items={{MODE_LABELS}}
@@ -418,15 +418,15 @@ export default class AutoSubtitleTool extends Component {
               @onChange={{this.pickMode}}
             />
           {{/each}}
-          <CanonRow
+          <XzRow
             class="as-model"
             @title={{this.model.name}}
             @detail={{this.model.size}}
             @form="flush"
           >
-            <CanonPopover class="as-models" @placement="bottom-end">
+            <XzPopover class="as-models" @placement="bottom-end">
               <:trigger as |p|>
-                <CanonButton
+                <XzButton
                   class="as-models-open"
                   @kind="cell"
                   @label="Models used"
@@ -435,14 +435,14 @@ export default class AutoSubtitleTool extends Component {
                 />
               </:trigger>
               <:content>
-                <CanonRows
+                <XzRows
                   class="as-models-panel"
                   role="dialog"
                   aria-label="Models used"
                   @framed={{true}}
                 >
                   {{#each MODEL_ROWS as |row|}}
-                    <CanonRow
+                    <XzRow
                       class="as-models-row"
                       @title={{row.label}}
                       @detail={{row.size}}
@@ -453,25 +453,25 @@ export default class AutoSubtitleTool extends Component {
                         target="_blank"
                         rel="noopener noreferrer"
                       >{{row.name}}</a>
-                    </CanonRow>
+                    </XzRow>
                   {{/each}}
-                  <CanonStatus
+                  <XzStatus
                     @text="Experimental requires WebGPU"
                     @tone="muted"
                     @row={{true}}
                   />
-                </CanonRows>
+                </XzRows>
               </:content>
-            </CanonPopover>
-          </CanonRow>
-          <CanonHeading @text="Language" />
+            </XzPopover>
+          </XzRow>
+          <XzHeading @text="Language" />
           <LanguagePick
             @value={{this.language}}
             @disabled={{this.busy}}
             @onChange={{this.setLanguage}}
           />
-          <CanonHeading @text="Format" />
-          <CanonSegmented
+          <XzHeading @text="Format" />
+          <XzSegmented
             class="as-format"
             aria-label="Format"
             @items={{FORMAT_LABELS}}
@@ -479,7 +479,7 @@ export default class AutoSubtitleTool extends Component {
             @disabled={{this.busy}}
             @onChange={{this.pickFormat}}
           />
-          <CanonButton
+          <XzButton
             class="as-run"
             @kind="primary"
             @text="Transcribe"
@@ -489,7 +489,7 @@ export default class AutoSubtitleTool extends Component {
             @onClick={{this.run}}
           />
           {{#if this.problemText}}
-            <CanonStatus
+            <XzStatus
               class="as-problem"
               role="alert"
               @text={{this.problemText}}
@@ -497,8 +497,8 @@ export default class AutoSubtitleTool extends Component {
               @row={{true}}
             />
           {{/if}}
-        </CanonRows>
-        <CanonDialog
+        </XzRows>
+        <XzDialog
           class="as-warning"
           @open={{this.warning}}
           @message={{EXPERIMENTAL_WARNING}}
@@ -515,40 +515,40 @@ export default class AutoSubtitleTool extends Component {
             />
           </:header>
           <:footer as |close|>
-            <CanonButton
+            <XzButton
               class="as-warning-cancel"
               @text="Cancel"
               @onClick={{fn close "cancel"}}
             />
-            <CanonButton
+            <XzButton
               class="as-warning-proceed"
               @kind="primary"
               @text="Proceed"
               @onClick={{fn close "confirm"}}
             />
           </:footer>
-        </CanonDialog>
+        </XzDialog>
       </:sidebar>
       <:main>
-        <CanonRows class="as-source" @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows class="as-source" @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.file}}
-            <CanonRow
+            <XzRow
               class="as-file"
               @title={{this.fileName}}
               @detail={{this.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 class="as-clear"
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
-            <CanonDropZone
+            <XzDropZone
               class="as-drop"
               @prompt={{DROP_TITLE}}
               @icon={{Wave}}
@@ -558,21 +558,21 @@ export default class AutoSubtitleTool extends Component {
               {{on "paste" keepPaste}}
             />
           {{/if}}
-        </CanonRows>
+        </XzRows>
         {{#if this.showsResult}}
-          <CanonRows class="as-result" @framed={{true}}>
-            <CanonHeading @text="Subtitles" />
+          <XzRows class="as-result" @framed={{true}}>
+            <XzHeading @text="Subtitles" />
             {{#if this.busy}}
-              <CanonRow class="as-busy" @title={{this.status}}>
+              <XzRow class="as-busy" @title={{this.status}}>
                 <span class="as-busy-cell">
-                  <CanonLoader @cell={{5}} @gap={{1}} />
+                  <XzLoader @cell={{5}} @gap={{1}} />
                   {{#if this.downloading}}
                     <span role="status">{{this.percent}}%</span>
                   {{/if}}
                 </span>
-              </CanonRow>
+              </XzRow>
               {{#if this.downloading}}
-                <CanonBar
+                <XzBar
                   class="as-bar"
                   role="progressbar"
                   aria-label="Progress"
@@ -582,21 +582,21 @@ export default class AutoSubtitleTool extends Component {
                   @share={{this.share}}
                 />
               {{/if}}
-              <CanonButton
+              <XzButton
                 class="as-cancel"
                 @text="Cancel"
                 @icon={{Cancel}}
                 @onClick={{this.cancel}}
               />
             {{else if this.noCues}}
-              <CanonStatus
+              <XzStatus
                 class="as-empty"
                 @text="No cues found."
                 @tone="warn"
                 @row={{true}}
               />
             {{else}}
-              <CanonRow class="as-stats" @title={{this.stats}} />
+              <XzRow class="as-stats" @title={{this.stats}} />
               {{#each this.cues key="@index" as |cue index|}}
                 <CueRow
                   @index={{index}}
@@ -607,27 +607,27 @@ export default class AutoSubtitleTool extends Component {
                 />
               {{/each}}
             {{/if}}
-          </CanonRows>
+          </XzRows>
         {{/if}}
       </:main>
       <:footer>
-        <CanonGrid class="as-actions">
-          <CanonButton
+        <XzGrid class="as-actions">
+          <XzButton
             class="as-copy"
             aria-label="Copy subtitles"
             @text="Copy"
             @icon={{Copy}}
             @onClick={{this.copy}}
           />
-          <CanonButton
+          <XzButton
             class="as-download"
             @kind="primary"
             @text={{this.downloadText}}
             @icon={{Save}}
             @onClick={{this.download}}
           />
-        </CanonGrid>
+        </XzGrid>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

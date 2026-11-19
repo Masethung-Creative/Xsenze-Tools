@@ -1,0 +1,94 @@
+/* the kit's menu list as an anchored popover (lib/xz/popover.ts places it) */
+.xz-menu-panel[popover] {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  margin: 0;
+  min-inline-size: var(--xz-menu-min-width, 11rem);
+  max-inline-size: calc(100vw - 1rem);
+  padding: var(--xz-space-1);
+  overflow: visible;
+  animation: none;
+  box-shadow: var(--xz-shadow-md);
+}
+
+.xz-menu-panel:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+
+.xz-menu-panel .xz-menu__item {
+  flex: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* pointer and keyboard both move focus, so focus is the highlight */
+.xz-menu-panel .xz-menu__item:focus,
+.xz-menu-panel .xz-menu__item[aria-expanded="true"] {
+  outline: none;
+  background: var(--xz-surface-2);
+}
+
+.xz-menu-panel .xz-menu__item[aria-disabled="true"] {
+  color: var(--xz-disabled-text);
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.xz-menu-item-check,
+.xz-menu-item-icon,
+.xz-menu-item-more {
+  display: flex;
+  flex: none;
+  inline-size: var(--xz-icon-sm);
+  block-size: var(--xz-icon-sm);
+}
+
+.xz-menu-item-check .icon,
+.xz-menu-item-icon .icon,
+.xz-menu-item-more .icon,
+.xz-menu-item-check svg,
+.xz-menu-item-icon svg,
+.xz-menu-item-more svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* a column for checks or icons only when some item has one, so titles line up */
+.xz-menu-panel:not(.xz-menu-panel--checks)
+  > .xz-menu__item
+  > .xz-menu-item-check,
+.xz-menu-panel:not(.xz-menu-panel--icons)
+  > .xz-menu__item
+  > .xz-menu-item-icon {
+  display: none;
+}
+
+.xz-menu-item-check {
+  color: var(--xz-accent-text);
+}
+
+.xz-menu-item-title {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xz-menu-item-shortcut {
+  flex: none;
+  margin-inline-start: var(--xz-space-6);
+  color: var(--xz-text-subtle);
+  font-family: var(--xz-font-mono);
+  font-size: var(--xz-font-size-xs);
+}
+
+.xz-menu-item-more {
+  color: var(--xz-text-muted);
+}
+
+.xz-menu-item-more:dir(rtl) {
+  scale: -1 1;
+}

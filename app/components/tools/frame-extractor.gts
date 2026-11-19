@@ -1,18 +1,18 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import type { CanonLamp } from 'delphicanon/components/canon-lamps';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSlider from 'delphicanon/components/canon-slider';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import type { XzLamp } from 'xsenze-tools/components/xz/lamps';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSlider from 'xsenze-tools/components/xz/slider';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -52,7 +52,7 @@ const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 // preview size cap
 const tallest = 1.25;
 const tallestPreview = 340;
-const lamps: CanonLamp[] = ['play', 'pause'];
+const lamps: XzLamp[] = ['play', 'pause'];
 const sheetMin = 2;
 const sheetMax = 48;
 // seconds the sheet times stay on the strip after the slider moves
@@ -356,7 +356,7 @@ export default class FrameExtractor extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="frame-extractor"
       @sidebarWidth={{480}}
       @bannerSticks={{true}}
@@ -367,8 +367,8 @@ export default class FrameExtractor extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.ready this.duration null}}
             @readout="below"
@@ -389,12 +389,12 @@ export default class FrameExtractor extends Component {
                 @duration={{this.duration}}
               />
             </div>
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows class="fx-stills-rows" @framed={{true}}>
-          <CanonHeading @text={{this.stillsHeading}} />
+        <XzRows class="fx-stills-rows" @framed={{true}}>
+          <XzHeading @text={{this.stillsHeading}} />
           {{#if this.stills.length}}
             <Stills
               @stills={{this.stills}}
@@ -409,18 +409,18 @@ export default class FrameExtractor extends Component {
               @zipName={{this.zipName}}
             />
           {{else}}
-            <CanonEmptyRow @text="None" />
+            <XzEmptyRow @text="None" />
           {{/if}}
-        </CanonRows>
-        <CanonRows class="fx-sheet-rows" @framed={{true}}>
-          <CanonHeading @text="Contact sheet" />
-          <CanonRow
+        </XzRows>
+        <XzRows class="fx-sheet-rows" @framed={{true}}>
+          <XzHeading @text="Contact sheet" />
+          <XzRow
             class="fx-sheet-count"
             @title="Frames"
             @form="flush"
             as |titleId|
           >
-            <CanonSlider
+            <XzSlider
               @value={{this.sheetCount}}
               @min={{sheetMin}}
               @max={{sheetMax}}
@@ -429,7 +429,7 @@ export default class FrameExtractor extends Component {
               @labelledBy={{titleId}}
               @onChange={{this.setSheetCount}}
             />
-          </CanonRow>
+          </XzRow>
           <Job
             @title="Contact sheet"
             @icon={{Sheet}}
@@ -446,25 +446,25 @@ export default class FrameExtractor extends Component {
           {{#if this.sheet}}
             <img class="fx-sheet" src={{this.sheet.url}} alt="Contact sheet" />
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="fx-source"
               @title={{this.intake.fileName}}
               @detail={{if this.warning this.warning this.meta}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="fx-slot"
@@ -476,11 +476,11 @@ export default class FrameExtractor extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.warning}}
-              <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
             {{/if}}
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="fx-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
@@ -507,9 +507,9 @@ export default class FrameExtractor extends Component {
                 height="9"
               /></svg>
           {{/if}}
-        </CanonCanvas>
-        <CanonRows @framed={{true}}>
-          <CanonButton
+        </XzCanvas>
+        <XzRows @framed={{true}}>
+          <XzButton
             class="fx-grab"
             @kind="primary"
             @text="Grab frame"
@@ -519,13 +519,13 @@ export default class FrameExtractor extends Component {
             @onClick={{this.grab}}
           />
           {{#if this.grabFailed}}
-            <CanonStatus @text={{GRAB_ERROR}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{GRAB_ERROR}} @tone="warn" @row={{true}} />
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:main>
       <:footer>
-        <CanonGrid class="fx-transport">
-          <CanonButton
+        <XzGrid class="fx-transport">
+          <XzButton
             class="fx-back"
             @text="−1 s"
             aria-label="Back 1 second"
@@ -533,7 +533,7 @@ export default class FrameExtractor extends Component {
             @disabled={{this.unready}}
             @onClick={{this.back}}
           />
-          <CanonButton
+          <XzButton
             class="fx-step-back"
             @label="Back one frame"
             @icon={{Back}}
@@ -541,7 +541,7 @@ export default class FrameExtractor extends Component {
             @disabled={{this.unready}}
             @onClick={{this.stepBack}}
           />
-          <CanonButton
+          <XzButton
             class="fx-play"
             @kind="primary"
             @text={{if this.playback.playing "Pause" "Play"}}
@@ -549,7 +549,7 @@ export default class FrameExtractor extends Component {
             @disabled={{this.unready}}
             @onClick={{this.playback.toggle}}
           />
-          <CanonButton
+          <XzButton
             class="fx-step-forward"
             @label="Forward one frame"
             @icon={{Forward}}
@@ -557,7 +557,7 @@ export default class FrameExtractor extends Component {
             @disabled={{this.unready}}
             @onClick={{this.stepForward}}
           />
-          <CanonButton
+          <XzButton
             class="fx-forward"
             @text="+1 s"
             aria-label="Forward 1 second"
@@ -565,8 +565,8 @@ export default class FrameExtractor extends Component {
             @disabled={{this.unready}}
             @onClick={{this.forward}}
           />
-        </CanonGrid>
+        </XzGrid>
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

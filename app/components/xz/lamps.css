@@ -1,0 +1,40 @@
+/* Icon-only transport lamps, on the kit's xz-lamps / xz-lamp tones. */
+.xz-lamps--bare {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: var(--xz-space-4);
+  align-items: center;
+  pointer-events: none;
+}
+
+.xz-lamps--bare > .xz-lamp {
+  display: flex;
+  inline-size: 17px;
+  block-size: 17px;
+  color: var(--xz-text-subtle);
+}
+
+.xz-lamps--bare > .xz-lamp svg {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  opacity: 0.45;
+  transition:
+    opacity var(--xz-duration-base) var(--xz-ease-out),
+    filter var(--xz-duration-base) var(--xz-ease-out);
+}
+
+.xz-lamps--bare > .xz-lamp.is-on:not(.xz-lamp--blink) svg {
+  opacity: 1;
+  filter: drop-shadow(
+    0 0 3px color-mix(in srgb, currentcolor 60%, transparent)
+  );
+}
+
+/* the brief off-flash on a loop wrap or similar */
+.xz-lamps--bare > .xz-lamp--blink svg {
+  opacity: 0.45;
+  filter: none;
+  transition: none;
+}

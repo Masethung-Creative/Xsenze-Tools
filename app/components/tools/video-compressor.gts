@@ -2,19 +2,19 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonCompressionScale from 'delphicanon/components/canon-compression-scale';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonImageCompare from 'delphicanon/components/canon-image-compare';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzCompressionScale from 'xsenze-tools/components/xz/compression-scale';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzImageCompare from 'xsenze-tools/components/xz/image-compare';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -874,7 +874,7 @@ export default class VideoCompressor extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="video-compressor"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -884,7 +884,7 @@ export default class VideoCompressor extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{scaleHeight}}>
+        <XzCanvas @height={{scaleHeight}}>
           {{#if this.busy}}
             <WorkBanner
               @title={{this.bannerTitle}}
@@ -892,26 +892,26 @@ export default class VideoCompressor extends Component {
               @onCancel={{this.cancel}}
             />
           {{else}}
-            <CanonCompressionScale
+            <XzCompressionScale
               @before={{this.sourceBytes}}
               @after={{this.shownBytes}}
               @format={{this.scaleFormat}}
             />
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Compress by" />
-          <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Compress by" />
+          <XzSegmented
             @items={{MODES}}
             @selected={{this.mode}}
             @disabled={{this.busy}}
             @onChange={{this.pickMode}}
           />
           {{#if this.mode}}
-            <CanonHeading @text="Target size, each video" />
-            <CanonSegmented
+            <XzHeading @text="Target size, each video" />
+            <XzSegmented
               @items={{TARGETS}}
               @selected={{this.targetIndex}}
               @disabledIndices={{this.blockedTargets}}
@@ -919,40 +919,40 @@ export default class VideoCompressor extends Component {
               @onChange={{this.pickTarget}}
             />
           {{else}}
-            <CanonHeading @text="Quality" />
-            <CanonSegmented
+            <XzHeading @text="Quality" />
+            <XzSegmented
               @items={{PRESETS}}
               @selected={{this.preset}}
               @disabled={{this.busy}}
               @onChange={{this.pickPreset}}
             />
           {{/if}}
-          <CanonHeading @text="Resolution" />
-          <CanonSegmented
+          <XzHeading @text="Resolution" />
+          <XzSegmented
             @items={{RESOLUTIONS}}
             @selected={{this.resolutionIndex}}
             @disabledIndices={{this.blockedResolutions}}
             @disabled={{this.busy}}
             @onChange={{this.pickResolution}}
           />
-          <CanonHeading @text="Frame rate" />
-          <CanonSegmented
+          <XzHeading @text="Frame rate" />
+          <XzSegmented
             @items={{RATES}}
             @selected={{this.rateIndex}}
             @disabledIndices={{this.blockedRates}}
             @disabled={{this.busy}}
             @onChange={{this.pickRate}}
           />
-          <CanonHeading @text="Container" />
-          <CanonSegmented
+          <XzHeading @text="Container" />
+          <XzSegmented
             @items={{containerLabels}}
             @selected={{this.containerIndex}}
             @disabledIndices={{this.blockedContainers}}
             @disabled={{this.busy}}
             @onChange={{this.pickContainer}}
           />
-          <CanonHeading @text="Codec" />
-          <CanonSegmented
+          <XzHeading @text="Codec" />
+          <XzSegmented
             @items={{CODEC_LABELS}}
             @selected={{this.codecIndex}}
             @disabledIndices={{this.blockedCodecs}}
@@ -960,18 +960,18 @@ export default class VideoCompressor extends Component {
             @onChange={{this.pickCodec}}
           />
           {{#if this.codecNote}}
-            <CanonEmptyRow @text={{this.codecNote}} />
+            <XzEmptyRow @text={{this.codecNote}} />
           {{/if}}
-          <CanonRow @title="Remove audio" as |titleId|>
-            <CanonSwitch
+          <XzRow @title="Remove audio" as |titleId|>
+            <XzSwitch
               aria-labelledby={{titleId}}
               @on={{this.removeAudio}}
               @disabled={{if this.loaded this.busy true}}
               @onChange={{this.setRemoveAudio}}
             />
-          </CanonRow>
-          <CanonHeading @text="Output" />
-          <CanonTiles @items={{this.tiles}} />
+          </XzRow>
+          <XzHeading @text="Output" />
+          <XzTiles @items={{this.tiles}} />
           {{! progress shows in the banner; here the button just says so }}
           <Job
             @title={{this.runTitle}}
@@ -993,19 +993,19 @@ export default class VideoCompressor extends Component {
               />
             {{/unless}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Videos" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Videos" />
           {{#each this.rows as |row|}}
-            <CanonRow
+            <XzRow
               class="vc-source {{if row.on 'vc-source--on'}}"
               @title={{row.clip.file.name}}
               @detail={{row.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 class="vc-view"
                 @kind="cell"
                 @text={{if row.on "Viewing" "View"}}
@@ -1013,7 +1013,7 @@ export default class VideoCompressor extends Component {
                 @disabled={{row.clip.broken}}
                 @onClick={{fn this.select row.clip.id}}
               />
-              <CanonButton
+              <XzButton
                 class="vc-remove"
                 @kind="cell"
                 @text="Remove"
@@ -1021,7 +1021,7 @@ export default class VideoCompressor extends Component {
                 @disabled={{this.busy}}
                 @onClick={{fn this.remove row.clip.id}}
               />
-            </CanonRow>
+            </XzRow>
           {{/each}}
           <Slot
             class="vc-slot"
@@ -1034,7 +1034,7 @@ export default class VideoCompressor extends Component {
             @onFiles={{this.add}}
           />
           {{#if this.loaded}}
-            <CanonButton
+            <XzButton
               class="vc-clear"
               @kind="cell"
               @text="Clear all"
@@ -1044,30 +1044,30 @@ export default class VideoCompressor extends Component {
             />
           {{/if}}
           {{#if this.warning}}
-            <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
           {{/if}}
           {{#if this.resultUrl}}
-            <CanonSegmented
+            <XzSegmented
               @items={{VIEWS}}
               @selected={{this.view}}
               @onChange={{this.pickView}}
             />
-            <CanonRow @title="Compare quality" as |titleId|>
-              <CanonSwitch
+            <XzRow @title="Compare quality" as |titleId|>
+              <XzSwitch
                 aria-labelledby={{titleId}}
                 @on={{this.compareOn}}
                 @disabled={{if this.canCompare false true}}
                 @onChange={{this.setCompare}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="vc-preview"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background={{if this.loaded "#000" "var(--canon-muted)"}}
+          @background={{if this.loaded "#000" "var(--xz-surface-2)"}}
         >
           {{#if this.intake.url}}
             {{! the transport is its control; user media lacks captions }}
@@ -1084,7 +1084,7 @@ export default class VideoCompressor extends Component {
             ></video>
             {{#if this.comparing}}
               <div class="vc-compare">
-                <CanonImageCompare
+                <XzImageCompare
                   @before={{this.selected.before}}
                   @after={{this.selected.after}}
                   @beforeTitle="Original"
@@ -1093,7 +1093,7 @@ export default class VideoCompressor extends Component {
               </div>
             {{/if}}
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
         {{#if this.selected}}
           <Sections @sections={{this.selected.info}} />
         {{/if}}
@@ -1104,6 +1104,6 @@ export default class VideoCompressor extends Component {
           @ready={{if this.intake.duration true false}}
         />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

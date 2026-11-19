@@ -1,6 +1,6 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonGrid from 'delphicanon/components/canon-grid';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzGrid from 'xsenze-tools/components/xz/grid';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import type Playback from 'xsenze-tools/components/tools/media/playback';
 
@@ -16,9 +16,9 @@ const Transport: TOC<{
   Args: { playback: Playback; ready?: boolean };
   Blocks: { default: []; before: [] };
 }> = <template>
-  <CanonGrid class="media-transport">
+  <XzGrid class="media-transport">
     {{yield to="before"}}
-    <CanonButton
+    <XzButton
       class="media-loop"
       @text="Loop"
       @icon={{LoopIcon}}
@@ -27,7 +27,7 @@ const Transport: TOC<{
       @onClick={{@playback.toggleLoop}}
       aria-pressed={{if @playback.looping "true" "false"}}
     />
-    <CanonButton
+    <XzButton
       class="media-play"
       @kind="primary"
       @text={{if @playback.playing "Pause" "Play"}}
@@ -35,7 +35,7 @@ const Transport: TOC<{
       @disabled={{off @ready}}
       @onClick={{@playback.toggle}}
     />
-    <CanonButton
+    <XzButton
       class="media-stop"
       @text="Stop"
       @icon={{StopIcon}}
@@ -43,7 +43,7 @@ const Transport: TOC<{
       @onClick={{@playback.stop}}
     />
     {{yield}}
-  </CanonGrid>
+  </XzGrid>
 </template>;
 
 export default Transport;

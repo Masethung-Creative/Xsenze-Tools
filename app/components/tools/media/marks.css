@@ -14,16 +14,15 @@
 .media-mark--dim {
   inset-block-end: 0;
   block-size: 30%;
-  background: color-mix(in srgb, var(--canon-background) 85%, transparent);
+  background: color-mix(in srgb, var(--xz-bg) 85%, transparent);
 }
 
 /* the tick and its flag edged in the page colour, to read on any frame */
 .media-mark--lit {
   inset-block: 0;
-  background: var(--canon-primary);
-  filter: drop-shadow(1px 0 0 var(--canon-background))
-    drop-shadow(-1px 0 0 var(--canon-background))
-    drop-shadow(0 1px 0 var(--canon-background));
+  background: var(--xz-accent-2);
+  filter: drop-shadow(1px 0 0 var(--xz-bg)) drop-shadow(-1px 0 0 var(--xz-bg))
+    drop-shadow(0 1px 0 var(--xz-bg));
 }
 
 .media-mark--lit::after {
@@ -32,6 +31,6 @@
   inset-inline-start: 0;
   inline-size: 8px;
   block-size: 8px;
-  background: var(--canon-primary);
+  background: var(--xz-accent-2);
   content: "";
 }

@@ -1,11 +1,11 @@
 import Component from '@glimmer/component';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonReadoutBand, {
-  type CanonTransport,
-} from 'delphicanon/components/canon-readout-band';
-import type { CanonLamp } from 'delphicanon/components/canon-lamps';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzReadoutBand, {
+  type XzTransport,
+} from 'xsenze-tools/components/xz/readout-band';
+import type { XzLamp } from 'xsenze-tools/components/xz/lamps';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import {
   peakInterval,
@@ -23,7 +23,7 @@ export interface RecorderTake {
   duration: number;
 }
 
-const lamps: CanonLamp[] = ['record', 'play', 'pause'];
+const lamps: XzLamp[] = ['record', 'play', 'pause'];
 const none: number[] = [];
 
 /** Platter travel in px per second of audio: the strip's two px per peak. */
@@ -68,17 +68,17 @@ function paint(
     context.fillRect(x, mid - extent / 2, layout.step, extent);
   };
   context.clearRect(0, 0, width, height);
-  context.fillStyle = colour('--canon-primary');
+  context.fillStyle = colour('--xz-accent-2');
   context.fillRect(0, mid - unit / 2, layout.head, unit);
   for (let index = layout.from; index < layout.index; index++) column(index);
   context.globalAlpha = 0.45;
-  context.fillStyle = colour('--canon-muted-foreground');
+  context.fillStyle = colour('--xz-text-muted');
   context.fillRect(layout.head, mid - unit / 2, width - layout.head, unit);
   if (shown.ahead)
     for (let index = layout.index; index < layout.to; index++) column(index);
   context.globalAlpha = 1;
   if (!shown.head) return;
-  context.fillStyle = colour('--canon-foreground');
+  context.fillStyle = colour('--xz-text');
   const rule = 2 * unit;
   context.fillRect(
     Math.min(Math.max(0, layout.head - unit), width - rule),
@@ -106,7 +106,7 @@ export interface RecorderBandSignature {
  * motion the whole take fits the width and the head moves instead.
  */
 export class RecorderBand extends Component<RecorderBandSignature> {
-  get transport(): CanonTransport {
+  get transport(): XzTransport {
     const { capture, playback } = this.args;
     if (capture.active)
       return {
@@ -182,7 +182,7 @@ export class RecorderBand extends Component<RecorderBandSignature> {
   });
 
   <template>
-    <CanonReadoutBand
+    <XzReadoutBand
       class="media-recorder"
       @transport={{this.transport}}
       @idle={{this.idle}}
@@ -206,7 +206,7 @@ export class RecorderBand extends Component<RecorderBandSignature> {
           ></span>
         {{/if}}
       </div>
-    </CanonReadoutBand>
+    </XzReadoutBand>
   </template>
 }
 
@@ -313,7 +313,7 @@ export class RecorderTransport extends Component<RecorderTransportSignature> {
         {{if this.active 'media-recorder-transport--active'}}"
     >
       {{#if this.active}}
-        <CanonButton
+        <XzButton
           class="media-recorder-stop"
           @label="Stop"
           @icon={{StopIcon}}
@@ -326,14 +326,14 @@ export class RecorderTransport extends Component<RecorderTransportSignature> {
           aria-hidden="true"
           {{this.platter}}
         ></span>
-        <CanonButton
+        <XzButton
           class="media-recorder-pause"
           @label={{if this.held "Resume" "Pause"}}
           @icon={{if this.held ResumeIcon PauseIcon}}
           @onClick={{this.pause}}
         />
       {{else}}
-        <CanonButton
+        <XzButton
           class="media-recorder-record"
           @kind="primary"
           @text={{if @recordText @recordText "Record"}}

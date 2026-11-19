@@ -6,7 +6,7 @@
 }
 
 .ss-lane {
-  background: var(--canon-muted);
+  background: var(--xz-surface-2);
 }
 
 .ss-lane .cue-timeline-cue {
@@ -30,7 +30,7 @@
 
 .ss-blank {
   display: block;
-  background: var(--canon-muted);
+  background: var(--xz-surface-2);
 }
 
 .ss-canvas {
@@ -44,61 +44,61 @@
   position: absolute;
   inline-size: 12px;
   block-size: 12px;
-  border: 0 solid color-mix(in srgb, var(--canon-primary) 70%, transparent);
+  border: 0 solid color-mix(in srgb, var(--xz-accent-2) 70%, transparent);
   pointer-events: none;
 }
 
 .ss-safe--ts {
   inset-block-start: 5%;
   inset-inline-start: 5%;
-  border-block-start-width: var(--canon-hairline);
-  border-inline-start-width: var(--canon-hairline);
+  border-block-start-width: 1px;
+  border-inline-start-width: 1px;
 }
 
 .ss-safe--te {
   inset-block-start: 5%;
   inset-inline-end: 5%;
-  border-block-start-width: var(--canon-hairline);
-  border-inline-end-width: var(--canon-hairline);
+  border-block-start-width: 1px;
+  border-inline-end-width: 1px;
 }
 
 .ss-safe--bs {
   inset-block-end: 5%;
   inset-inline-start: 5%;
-  border-block-end-width: var(--canon-hairline);
-  border-inline-start-width: var(--canon-hairline);
+  border-block-end-width: 1px;
+  border-inline-start-width: 1px;
 }
 
 .ss-safe--be {
   inset-block-end: 5%;
   inset-inline-end: 5%;
-  border-block-end-width: var(--canon-hairline);
-  border-inline-end-width: var(--canon-hairline);
+  border-block-end-width: 1px;
+  border-inline-end-width: 1px;
 }
 
 /* snap guides while dragging: solid when snapped, else dashed at half */
 .ss-guide {
   position: absolute;
-  border: 0 dashed color-mix(in srgb, var(--canon-primary) 50%, transparent);
+  border: 0 dashed color-mix(in srgb, var(--xz-accent-2) 50%, transparent);
   pointer-events: none;
 }
 
 .ss-guide--snapped {
   border-style: solid;
-  border-color: var(--canon-primary);
+  border-color: var(--xz-accent-2);
 }
 
 .ss-guide--centre {
   inset-block: 0;
   inset-inline-start: 50%;
-  border-inline-start-width: var(--canon-hairline);
+  border-inline-start-width: 1px;
 }
 
 /* the default baseline, 94 % down */
 .ss-guide--baseline {
   inset-block-start: 94%;
   inset-inline: 0;
-  border-block-start-width: var(--canon-hairline);
+  border-block-start-width: 1px;
 }
 
 .ss-handle {
@@ -106,8 +106,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border: var(--canon-hairline) solid
-    color-mix(in srgb, var(--canon-primary) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--xz-accent-2) 50%, transparent);
   border-radius: 0;
   background: transparent;
   cursor: grab;
@@ -122,7 +121,7 @@
 }
 
 .ss-handle--dragging {
-  border-color: var(--canon-primary);
+  border-color: var(--xz-accent-2);
   cursor: grabbing;
 }
 
@@ -131,7 +130,7 @@
 }
 
 .ss-handle:focus-visible {
-  outline: var(--canon-frame) solid var(--canon-primary);
+  outline: 2px solid var(--xz-accent-2);
   outline-offset: 2px;
 }
 
@@ -140,7 +139,7 @@
   inset-block-start: calc(50% - 5px);
   inline-size: 5px;
   block-size: 10px;
-  background: var(--canon-primary);
+  background: var(--xz-accent-2);
 }
 
 .ss-grip--start {
@@ -160,11 +159,11 @@
   max-inline-size: calc(100% - 32px);
   padding: 5px 10px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--canon-background) 85%, transparent);
-  color: var(--canon-foreground);
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-caption);
-  font-weight: var(--canon-weight-semibold);
+  background: color-mix(in srgb, var(--xz-bg) 85%, transparent);
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
   transform: translateX(-50%);
@@ -190,8 +189,8 @@
   }
 }
 
-.ss-video .canon-row-title,
-.ss-subs .canon-row-title {
+.ss-video .xz-panel__key,
+.ss-subs .xz-panel__key {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

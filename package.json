@@ -108,7 +108,6 @@
     "@jsquash/resize": "^2.1.1",
     "@jsquash/webp": "^1.5.0",
     "browser-fs-access": "^0.38.0",
-    "delphicanon": "^0.1.0",
     "demucs-web": "^1.0.2",
     "dexie": "^4.4.7",
     "ember-truth-helpers": "^5.0.0",

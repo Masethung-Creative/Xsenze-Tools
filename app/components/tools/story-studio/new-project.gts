@@ -2,15 +2,15 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import Icon from 'xsenze-tools/components/icon';
 import Outline from 'xsenze-tools/components/tools/story-studio/outline';
 import PlanSummary from 'xsenze-tools/components/tools/story-studio/plan-summary';
@@ -154,11 +154,11 @@ export default class NewProject extends Component<NewProjectSignature> {
   };
 
   <template>
-    <CanonSplit class="story-studio" @mainLeadsStacked={{this.isFirst}}>
+    <XzSplit class="story-studio" @mainLeadsStacked={{this.isFirst}}>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="New project" />
-          <CanonSegmented
+        <XzRows @framed={{true}}>
+          <XzHeading @text="New project" />
+          <XzSegmented
             class="ss-steps"
             aria-label="Steps"
             @items={{STEPS}}
@@ -167,37 +167,37 @@ export default class NewProject extends Component<NewProjectSignature> {
             @disabledIndices={{this.locked}}
             @onChange={{this.go}}
           />
-        </CanonRows>
+        </XzRows>
 
         {{#if this.isFirst}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Start" />
-            <CanonStatus
+          <XzRows @framed={{true}}>
+            <XzHeading @text="Start" />
+            <XzStatus
               @text="Pick what you are making. You can change every answer later except the type."
               @tone="muted"
               @row={{true}}
             />
             {{#if @seed}}
-              <CanonStatus
+              <XzStatus
                 @text="Copying “{{@seed.from}}”: its look and what you have come along."
                 @tone="ok"
                 @row={{true}}
               />
             {{/if}}
-            <CanonGrid>
+            <XzGrid>
               {{#if @saved}}
-                <CanonButton @text="Saved projects" @onClick={{@onProjects}} />
+                <XzButton @text="Saved projects" @onClick={{@onProjects}} />
               {{/if}}
-              <CanonButton @text="Open project file" @onClick={{@onOpenFile}} />
-            </CanonGrid>
+              <XzButton @text="Open project file" @onClick={{@onOpenFile}} />
+            </XzGrid>
             {{#if @onCancel}}
-              <CanonButton @text="Back to my project" @onClick={{@onCancel}} />
+              <XzButton @text="Back to my project" @onClick={{@onCancel}} />
             {{/if}}
-          </CanonRows>
+          </XzRows>
         {{else}}
-          <CanonRows @framed={{true}}>
+          <XzRows @framed={{true}}>
             {{#if (eq this.step 1)}}
-              <CanonHeading @text="{{this.typeName}} plan" />
+              <XzHeading @text="{{this.typeName}} plan" />
               {{#if this.type}}
                 <Questions
                   @type={{this.type}}
@@ -207,8 +207,8 @@ export default class NewProject extends Component<NewProjectSignature> {
                 />
               {{/if}}
             {{else if (eq this.step 2)}}
-              <CanonHeading @text="What you already have" />
-              <CanonStatus
+              <XzHeading @text="What you already have" />
+              <XzStatus
                 @text="These only set the start: later each character, place or prop can be I have a picture or Make a prompt."
                 @tone="muted"
                 @row={{true}}
@@ -223,7 +223,7 @@ export default class NewProject extends Component<NewProjectSignature> {
                 />
               {{/if}}
             {{else if (eq this.step 3)}}
-              <CanonHeading @text="Look and motion" />
+              <XzHeading @text="Look and motion" />
               {{#if this.type}}
                 <Questions
                   @type={{this.type}}
@@ -233,44 +233,40 @@ export default class NewProject extends Component<NewProjectSignature> {
                 />
               {{/if}}
             {{else}}
-              <CanonHeading @text="Name" />
-              <CanonRow @title="Project name" @form="flush" as |titleId|>
-                <CanonTextCell
+              <XzHeading @text="Name" />
+              <XzRow @title="Project name" @form="flush" as |titleId|>
+                <XzTextCell
                   @value={{this.title}}
                   @placeholder={{this.placeholder}}
                   @onChange={{this.rename}}
                   aria-labelledby={{titleId}}
                 />
-              </CanonRow>
-              <CanonStatus
+              </XzRow>
+              <XzStatus
                 @text="Once you create the project its type is locked. Everything else can change on the Plan tab."
                 @tone="muted"
                 @row={{true}}
               />
             {{/if}}
-            <CanonGrid>
-              <CanonButton @text="Back" @onClick={{this.back}} />
+            <XzGrid>
+              <XzButton @text="Back" @onClick={{this.back}} />
               {{#if this.isLast}}
-                <CanonButton
+                <XzButton
                   @kind="primary"
                   @text="Create project"
                   @onClick={{this.create}}
                 />
               {{else}}
-                <CanonButton
-                  @kind="primary"
-                  @text="Next"
-                  @onClick={{this.next}}
-                />
+                <XzButton @kind="primary" @text="Next" @onClick={{this.next}} />
               {{/if}}
-            </CanonGrid>
-          </CanonRows>
+            </XzGrid>
+          </XzRows>
         {{/if}}
       </:sidebar>
       <:main>
         {{#if this.isFirst}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="What are you making?" />
+          <XzRows @framed={{true}}>
+            <XzHeading @text="What are you making?" />
             <ul class="ss-types">
               {{#each this.types as |t|}}
                 <li>
@@ -287,24 +283,24 @@ export default class NewProject extends Component<NewProjectSignature> {
                 </li>
               {{/each}}
             </ul>
-          </CanonRows>
+          </XzRows>
         {{else if this.type}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Your plan" />
+          <XzRows @framed={{true}}>
+            <XzHeading @text="Your plan" />
             <PlanSummary @type={{this.type}} @answers={{this.answers}} />
-          </CanonRows>
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="Outline" />
+          </XzRows>
+          <XzRows @framed={{true}}>
+            <XzHeading @text="Outline" />
             <Outline
               @type={{this.type}}
               @answers={{this.answers}}
               @parts={{this.parts}}
               @compact={{true}}
             />
-          </CanonRows>
+          </XzRows>
         {{/if}}
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }
 

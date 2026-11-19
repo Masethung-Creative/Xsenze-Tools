@@ -1,15 +1,15 @@
 import Component from '@glimmer/component';
 import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import {
@@ -316,7 +316,7 @@ export default class AudioAtlas extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="audio-atlas"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -326,8 +326,8 @@ export default class AudioAtlas extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.decoded this.view.span null}}
           >
@@ -342,12 +342,12 @@ export default class AudioAtlas extends Component {
               @onScrub={{this.seek}}
               @blank={{if this.loaded false true}}
             />
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
         {{#if this.tags}}
-          <CanonRows class="aa-tags" @framed={{true}}>
+          <XzRows class="aa-tags" @framed={{true}}>
             <div class="aa-tags-text">
               {{#if this.tags.title}}
                 <p class="aa-tags-title">{{this.tags.title}}</p>
@@ -359,7 +359,7 @@ export default class AudioAtlas extends Component {
                 <p class="aa-tags-album">{{this.tags.album}}</p>
               {{/if}}
             </div>
-          </CanonRows>
+          </XzRows>
         {{/if}}
         <Sections @sections={{this.sections}} />
       </:sidebar>
@@ -374,22 +374,22 @@ export default class AudioAtlas extends Component {
             {{this.playback.register}}
           ></audio>
         {{/if}}
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="aa-source {{if this.intake.error 'aa-source--failed'}}"
               @title={{this.intake.fileName}}
               @detail={{this.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="aa-slot"
@@ -401,21 +401,21 @@ export default class AudioAtlas extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.intake.error}}
-              <CanonStatus
+              <XzStatus
                 @text={{this.intake.error}}
                 @tone="warn"
                 @row={{true}}
               />
             {{/if}}
           {{/if}}
-          <CanonRow
+          <XzRow
             class="aa-view"
             @title="View"
             @detail={{this.viewText}}
             @form="flush"
           >
-            <CanonGrid class="aa-zoom">
-              <CanonButton
+            <XzGrid class="aa-zoom">
+              <XzButton
                 class="aa-zoom-out"
                 @kind="cell"
                 @label="Zoom out"
@@ -423,7 +423,7 @@ export default class AudioAtlas extends Component {
                 @disabled={{this.notZoomed}}
                 @onClick={{this.zoomOut}}
               />
-              <CanonButton
+              <XzButton
                 class="aa-zoom-in"
                 @kind="cell"
                 @label="Zoom in"
@@ -431,7 +431,7 @@ export default class AudioAtlas extends Component {
                 @disabled={{this.undecoded}}
                 @onClick={{this.zoomIn}}
               />
-              <CanonButton
+              <XzButton
                 class="aa-fit"
                 @kind="cell"
                 @label="Reset zoom"
@@ -439,14 +439,14 @@ export default class AudioAtlas extends Component {
                 @disabled={{this.notZoomed}}
                 @onClick={{this.fit}}
               />
-            </CanonGrid>
-          </CanonRow>
-        </CanonRows>
-        <CanonCanvas
+            </XzGrid>
+          </XzRow>
+        </XzRows>
+        <XzCanvas
           class="aa-picture"
           @height={{sheetHeight}}
           @boxing="unlessWide"
-          @background="var(--canon-muted)"
+          @background="var(--xz-surface-2)"
         >
           {{#if this.intake.buffer}}
             <Sheet
@@ -467,7 +467,7 @@ export default class AudioAtlas extends Component {
               <span class="aa-plate"></span>
             </div>
           {{/if}}
-        </CanonCanvas>
+        </XzCanvas>
         {{#if this.loaded}}
           <OpenIn
             class="aa-open"
@@ -485,6 +485,6 @@ export default class AudioAtlas extends Component {
       <:footer>
         <Transport @playback={{this.playback}} @ready={{this.decoded}} />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

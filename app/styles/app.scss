@@ -4,8 +4,6 @@
 // not have. Component styles live next to their .gts file as plain .css and
 // use the kit's --xz-* variables.
 
-@use "canon";
-
 // ---------- theme ----------
 // index.html sets data-theme="dark" (default) or "light" before first paint.
 // The short names below are kept for the tools not yet moved to the kit.

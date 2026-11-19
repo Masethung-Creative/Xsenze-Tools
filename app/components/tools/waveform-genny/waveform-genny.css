@@ -11,10 +11,10 @@
   display: block;
   inline-size: min(100cqi, 100cqb * var(--wg-ratio));
   block-size: auto;
-  outline: var(--canon-hairline) solid var(--canon-border);
-  outline-offset: calc(-1 * var(--canon-hairline));
+  outline: 1px solid var(--xz-border);
+  outline-offset: calc(-1 * 1px);
 }
 
-.wg-source--failed .canon-row-detail {
-  color: var(--canon-destructive);
+.wg-source--failed .xz-panel__hint {
+  color: var(--xz-danger-text);
 }

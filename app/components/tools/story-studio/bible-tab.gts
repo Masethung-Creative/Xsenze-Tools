@@ -1,19 +1,19 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonSwitch from 'delphicanon/components/canon-switch';
-import CanonTextArea from 'delphicanon/components/canon-text-area';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
-import CanonTiles, { type CanonTile } from 'delphicanon/components/canon-tiles';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzSwitch from 'xsenze-tools/components/xz/switch';
+import XzTextArea from 'xsenze-tools/components/xz/text-area';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
+import XzTiles, { type XzTile } from 'xsenze-tools/components/xz/tiles';
 import TabBar from 'xsenze-tools/components/tools/story-studio/tab-bar';
 import { nextId, usesTools } from 'xsenze-tools/lib/story/analysis';
 import type { ProjectStore } from 'xsenze-tools/lib/story/project-store';
@@ -94,7 +94,7 @@ export default class BibleTab extends Component<BibleTabSignature> {
     return this.args.project.type === 'movie';
   }
 
-  get tiles(): CanonTile[] {
+  get tiles(): XzTile[] {
     const tiles = this.groups.map((g) => ({
       label: g.heading,
       value: String(g.items.length),
@@ -208,172 +208,169 @@ export default class BibleTab extends Component<BibleTabSignature> {
   };
 
   <template>
-    <CanonSplit class="story-studio">
+    <XzSplit class="story-studio">
       <:sidebar>
         <TabBar @selected={{@tab}} @onChange={{@onTab}} />
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Story summary" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Story summary" />
           {{#if this.movie}}
-            <CanonRow @title="Logline" @form="stacked" as |titleId|>
-              <CanonTextCell
+            <XzRow @title="Logline" @form="stacked" as |titleId|>
+              <XzTextCell
                 @value={{@project.logline}}
                 @placeholder="The film in one sentence"
                 @onChange={{this.setLogline}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonTextArea
+          <XzTextArea
             @value={{@project.synopsis}}
             @placeholder="The story in a few sentences"
             @height={{140}}
             @onChange={{this.setSynopsis}}
             aria-label="Story summary"
           />
-          <CanonTiles @items={{this.tiles}} />
-        </CanonRows>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Add" />
-          <CanonStatus
+          <XzTiles @items={{this.tiles}} />
+        </XzRows>
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Add" />
+          <XzStatus
             @text="The look is repeated word for word in every prompt, so keep it short and visual. Switch on I have a picture for anything you already have."
             @tone="muted"
             @row={{true}}
           />
-          <CanonGrid @columns={{2}}>
+          <XzGrid @columns={{2}}>
             {{#each this.groups as |g|}}
-              <CanonButton
-                @text="+ {{g.one}}"
-                @onClick={{fn this.add g.kind}}
-              />
+              <XzButton @text="+ {{g.one}}" @onClick={{fn this.add g.kind}} />
             {{/each}}
             {{#if this.showsTools}}
-              <CanonButton @text="+ AI tool" @onClick={{this.addTool}} />
+              <XzButton @text="+ AI tool" @onClick={{this.addTool}} />
             {{/if}}
-          </CanonGrid>
-        </CanonRows>
+          </XzGrid>
+        </XzRows>
       </:sidebar>
       <:main>
         {{#if this.empty}}
-          <CanonRows @framed={{true}}>
-            <CanonHeading @text="The list" />
-            <CanonEmptyRow
+          <XzRows @framed={{true}}>
+            <XzHeading @text="The list" />
+            <XzEmptyRow
               @text="Nothing yet. Read the story with a chatbot on the Story tab, or add items on the left."
             />
-          </CanonRows>
+          </XzRows>
         {{/if}}
         {{#each this.groups as |g|}}
           {{#if g.items.length}}
-            <CanonRows @framed={{true}}>
-              <CanonHeading @text={{g.heading}} />
+            <XzRows @framed={{true}}>
+              <XzHeading @text={{g.heading}} />
               {{#each g.items key="id" as |item|}}
                 <div class="ss-card">
-                  <CanonRow @title={{item.id}} @form="flush" as |titleId|>
-                    <CanonTextCell
+                  <XzRow @title={{item.id}} @form="flush" as |titleId|>
+                    <XzTextCell
                       @value={{item.name}}
                       @placeholder="Name"
                       @onChange={{fn this.setAsset item.id "name"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="Role" @form="flush" as |titleId|>
-                    <CanonTextCell
+                  </XzRow>
+                  <XzRow @title="Role" @form="flush" as |titleId|>
+                    <XzTextCell
                       @value={{item.role}}
                       @placeholder="Who or what it is in the story"
                       @onChange={{fn this.setAsset item.id "role"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="Look" @form="stacked">
-                    <CanonTextArea
+                  </XzRow>
+                  <XzRow @title="Look" @form="stacked">
+                    <XzTextArea
                       @value={{item.look}}
                       @placeholder="25 to 45 words a picture model can draw"
                       @height={{84}}
                       @onChange={{fn this.setAsset item.id "look"}}
                       aria-label="Look of {{item.id}}"
                     />
-                  </CanonRow>
-                  <CanonRow @title="I have a picture" as |titleId|>
-                    <CanonSwitch
+                  </XzRow>
+                  <XzRow @title="I have a picture" as |titleId|>
+                    <XzSwitch
                       @on={{item.have}}
                       @onChange={{fn this.setHave item.id}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonButton
+                  </XzRow>
+                  <XzButton
                     @text={{this.deleteText item.id}}
                     @onClick={{fn this.remove item.id}}
                   />
                 </div>
               {{/each}}
-            </CanonRows>
+            </XzRows>
           {{/if}}
         {{/each}}
         {{#if this.showsTools}}
           {{#if @project.tools.length}}
-            <CanonRows @framed={{true}}>
-              <CanonHeading @text="Free AI tools" />
+            <XzRows @framed={{true}}>
+              <XzHeading @text="Free AI tools" />
               {{#each @project.tools key="id" as |tool|}}
                 <div class="ss-card">
-                  <CanonRow @title={{tool.id}} @form="flush" as |titleId|>
-                    <CanonTextCell
+                  <XzRow @title={{tool.id}} @form="flush" as |titleId|>
+                    <XzTextCell
                       @value={{tool.name}}
                       @placeholder="Name"
                       @onChange={{fn this.setTool tool.id "name"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="What it does" @form="stacked" as |titleId|>
-                    <CanonTextCell
+                  </XzRow>
+                  <XzRow @title="What it does" @form="stacked" as |titleId|>
+                    <XzTextCell
                       @value={{tool.does}}
                       @onChange={{fn this.setTool tool.id "does"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow
+                  </XzRow>
+                  <XzRow
                     @title="How a kid uses it"
                     @form="stacked"
                     as |titleId|
                   >
-                    <CanonTextCell
+                    <XzTextCell
                       @value={{tool.use}}
                       @onChange={{fn this.setTool tool.id "use"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="Age limit" @form="flush" as |titleId|>
-                    <CanonTextCell
+                  </XzRow>
+                  <XzRow @title="Age limit" @form="flush" as |titleId|>
+                    <XzTextCell
                       @value={{tool.age}}
                       @placeholder="From the tool’s own terms"
                       @onChange={{fn this.setTool tool.id "age"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="Safety tip" @form="stacked" as |titleId|>
-                    <CanonTextCell
+                  </XzRow>
+                  <XzRow @title="Safety tip" @form="stacked" as |titleId|>
+                    <XzTextCell
                       @value={{tool.safety}}
                       @placeholder="For parents and teachers"
                       @onChange={{fn this.setTool tool.id "safety"}}
                       aria-labelledby={{titleId}}
                     />
-                  </CanonRow>
-                  <CanonRow @title="Shown by" @form="flush" as |titleId|>
-                    <CanonMenuCell
+                  </XzRow>
+                  <XzRow @title="Shown by" @form="flush" as |titleId|>
+                    <XzMenuCell
                       @items={{this.byItems}}
                       @selected={{this.byIndex tool}}
                       @labelledBy={{titleId}}
                       @onChange={{fn this.pickBy tool.id}}
                     />
-                  </CanonRow>
-                  <CanonButton
+                  </XzRow>
+                  <XzButton
                     @text={{this.deleteText tool.id}}
                     @onClick={{fn this.remove tool.id}}
                   />
                 </div>
               {{/each}}
-            </CanonRows>
+            </XzRows>
           {{/if}}
         {{/if}}
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

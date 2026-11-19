@@ -3,18 +3,18 @@ import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import type Owner from '@ember/owner';
-import CanonBar from 'delphicanon/components/canon-bar';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDropZone from 'delphicanon/components/canon-drop-zone';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonLoader from 'delphicanon/components/canon-loader';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzBar from 'xsenze-tools/components/xz/bar';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzLoader from 'xsenze-tools/components/xz/loader';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import CueRow from 'xsenze-tools/components/tools/media/cue-row';
 import DownloadAll from 'xsenze-tools/components/tools/media/download-all';
@@ -1323,17 +1323,14 @@ export default class AudioDubTool extends Component {
     ]);
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="audio-dub"
       @collapsesTo={{72}}
       @mainLeadsStacked={{true}}
       {{filePaste this.loadFile accept=MEDIA_ACCEPT}}
     >
       <:banner>
-        <CanonCanvas
-          @height={{this.bandHeight}}
-          @background="var(--canon-muted)"
-        >
+        <XzCanvas @height={{this.bandHeight}} @background="var(--xz-surface-2)">
           <Picture
             @peaks={{this.peaks}}
             @duration={{this.duration}}
@@ -1347,11 +1344,11 @@ export default class AudioDubTool extends Component {
             @unit={{this.unit}}
             @label={{this.pictureLabel}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows class="ad-controls" @framed={{true}}>
-          <CanonHeading @text="Languages" />
+        <XzRows class="ad-controls" @framed={{true}}>
+          <XzHeading @text="Languages" />
           <LanguageSelect
             @title="From"
             @auto={{true}}
@@ -1369,13 +1366,13 @@ export default class AudioDubTool extends Component {
             @onChange={{this.pickTargets}}
           />
           {{#each this.targetRows key="code" as |row|}}
-            <CanonRow
+            <XzRow
               class="ad-target"
               @title={{row.name}}
               @detail={{row.engine}}
               @icon={{row.icon}}
             >
-              <CanonButton
+              <XzButton
                 class="ad-target-remove"
                 @kind="cell"
                 @icon={{Remove}}
@@ -1383,13 +1380,13 @@ export default class AudioDubTool extends Component {
                 @disabled={{this.busy}}
                 @onClick={{fn this.removeTarget row.code}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
-            <CanonEmptyRow @text="Pick languages above" />
+            <XzEmptyRow @text="Pick languages above" />
           {{/each}}
           {{#unless this.cloning}}
-            <CanonHeading @text="Voice" />
-            <CanonSegmented
+            <XzHeading @text="Voice" />
+            <XzSegmented
               class="ad-voice"
               aria-label="Voice"
               @items={{VOICE_LABELS}}
@@ -1397,10 +1394,10 @@ export default class AudioDubTool extends Component {
               @disabled={{this.busy}}
               @onChange={{this.pickVoice}}
             />
-            <CanonStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
+            <XzStatus @text={{this.voiceNote}} @tone="muted" @row={{true}} />
           {{/unless}}
-          <CanonHeading @text="Speakers" />
-          <CanonSegmented
+          <XzHeading @text="Speakers" />
+          <XzSegmented
             class="ad-speaker-count"
             aria-label="Speakers"
             @items={{SPEAKER_LABELS}}
@@ -1409,13 +1406,13 @@ export default class AudioDubTool extends Component {
             @disabled={{this.busy}}
             @onChange={{this.pickSpeakerCount}}
           />
-          <CanonStatus
+          <XzStatus
             @text={{this.speakerCountNote}}
             @tone="muted"
             @row={{true}}
           />
-          <CanonHeading @text="Background" />
-          <CanonSegmented
+          <XzHeading @text="Background" />
+          <XzSegmented
             class="ad-background"
             aria-label="Background"
             @items={{BACKGROUND_LABELS}}
@@ -1423,14 +1420,10 @@ export default class AudioDubTool extends Component {
             @disabled={{this.busy}}
             @onChange={{this.pickBackground}}
           />
-          <CanonStatus
-            @text={{this.backgroundNote}}
-            @tone="muted"
-            @row={{true}}
-          />
-          <CanonHeading @text="Voice engine" />
+          <XzStatus @text={{this.backgroundNote}} @tone="muted" @row={{true}} />
+          <XzHeading @text="Voice engine" />
           {{#if VOICES_READY}}
-            <CanonSegmented
+            <XzSegmented
               class="ad-engine"
               aria-label="Voice engine"
               @items={{ENGINE_LABELS}}
@@ -1438,15 +1431,11 @@ export default class AudioDubTool extends Component {
               @disabled={{this.busy}}
               @onChange={{this.pickEngine}}
             />
-            <CanonStatus
-              @text={{this.engineNote}}
-              @tone="muted"
-              @row={{true}}
-            />
+            <XzStatus @text={{this.engineNote}} @tone="muted" @row={{true}} />
           {{else}}
-            <CanonEmptyRow @text="Coming soon" />
+            <XzEmptyRow @text="Coming soon" />
           {{/if}}
-          <CanonButton
+          <XzButton
             class="ad-run"
             @kind="primary"
             @text={{this.runText}}
@@ -1455,25 +1444,25 @@ export default class AudioDubTool extends Component {
             @disabled={{this.cannotRun}}
             @onClick={{this.dub}}
           />
-          <CanonStatus
+          <XzStatus
             class="ad-licence"
             @text={{this.licenceNote}}
             @tone="muted"
             @row={{true}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows class="ad-source" @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows class="ad-source" @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.file}}
-            <CanonRow
+            <XzRow
               class="ad-file"
               @title={{this.fileName}}
               @detail={{this.fileDetail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 class="ad-clear"
                 @kind="cell"
                 @text="Clear"
@@ -1481,16 +1470,12 @@ export default class AudioDubTool extends Component {
                 @disabled={{this.busy}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
             {{#if this.loadError}}
-              <CanonStatus
-                @text={{this.loadError}}
-                @tone="warn"
-                @row={{true}}
-              />
+              <XzStatus @text={{this.loadError}} @tone="warn" @row={{true}} />
             {{/if}}
           {{else}}
-            <CanonDropZone
+            <XzDropZone
               class="ad-drop"
               @prompt="Drop audio or video, plus SRT if you have one"
               @icon={{FileIcon}}
@@ -1501,7 +1486,7 @@ export default class AudioDubTool extends Component {
               {{on "paste" keepPaste}}
             />
           {{/if}}
-        </CanonRows>
+        </XzRows>
 
         {{#if this.file}}
           <Speakers
@@ -1523,8 +1508,8 @@ export default class AudioDubTool extends Component {
             @onMove={{this.setLineSpeaker}}
             @onCloseMove={{this.closeMove}}
           />
-          <CanonRows class="ad-script" @framed={{true}}>
-            <CanonHeading @text={{this.scriptHeading}} />
+          <XzRows class="ad-script" @framed={{true}}>
+            <XzHeading @text={{this.scriptHeading}} />
             {{#if this.cues.length}}
               <div class="ad-lines">
                 {{#each this.cues key="@index" as |cue index|}}
@@ -1538,7 +1523,7 @@ export default class AudioDubTool extends Component {
                   />
                 {{/each}}
               </div>
-              <CanonButton
+              <XzButton
                 class="ad-script-clear"
                 @text="Clear script"
                 @icon={{Trash}}
@@ -1546,12 +1531,12 @@ export default class AudioDubTool extends Component {
                 @onClick={{this.clearScript}}
               />
             {{else}}
-              <CanonStatus
+              <XzStatus
                 @text="Dub transcribes the speech first. Or drop an SRT or VTT to use your own script."
                 @tone="muted"
                 @row={{true}}
               />
-              <CanonDropZone
+              <XzDropZone
                 class="ad-subs-drop"
                 @prompt="SRT or VTT (optional)"
                 @icon={{SubsIcon}}
@@ -1561,19 +1546,19 @@ export default class AudioDubTool extends Component {
                 {{on "paste" keepPaste}}
               />
             {{/if}}
-          </CanonRows>
+          </XzRows>
         {{/if}}
 
-        <CanonRows class="ad-output" @framed={{true}}>
-          <CanonHeading @text="Dubs" />
+        <XzRows class="ad-output" @framed={{true}}>
+          <XzHeading @text="Dubs" />
           {{#if this.busy}}
-            <CanonRow class="ad-busy" @title={{this.status}}>
+            <XzRow class="ad-busy" @title={{this.status}}>
               <span class="ad-busy-cell">
-                <CanonLoader @cell={{5}} @gap={{1}} />
+                <XzLoader @cell={{5}} @gap={{1}} />
                 <span role="status">{{this.sharePercent}}%</span>
               </span>
-            </CanonRow>
-            <CanonBar
+            </XzRow>
+            <XzBar
               class="ad-bar"
               role="progressbar"
               aria-label="Progress"
@@ -1582,7 +1567,7 @@ export default class AudioDubTool extends Component {
               aria-valuenow={{this.sharePercent}}
               @share={{this.share}}
             />
-            <CanonButton
+            <XzButton
               class="ad-cancel"
               @text="Cancel"
               @icon={{Cancel}}
@@ -1590,11 +1575,11 @@ export default class AudioDubTool extends Component {
             />
           {{/if}}
           {{#if this.error}}
-            <CanonStatus @text={{this.error}} @tone="warn" @row={{true}} />
+            <XzStatus @text={{this.error}} @tone="warn" @row={{true}} />
           {{/if}}
 
           {{#each this.queueRows key="code" as |row|}}
-            <CanonRow
+            <XzRow
               class="ad-job ad-job--{{row.state}}"
               @title={{row.name}}
               @detail={{row.detail}}
@@ -1602,11 +1587,11 @@ export default class AudioDubTool extends Component {
             >
               {{#if row.running}}
                 <span class="ad-busy-cell">
-                  <CanonLoader @cell={{4}} @gap={{1}} />
+                  <XzLoader @cell={{4}} @gap={{1}} />
                 </span>
               {{else if row.done}}
                 <span class="ad-job-actions">
-                  <CanonButton
+                  <XzButton
                     class="ad-job-redo"
                     @kind="cell"
                     @icon={{Redo}}
@@ -1614,7 +1599,7 @@ export default class AudioDubTool extends Component {
                     @disabled={{this.busy}}
                     @onClick={{fn this.redo row.code}}
                   />
-                  <CanonButton
+                  <XzButton
                     class="ad-job-download"
                     @kind="cell"
                     @text="Download"
@@ -1623,12 +1608,12 @@ export default class AudioDubTool extends Component {
                   />
                 </span>
               {{/if}}
-            </CanonRow>
+            </XzRow>
           {{/each}}
 
           {{#if this.shown}}
             {{#if this.showsTabs}}
-              <CanonSegmented
+              <XzSegmented
                 class="ad-tabs"
                 aria-label="Preview language"
                 @items={{this.tabs}}
@@ -1644,7 +1629,7 @@ export default class AudioDubTool extends Component {
               @disabled={{this.busy}}
             />
             {{#if this.video}}
-              <CanonButton
+              <XzButton
                 class="ad-combine"
                 @kind="secondary"
                 @text={{this.combineText}}
@@ -1655,10 +1640,10 @@ export default class AudioDubTool extends Component {
             {{/if}}
           {{else if this.noResult}}
             {{#unless this.showsQueue}}
-              <CanonEmptyRow @text="None yet" />
+              <XzEmptyRow @text="None yet" />
             {{/unless}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
 
         {{#if this.previewUrl}}
           {{! the transport is its control; the dub has no captions track }}
@@ -1677,6 +1662,6 @@ export default class AudioDubTool extends Component {
           @ready={{if this.previewUrl true false}}
         />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

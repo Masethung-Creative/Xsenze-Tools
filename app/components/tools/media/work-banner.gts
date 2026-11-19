@@ -1,8 +1,8 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
-import CanonBar from 'delphicanon/components/canon-bar';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonLoader from 'delphicanon/components/canon-loader';
+import XzBar from 'xsenze-tools/components/xz/bar';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzLoader from 'xsenze-tools/components/xz/loader';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import './work-banner.css';
 
@@ -58,7 +58,7 @@ export default class WorkBanner extends Component<WorkBannerSignature> {
     <div class="work-banner">
       <div class="work-banner-head">
         <span class="work-banner-title">
-          <CanonLoader @cell={{5}} @gap={{1}} />
+          <XzLoader @cell={{5}} @gap={{1}} />
           {{@title}}
         </span>
         <span class="work-banner-time" role="status">
@@ -66,10 +66,10 @@ export default class WorkBanner extends Component<WorkBannerSignature> {
           <span class="work-banner-percent">{{this.percent}}</span>
         </span>
       </div>
-      <CanonBar class="work-banner-bar" @share={{@progress}} />
+      <XzBar class="work-banner-bar" @share={{@progress}} />
       {{#if @onCancel}}
         <div class="work-banner-foot">
-          <CanonButton
+          <XzButton
             class="work-banner-cancel"
             @kind="cell"
             @text="Cancel"

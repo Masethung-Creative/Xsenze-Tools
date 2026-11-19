@@ -1,15 +1,15 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -319,7 +319,7 @@ export default class VideoMuter extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="video-muter"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
@@ -329,8 +329,8 @@ export default class VideoMuter extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.intake.duration this.intake.duration null}}
             @readout="below"
@@ -346,29 +346,29 @@ export default class VideoMuter extends Component {
               @onScrub={{this.playback.scrub}}
               @blank={{if this.loaded false true}}
             />
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
         <Sections @sections={{this.shownInfo}} />
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="vm-source"
               @title={{this.intake.fileName}}
               @detail={{if this.warning this.warning this.meta}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="vm-slot"
@@ -380,16 +380,16 @@ export default class VideoMuter extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.warning}}
-              <CanonStatus @text={{this.warning}} @tone="warn" @row={{true}} />
+              <XzStatus @text={{this.warning}} @tone="warn" @row={{true}} />
             {{/if}}
           {{/if}}
-        </CanonRows>
-        <CanonCanvas
+        </XzRows>
+        <XzCanvas
           class="vm-preview {{unless this.loaded 'vm-preview--blank'}}"
           @aspect={{this.previewAspect}}
           @maxHeight={{tallestPreview}}
           @boxing="unlessWide"
-          @background={{if this.loaded "#000" "var(--canon-muted)"}}
+          @background={{if this.loaded "#000" "var(--xz-surface-2)"}}
         >
           {{#if this.loaded}}
             {{! the transport is its control; user media lacks captions }}
@@ -405,10 +405,10 @@ export default class VideoMuter extends Component {
               {{on "error" this.intake.failed}}
             ></video>
           {{/if}}
-        </CanonCanvas>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Container" />
-          <CanonSegmented
+        </XzCanvas>
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Container" />
+          <XzSegmented
             class="vm-containers"
             @items={{containerLabels}}
             @selected={{this.containerIndex}}
@@ -429,7 +429,7 @@ export default class VideoMuter extends Component {
             @onCancel={{this.cancel}}
             @onSave={{this.save}}
           />
-        </CanonRows>
+        </XzRows>
       </:main>
       <:footer>
         <Transport
@@ -437,6 +437,6 @@ export default class VideoMuter extends Component {
           @ready={{if this.intake.duration true false}}
         />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

@@ -1,7 +1,7 @@
 .media-download-all {
   display: flex;
-  gap: var(--canon-hairline);
-  background: var(--canon-border);
+  gap: 1px;
+  background: var(--xz-border);
 }
 
 .media-download-all > .media-download-all-each {

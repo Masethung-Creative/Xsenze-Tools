@@ -1,17 +1,17 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonLoader from 'delphicanon/components/canon-loader';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzLoader from 'xsenze-tools/components/xz/loader';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -250,7 +250,7 @@ export default class AudioNormaliser extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="audio-normaliser"
       {{filePaste this.intake.load accept=ACCEPT}}
       {{on "dragover" this.drop.enter}}
@@ -258,32 +258,32 @@ export default class AudioNormaliser extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}} @background="var(--canon-muted)">
+        <XzCanvas @height={{bandHeight}} @background="var(--xz-surface-2)">
           <Picture
             @peaks={{if this.measured this.measured.peaks null}}
             @gainDb={{if this.plan this.plan.gainDb null}}
             @limited={{if this.plan.limited true false}}
             @blank={{if this.loaded false true}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="an-source"
               @title={{this.intake.fileName}}
               @detail={{this.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="an-slot"
@@ -295,27 +295,27 @@ export default class AudioNormaliser extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.intake.error}}
-              <CanonStatus
+              <XzStatus
                 @text={{this.intake.error}}
                 @tone="warn"
                 @row={{true}}
               />
             {{/if}}
           {{/if}}
-          <CanonRow
+          <XzRow
             class="an-target"
             @title="Target (LUFS)"
             @detail={{this.hint}}
             @form="stacked"
           >
-            <CanonSegmented
+            <XzSegmented
               class="an-targets"
               @items={{targetLabels}}
               @selected={{this.targetIndex}}
               @disabled={{this.busy}}
               @onChange={{this.pickTarget}}
             />
-          </CanonRow>
+          </XzRow>
           <Job
             @title="Normalise"
             @icon={{Gauge}}
@@ -332,25 +332,25 @@ export default class AudioNormaliser extends Component {
             {{! template-lint-disable require-media-caption }}
             <audio class="an-player" src={{this.resultUrl}} controls></audio>
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
         {{#unless this.unreadable}}
-          <CanonRows class="an-readings" @framed={{true}}>
+          <XzRows class="an-readings" @framed={{true}}>
             {{#if this.measuring}}
-              <CanonRow class="an-measuring" @title="Measuring…">
-                <CanonLoader @cell={{5}} @gap={{1}} />
-              </CanonRow>
+              <XzRow class="an-measuring" @title="Measuring…">
+                <XzLoader @cell={{5}} @gap={{1}} />
+              </XzRow>
             {{else}}
-              <CanonHeading @text="Loudness" />
-              <CanonTiles @items={{this.tiles}} />
+              <XzHeading @text="Loudness" />
+              <XzTiles @items={{this.tiles}} />
               {{#if this.plan.limited}}
-                <CanonEmptyRow @text={{LIMITED_NOTE}} />
+                <XzEmptyRow @text={{LIMITED_NOTE}} />
               {{/if}}
             {{/if}}
-          </CanonRows>
+          </XzRows>
         {{/unless}}
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

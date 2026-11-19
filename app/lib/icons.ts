@@ -13,6 +13,7 @@ import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
 import iBox from 'lucide-static/icons/box.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
+import iCast from 'lucide-static/icons/cast.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
@@ -30,6 +31,7 @@ import iCpu from 'lucide-static/icons/cpu.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
+import iDot from 'lucide-static/icons/dot.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
 import iDrama from 'lucide-static/icons/drama.svg?raw';
 import iEdit from 'lucide-static/icons/edit.svg?raw';
@@ -40,13 +42,16 @@ import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
 import iFileText from 'lucide-static/icons/file-text.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFlame from 'lucide-static/icons/flame.svg?raw';
+import iFolder from 'lucide-static/icons/folder.svg?raw';
 import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iGlobe from 'lucide-static/icons/globe.svg?raw';
+import iGoal from 'lucide-static/icons/goal.svg?raw';
 import iGpu from 'lucide-static/icons/gpu.svg?raw';
 import iGraduationCap from 'lucide-static/icons/graduation-cap.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
+import iGroup from 'lucide-static/icons/group.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
 import iHouse from 'lucide-static/icons/house.svg?raw';
 import iImage from 'lucide-static/icons/image.svg?raw';
@@ -57,6 +62,7 @@ import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
+import iLink from 'lucide-static/icons/link.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
@@ -79,8 +85,11 @@ import iReplace from 'lucide-static/icons/replace.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRoute from 'lucide-static/icons/route.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
+import iScroll from 'lucide-static/icons/scroll.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
+import iSettings from 'lucide-static/icons/settings.svg?raw';
 import iShapes from 'lucide-static/icons/shapes.svg?raw';
+import iSheet from 'lucide-static/icons/sheet.svg?raw';
 import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
@@ -92,6 +101,7 @@ import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSpeech from 'lucide-static/icons/speech.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
+import iSummary from 'lucide-static/icons/summary.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iTags from 'lucide-static/icons/tags.svg?raw';
 import iText from 'lucide-static/icons/text.svg?raw';
@@ -125,6 +135,7 @@ export const icons: Record<string, string> = {
   box: iBox,
   camera: iCamera,
   captions: iCaptions,
+  cast: iCast,
   check: iCheck,
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
@@ -142,6 +153,7 @@ export const icons: Record<string, string> = {
   delete: iDelete,
   dices: iDices,
   'disc-3': iDisc3,
+  dot: iDot,
   download: iDownload,
   drama: iDrama,
   edit: iEdit,
@@ -152,13 +164,16 @@ export const icons: Record<string, string> = {
   'file-text': iFileText,
   film: iFilm,
   flame: iFlame,
+  folder: iFolder,
   'folder-open': iFolderOpen,
   frame: iFrame,
   gauge: iGauge,
   globe: iGlobe,
+  goal: iGoal,
   gpu: iGpu,
   'graduation-cap': iGraduationCap,
   'grid-3x3': iGrid3x3,
+  group: iGroup,
   headphones: iHeadphones,
   house: iHouse,
   image: iImage,
@@ -169,6 +184,7 @@ export const icons: Record<string, string> = {
   inspect: iInspect,
   key: iKey,
   languages: iLanguages,
+  link: iLink,
   lock: iLock,
   map: iMap,
   maximize: iMaximize,
@@ -191,8 +207,11 @@ export const icons: Record<string, string> = {
   'rotate-ccw': iRotateCcw,
   route: iRoute,
   scissors: iScissors,
+  scroll: iScroll,
   search: iSearch,
+  settings: iSettings,
   shapes: iShapes,
+  sheet: iSheet,
   'shield-check': iShieldCheck,
   shrink: iShrink,
   'skip-back': iSkipBack,
@@ -204,6 +223,7 @@ export const icons: Record<string, string> = {
   speech: iSpeech,
   square: iSquare,
   subtitles: iSubtitles,
+  summary: iSummary,
   sun: iSun,
   tags: iTags,
   text: iText,

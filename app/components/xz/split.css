@@ -1,0 +1,360 @@
+/*
+ * One column by default. The split is a size container; the wide layout is a
+ * container query on it, so it follows the split's own box, never the
+ * viewport. In one column the panes are display: contents, which makes every
+ * section, and the footer, an item of the one scrolling column.
+ * Wide: 640px+ landscape, or 900px+ portrait.
+ */
+.xz-tool-split {
+  --xz-split-pad: var(--xz-space-4);
+
+  position: relative;
+  block-size: 100%;
+  overflow: hidden;
+  background: var(--xz-bg);
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
+  container: xz-tool-split / size;
+}
+
+/* unnamed, so the wide container query never matches */
+.xz-tool-split--one-column {
+  container-name: none;
+}
+
+/* A page: the pane's own sections, centred, with the panel padding. */
+.xz-tool-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xz-split-pad, var(--xz-space-4));
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-block: var(--xz-split-pad, var(--xz-space-4));
+  overflow-y: auto;
+  background: var(--xz-bg);
+  color: var(--xz-text);
+  font-family: var(--xz-font-sans);
+}
+
+.xz-tool-page > :where(:not(dialog)) {
+  flex: none;
+  box-sizing: border-box;
+  inline-size: min(
+    100% - 2 * var(--xz-split-pad, var(--xz-space-4)),
+    var(--xz-page-max-width, 100000px)
+  );
+  margin-inline: auto;
+}
+
+.xz-tool-page > .xz-canvas {
+  inline-size: 100%;
+}
+
+.xz-tool-page > .xz-canvas.xz-canvas--unless-wide {
+  inline-size: min(
+    100% - 2 * var(--xz-split-pad, var(--xz-space-4)),
+    var(--xz-page-max-width, 100000px)
+  );
+  margin-block-start: 0;
+  padding-block-start: var(--xz-canvas-frame, 1px);
+}
+
+.xz-tool-split__body {
+  --xz-split-layout: stacked;
+  --xz-page-max-width: 720px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--xz-split-pad);
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-block: var(--xz-split-pad);
+  overflow-y: auto;
+}
+
+.xz-tool-split__body > .xz-tool-split__pane {
+  display: contents;
+}
+
+.xz-tool-split__rule {
+  display: none;
+  background: var(--xz-border);
+}
+
+.xz-tool-split__body > .xz-tool-split__banner {
+  order: -2;
+  margin-block-start: calc(-1 * var(--xz-split-pad));
+}
+
+.xz-tool-split__banner .xz-canvas {
+  padding-block-start: 0;
+}
+
+.xz-tool-split--sticks > .xz-tool-split__body > .xz-tool-split__banner {
+  --xz-canvas-cap: 45cqh;
+
+  position: sticky;
+
+  /* sticky offsets count from inside the body padding the margin undoes */
+  inset-block-start: calc(-1 * var(--xz-split-pad));
+  z-index: 2;
+}
+
+/* the end piece stays after the sidebar's sections */
+.xz-tool-split--main-leads
+  .xz-tool-split__main
+  > :not(.xz-tool-split__footer, .xz-tool-split__end) {
+  order: -1;
+}
+
+.xz-tool-split__end:empty {
+  display: none;
+}
+
+/* only the first section on screen reaches the top edge */
+.xz-tool-split__body > .xz-tool-split__pane > .xz-canvas:first-child {
+  margin-block-start: 0;
+  padding-block-start: var(--xz-canvas-frame, 1px);
+}
+
+.xz-tool-split__body
+  > .xz-tool-split__sidebar:first-child
+  > .xz-canvas:first-child,
+.xz-tool-split__body
+  > .xz-tool-split__rule:first-child
+  + .xz-tool-split__main
+  > .xz-canvas:first-child {
+  margin-block-start: calc(-1 * var(--xz-split-pad));
+  padding-block-start: 0;
+}
+
+.xz-tool-split__main > .xz-tool-split__footer {
+  position: sticky;
+  inset-block-end: max(
+    var(--xz-split-pad),
+    env(safe-area-inset-bottom, 0px) * 0.6
+  );
+  z-index: 1;
+  order: 1;
+  inline-size: min(100% - 64px, 480px);
+  padding: var(--xz-canvas-frame, 1px);
+  background: var(--xz-border);
+  box-shadow: var(--xz-shadow-md);
+}
+
+/* in a tool page the footer keeps a gap below it */
+.xz-tool-frame .xz-tool-split__main > .xz-tool-split__footer {
+  margin-block-end: var(--xz-split-pad);
+}
+
+/* collapsesTo: the picture floats over the top and shrinks as the page scrolls */
+.xz-tool-split[data-collapsing] > .xz-tool-split__body {
+  padding-block-start: calc(var(--xz-split-full, 0px) + var(--xz-split-pad));
+  scroll-padding-block-start: var(--xz-split-full, 0);
+}
+
+.xz-tool-split[data-collapsing] > .xz-tool-split__body > .xz-tool-split__banner,
+.xz-tool-split[data-collapsing].xz-tool-split--halves
+  > .xz-tool-split__body
+  > .xz-tool-split__sidebar
+  > .xz-canvas:only-child {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 2;
+  display: flex;
+  inline-size: auto;
+  block-size: var(--xz-split-band);
+  margin: 0;
+}
+
+.xz-tool-split[data-collapsing] .xz-tool-split__banner > .xz-canvas {
+  flex: 1;
+}
+
+.xz-tool-split[data-collapsing] .xz-tool-split__banner .xz-canvas__content,
+.xz-tool-split[data-collapsing].xz-tool-split--halves
+  .xz-tool-split__sidebar
+  > .xz-canvas:only-child
+  > .xz-canvas__content {
+  flex: 1 1 auto;
+  block-size: auto;
+}
+
+.xz-tool-split--halves > .xz-tool-split__body {
+  --xz-split-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+}
+
+@container xz-tool-split ((min-width: 640px) and (orientation: landscape)) or ((min-width: 900px) and (orientation: portrait)) {
+  .xz-tool-split__body {
+    --xz-split-layout: wide;
+    --xz-page-max-width: 100000px;
+
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: var(
+      --xz-split-columns,
+      min(var(--xz-split-sidebar, 340px), 40%) 1px minmax(0, 1fr)
+    );
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .xz-tool-split__body > .xz-tool-split__pane {
+    display: flex;
+    grid-row: 2;
+  }
+
+  .xz-tool-split__body > .xz-tool-split__sidebar {
+    grid-column: 1;
+  }
+
+  .xz-tool-split__rule {
+    display: block;
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  .xz-tool-split__body > .xz-tool-split__main {
+    grid-column: 3;
+  }
+
+  .xz-tool-split__body > .xz-tool-split__banner,
+  .xz-tool-split--sticks > .xz-tool-split__body > .xz-tool-split__banner {
+    --xz-canvas-cap: 45cqh;
+
+    position: static;
+    grid-row: 1;
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .xz-tool-split--main-leads
+    .xz-tool-split__main
+    > :not(.xz-tool-split__footer, .xz-tool-split__end) {
+    order: 0;
+  }
+
+  .xz-tool-split__body > .xz-tool-split__pane > .xz-canvas:first-child {
+    margin-block-start: calc(-1 * var(--xz-split-pad));
+  }
+
+  .xz-tool-split__body:not(:has(> .xz-tool-split__banner))
+    > .xz-tool-split__pane
+    > .xz-canvas:first-child {
+    padding-block-start: 0;
+  }
+
+  /* a band only beside a sidebar */
+  .xz-tool-split:not(.xz-tool-split--halves)
+    .xz-tool-split__pane
+    > .xz-canvas--unless-wide {
+    inline-size: 100%;
+    padding-inline: 0;
+  }
+
+  .xz-tool-split--halves .xz-tool-split__sidebar:has(> .xz-canvas:only-child) {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .xz-tool-split--halves
+    > .xz-tool-split__body
+    > .xz-tool-split__sidebar
+    > .xz-canvas:only-child {
+    flex: 1;
+    inline-size: 100%;
+    margin: 0;
+    padding-inline: 0;
+  }
+
+  .xz-tool-split--halves
+    .xz-tool-split__sidebar
+    > .xz-canvas:only-child
+    > .xz-canvas__content {
+    flex: 1 1 auto;
+    block-size: auto;
+  }
+}
+
+/* dual-screen, hinge upright: the panes meet at the crease */
+@media (horizontal-viewport-segments: 2) {
+  .xz-tool-split > .xz-tool-split__body {
+    --xz-split-columns: env(viewport-segment-width 0 0)
+      calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0))
+      minmax(0, 1fr);
+  }
+
+  .xz-tool-split--meets-crease.xz-tool-split--halves
+    .xz-tool-split__sidebar:has(> .xz-canvas:only-child) {
+    margin-inline-end: calc(
+      (env(viewport-segment-right 0 0) - env(viewport-segment-left 1 0)) / 2
+    );
+  }
+}
+
+/* laptop pose: a halves picture above the crease, the page below it */
+/* stylelint-disable-next-line media-feature-name-no-unknown -- foldables only */
+@media (vertical-viewport-segments: 2) and (device-posture: folded) {
+  .xz-tool-split--halves:not(
+      .xz-tool-split--one-column,
+      :has(> .xz-tool-split__body > .xz-tool-split__banner)
+    ):has(
+      > .xz-tool-split__body > .xz-tool-split__sidebar > .xz-canvas:only-child
+    )
+    > .xz-tool-split__body {
+    --xz-split-layout: wide;
+    --xz-page-max-width: 100000px;
+
+    display: grid;
+    grid-template-rows:
+      env(viewport-segment-height 0 0)
+      calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0))
+      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+
+    & > .xz-tool-split__pane {
+      display: flex;
+      grid-column: 1;
+    }
+
+    & > .xz-tool-split__sidebar {
+      grid-row: 1;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    & > .xz-tool-split__sidebar > .xz-canvas {
+      flex: 1;
+      margin: 0;
+      padding-block-start: 0;
+    }
+
+    & > .xz-tool-split__sidebar > .xz-canvas > .xz-canvas__content {
+      flex: 1 1 auto;
+      block-size: auto;
+    }
+
+    & > .xz-tool-split__rule {
+      display: block;
+      grid-row: 2;
+      grid-column: 1;
+    }
+
+    & > .xz-tool-split__main {
+      grid-row: 3;
+    }
+  }
+
+  .xz-tool-split--meets-crease
+    > .xz-tool-split__body
+    > .xz-tool-split__sidebar {
+    margin-block-end: calc(
+      (env(viewport-segment-bottom 0 0) - env(viewport-segment-top 0 1)) / 2
+    );
+  }
+}

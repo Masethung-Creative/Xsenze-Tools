@@ -1,8 +1,8 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonDialog from 'delphicanon/components/canon-dialog';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
 import NewProject, {
   sharedAnswers,
   type Seed,
@@ -232,31 +232,31 @@ export default class StoryStudio extends Component<StoryStudioSignature> {
       @onClose={{this.hideProjects}}
     />
 
-    <CanonDialog
+    <XzDialog
       @open={{this.hasProblem}}
       @title="Cannot open this file"
       @message={{this.fileProblem}}
       @onClose={{this.problemClosed}}
     >
       <:footer as |close|>
-        <CanonButton @kind="primary" @text="OK" @onClick={{fn close ""}} />
+        <XzButton @kind="primary" @text="OK" @onClick={{fn close ""}} />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
 
-    <CanonDialog
+    <XzDialog
       @open={{this.hasClash}}
       @title={{this.clashTitle}}
       @message={{this.clashText}}
       @onClose={{this.clashClosed}}
     >
       <:footer as |close|>
-        <CanonButton @text="Keep both" @onClick={{fn close "both"}} />
-        <CanonButton
+        <XzButton @text="Keep both" @onClick={{fn close "both"}} />
+        <XzButton
           @kind="primary"
           @text="Replace"
           @onClick={{fn close "replace"}}
         />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTiles, { type CanonTile } from 'delphicanon/components/canon-tiles';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTiles, { type XzTile } from 'xsenze-tools/components/xz/tiles';
 import {
   choice,
   clock,
@@ -42,11 +42,11 @@ export default class PlanSummary extends Component<PlanSummarySignature> {
     return planOf(this.args.type, this.args.answers);
   }
 
-  get tiles(): CanonTile[] {
+  get tiles(): XzTile[] {
     const { type, answers: a } = this.args;
     const { plan } = this;
     const info = typeInfo(type);
-    const tiles: CanonTile[] = [
+    const tiles: XzTile[] = [
       { label: 'Running time', value: clock(plan.seconds) },
     ];
     if (type === 'course') {
@@ -135,14 +135,14 @@ export default class PlanSummary extends Component<PlanSummarySignature> {
   }
 
   <template>
-    <CanonTiles @items={{this.tiles}} />
-    <CanonRow @title="You have" @detail={{this.haveText}} />
-    <CanonRow @title="Prompts get made for" @detail={{this.makeText}} />
+    <XzTiles @items={{this.tiles}} />
+    <XzRow @title="You have" @detail={{this.haveText}} />
+    <XzRow @title="Prompts get made for" @detail={{this.makeText}} />
     {{#if this.storyNote}}
-      <CanonStatus @text={{this.storyNote}} @tone="muted" @row={{true}} />
+      <XzStatus @text={{this.storyNote}} @tone="muted" @row={{true}} />
     {{/if}}
     {{#if this.bigNote}}
-      <CanonStatus @text={{this.bigNote}} @tone="warn" @row={{true}} />
+      <XzStatus @text={{this.bigNote}} @tone="warn" @row={{true}} />
     {{/if}}
   </template>
 }

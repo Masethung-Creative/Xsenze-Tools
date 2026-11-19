@@ -1,13 +1,13 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonDialog from 'delphicanon/components/canon-dialog';
-import CanonDropZone from 'delphicanon/components/canon-drop-zone';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { PROJECT_FILE_ACCEPT } from 'xsenze-tools/lib/story/project-store';
 import { typeInfo } from 'xsenze-tools/lib/story/project-types';
@@ -80,7 +80,7 @@ export default class ProjectsDialog extends Component<ProjectsDialogSignature> {
   };
 
   <template>
-    <CanonDialog
+    <XzDialog
       class="ss-projects"
       @open={{@open}}
       @title="Saved projects"
@@ -88,7 +88,7 @@ export default class ProjectsDialog extends Component<ProjectsDialogSignature> {
       @onClose={{this.closed}}
     >
       <:header>
-        <CanonDropZone
+        <XzDropZone
           @prompt="Drop a project file (.story.json) here, or press Files. It opens with all its settings."
           @icon={{FolderIcon}}
           @accept={{PROJECT_FILE_ACCEPT}}
@@ -99,43 +99,43 @@ export default class ProjectsDialog extends Component<ProjectsDialogSignature> {
       </:header>
       <:default>
         {{#each this.lines key="id" as |line|}}
-          <CanonRow @title={{line.title}} @detail={{line.detail}}>
-            <CanonGrid>
-              <CanonButton
+          <XzRow @title={{line.title}} @detail={{line.detail}}>
+            <XzGrid>
+              <XzButton
                 @kind="cell"
                 @text={{if line.current "Open now" "Open"}}
                 @disabled={{line.current}}
                 @onClick={{fn @onOpen line.id}}
               />
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Delete"
                 @onClick={{fn this.ask line.id}}
               />
-            </CanonGrid>
-          </CanonRow>
+            </XzGrid>
+          </XzRow>
         {{else}}
-          <CanonEmptyRow @text="No saved projects yet" />
+          <XzEmptyRow @text="No saved projects yet" />
         {{/each}}
         {{#if this.deleting}}
-          <CanonStatus
+          <XzStatus
             @text="Delete “{{this.deletingTitle}}”? This cannot be undone."
             @tone="warn"
             @row={{true}}
           />
-          <CanonGrid>
-            <CanonButton @text="Keep it" @onClick={{this.cancel}} />
-            <CanonButton
+          <XzGrid>
+            <XzButton @text="Keep it" @onClick={{this.cancel}} />
+            <XzButton
               @kind="primary"
               @text="Delete"
               @onClick={{this.confirm}}
             />
-          </CanonGrid>
+          </XzGrid>
         {{/if}}
       </:default>
       <:footer as |close|>
-        <CanonButton @text="Close" @onClick={{fn close ""}} />
+        <XzButton @text="Close" @onClick={{fn close ""}} />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

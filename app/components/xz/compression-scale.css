@@ -1,0 +1,40 @@
+.xz-delta--scale {
+  box-sizing: border-box;
+  align-content: end;
+  gap: var(--xz-space-1);
+  block-size: 100%;
+  padding: var(--xz-space-4);
+  background: var(--xz-surface);
+}
+
+.xz-delta__top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--xz-space-3);
+}
+
+.xz-delta__top > .xz-delta__change {
+  margin: 0;
+}
+
+.xz-delta__loader {
+  color: var(--xz-text-muted);
+}
+
+.xz-delta--scale .xz-delta__bar {
+  transition:
+    width 600ms var(--xz-scale-easing, ease-out),
+    background-color 200ms ease-out;
+}
+
+.xz-delta__bar--grew {
+  background: var(--xz-danger);
+  color: var(--xz-on-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xz-delta--scale .xz-delta__bar {
+    transition: none;
+  }
+}

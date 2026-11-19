@@ -1,0 +1,35 @@
+.xz-readout-band {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  block-size: 100%;
+  background: var(--xz-surface-2);
+}
+
+.xz-readout-band--below {
+  grid-template-rows: minmax(0, 1fr) 44px;
+}
+
+.xz-readout-band__strip {
+  grid-area: 1 / 1;
+  min-block-size: 0;
+}
+
+.xz-readout-band__readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--xz-space-4);
+  pointer-events: none;
+}
+
+.xz-readout-band--over > .xz-readout-band__readout {
+  grid-area: 1 / 1;
+  align-items: flex-end;
+  align-self: end;
+  padding-block-end: 10px;
+}
+
+.xz-readout-band--over .xz-lamps {
+  margin-block-end: calc(var(--xz-space-4) - 10px);
+}

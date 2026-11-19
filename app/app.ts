@@ -1,5 +1,6 @@
 // The Xsenze UI Kit (bundled copy, fonts included), then the site's own styles
 import '../vendor/xsenze-ui/xsenze.min.css';
+import '../vendor/xsenze-ui/xsenze-tools.min.css';
 import './styles/app.scss';
 
 import Application from '@ember/application';

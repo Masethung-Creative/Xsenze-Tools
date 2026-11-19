@@ -3,15 +3,15 @@ import { cached, tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import type Owner from '@ember/owner';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonEmptyRow from 'delphicanon/components/canon-empty-row';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { downloadBlob } from 'xsenze-tools/lib/download';
 import {
@@ -308,31 +308,31 @@ export default class VoiceRecorder extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="voice-recorder"
       @bannerSticks={{true}}
       @mainLeadsStacked={{true}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
+        <XzCanvas @height={{bandHeight}}>
           <RecorderBand
             @capture={{this.capture}}
             @playback={{this.playback}}
             @take={{this.current}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
+        <XzRows @framed={{true}}>
           {{#if this.error}}
-            <CanonStatus
+            <XzStatus
               class="vr-error"
               @text={{this.error}}
               @tone="warn"
               @row={{true}}
             />
           {{else if this.asksFirst}}
-            <CanonStatus
+            <XzStatus
               class="vr-hint"
               @text={{EMPTY_HINT}}
               @tone="muted"
@@ -340,27 +340,22 @@ export default class VoiceRecorder extends Component {
             />
           {{/if}}
           {{#if this.choosesInput}}
-            <CanonRow
-              class="vr-input"
-              @title="Input"
-              @form="flush"
-              as |titleId|
-            >
-              <CanonMenuCell
+            <XzRow class="vr-input" @title="Input" @form="flush" as |titleId|>
+              <XzMenuCell
                 @items={{this.deviceLabels}}
                 @selected={{this.deviceIndex}}
                 @labelledBy={{titleId}}
                 @disabled={{this.capture.active}}
                 @onChange={{this.chooseInput}}
               />
-            </CanonRow>
+            </XzRow>
           {{/if}}
-          <CanonHeading @text="Takes" />
+          <XzHeading @text="Takes" />
           {{#each this.takes key="id" as |take|}}
             <div
               class="vr-take {{if (this.isPlaying take) 'vr-take--playing'}}"
             >
-              <CanonButton
+              <XzButton
                 class="vr-take-play"
                 @kind="cell"
                 @label={{if (this.isPlaying take) "Stop" "Play"}}
@@ -372,14 +367,14 @@ export default class VoiceRecorder extends Component {
                 <span class="vr-take-name">{{take.name}}</span>
                 <span class="vr-take-detail">{{take.detail}}</span>
               </div>
-              <CanonButton
+              <XzButton
                 class="vr-take-save"
                 @kind="cell"
                 @label={{passAlong "Download"}}
                 @icon={{SaveIcon}}
                 @onClick={{fn this.save take}}
               />
-              <CanonButton
+              <XzButton
                 class="vr-take-delete"
                 @kind="cell"
                 @label="Delete"
@@ -388,11 +383,11 @@ export default class VoiceRecorder extends Component {
               />
             </div>
           {{else}}
-            <CanonEmptyRow @text="No takes" />
+            <XzEmptyRow @text="No takes" />
           {{/each}}
           {{#if (capturing)}}
             {{#if this.newest}}
-              <CanonButton
+              <XzButton
                 class="vr-pass"
                 @kind="primary"
                 @text={{passAlong "Download"}}
@@ -401,14 +396,14 @@ export default class VoiceRecorder extends Component {
               />
             {{/if}}
           {{/if}}
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
         {{#if this.current}}
-          <CanonCanvas
+          <XzCanvas
             class="vr-overview"
             @height={{overviewHeight}}
-            @background="var(--canon-muted)"
+            @background="var(--xz-surface-2)"
           >
             <Strips
               @thumbnails={{noFrames}}
@@ -418,7 +413,7 @@ export default class VoiceRecorder extends Component {
               @playhead={{this.playback.playhead}}
               @onScrub={{this.playback.scrub}}
             />
-          </CanonCanvas>
+          </XzCanvas>
           {{#each this.loaded key="id" as |take|}}
             {{! the transport is its control; user media lacks captions }}
             {{! template-lint-disable require-media-caption }}
@@ -442,6 +437,6 @@ export default class VoiceRecorder extends Component {
           @onPause={{this.togglePause}}
         />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

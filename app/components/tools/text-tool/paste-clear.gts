@@ -1,5 +1,5 @@
 import Component from '@glimmer/component';
-import CanonButton from 'delphicanon/components/canon-button';
+import XzButton from 'xsenze-tools/components/xz/button';
 import { IconSvg } from 'xsenze-tools/components/icon';
 
 interface PasteClearSignature {
@@ -24,14 +24,14 @@ export default class PasteClear extends Component<PasteClearSignature> {
   clear = () => this.args.onChange('');
 
   <template>
-    <CanonButton
+    <XzButton
       @kind={{if @cells "cell"}}
       @text={{unless @cells "Paste"}}
       @label="Paste"
       @icon={{PasteIcon}}
       @onClick={{this.paste}}
     />
-    <CanonButton
+    <XzButton
       @kind={{if @cells "cell"}}
       @text={{unless @cells "Clear"}}
       @label="Clear"

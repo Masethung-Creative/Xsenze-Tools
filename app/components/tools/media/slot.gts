@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
-import CanonButton from 'delphicanon/components/canon-button';
+import XzButton from 'xsenze-tools/components/xz/button';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { clipboardImages } from 'xsenze-tools/lib/clipboard-images';
 import { matchesAccept } from 'xsenze-tools/modifiers/file-paste';
@@ -107,7 +107,7 @@ export default class Slot extends Component<SlotSignature> {
           <span class="media-slot-icon"><IconSvg @name={{@icon}} /></span>
           <span class="media-slot-prompt">{{@prompt}}</span>
         </button>
-        <CanonButton
+        <XzButton
           class="media-slot-files"
           @kind="cell"
           @text="Files"
@@ -115,7 +115,7 @@ export default class Slot extends Component<SlotSignature> {
           @onClick={{this.choose}}
         />
         {{#if this.pastes}}
-          <CanonButton
+          <XzButton
             class="media-slot-paste"
             @kind="cell"
             @text="Paste"
@@ -144,7 +144,7 @@ export default class Slot extends Component<SlotSignature> {
         <span class="media-slot-icon"><IconSvg @name={{@icon}} /></span>
         <span class="media-slot-prompt">{{@prompt}}</span>
         <span class="media-slot-actions">
-          <CanonButton
+          <XzButton
             class="media-slot-upload"
             @kind="cell"
             @text="Upload"
@@ -152,7 +152,7 @@ export default class Slot extends Component<SlotSignature> {
             @onClick={{this.choose}}
           />
           {{#if this.pastes}}
-            <CanonButton
+            <XzButton
               class="media-slot-paste"
               @kind="cell"
               @text="Paste"

@@ -1,7 +1,7 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import type { Section } from 'xsenze-tools/lib/mediainfo';
 
 /** MediaInfo's report as headed tiles, one block per track. */
@@ -10,12 +10,12 @@ const Sections: TOC<{
   Element: HTMLDivElement;
 }> = <template>
   {{#if @sections.length}}
-    <CanonRows class="media-sections" @framed={{true}} ...attributes>
+    <XzRows class="media-sections" @framed={{true}} ...attributes>
       {{#each @sections as |section|}}
-        <CanonHeading @text={{section.title}} />
-        <CanonTiles @items={{section.rows}} />
+        <XzHeading @text={{section.title}} />
+        <XzTiles @items={{section.rows}} />
       {{/each}}
-    </CanonRows>
+    </XzRows>
   {{/if}}
 </template>;
 

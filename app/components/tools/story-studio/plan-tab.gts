@@ -1,15 +1,15 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonDialog from 'delphicanon/components/canon-dialog';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import Icon from 'xsenze-tools/components/icon';
 import Outline from 'xsenze-tools/components/tools/story-studio/outline';
 import PlanSummary from 'xsenze-tools/components/tools/story-studio/plan-summary';
@@ -139,21 +139,21 @@ export default class PlanTab extends Component<PlanTabSignature> {
   save = () => this.args.onSaveFile(this.args.project);
 
   <template>
-    <CanonSplit class="story-studio">
+    <XzSplit class="story-studio">
       <:sidebar>
         <TabBar @selected={{@tab}} @onChange={{@onTab}} />
 
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Project" />
-          <CanonRow @title="Name" @form="flush" as |titleId|>
-            <CanonTextCell
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Project" />
+          <XzRow @title="Name" @form="flush" as |titleId|>
+            <XzTextCell
               @value={{@project.title}}
               @placeholder={{this.placeholder}}
               @onChange={{this.rename}}
               aria-labelledby={{titleId}}
             />
-          </CanonRow>
-          <CanonRow
+          </XzRow>
+          <XzRow
             @title="Type"
             @detail="Locked. Copy as new project to use another type."
           >
@@ -161,35 +161,35 @@ export default class PlanTab extends Component<PlanTabSignature> {
               <Icon @name="lock" />
               {{this.info.name}}
             </span>
-          </CanonRow>
-          <CanonGrid @columns={{2}}>
-            <CanonButton @text="Save file" @onClick={{this.save}} />
-            <CanonButton @text="Open file" @onClick={{@onOpenFile}} />
-            <CanonButton @text="Saved projects" @onClick={{@onProjects}} />
-            <CanonButton @text="New project" @onClick={{@onNew}} />
-            <CanonButton @text="Copy as new project" @onClick={{this.copy}} />
-          </CanonGrid>
+          </XzRow>
+          <XzGrid @columns={{2}}>
+            <XzButton @text="Save file" @onClick={{this.save}} />
+            <XzButton @text="Open file" @onClick={{@onOpenFile}} />
+            <XzButton @text="Saved projects" @onClick={{@onProjects}} />
+            <XzButton @text="New project" @onClick={{@onNew}} />
+            <XzButton @text="Copy as new project" @onClick={{this.copy}} />
+          </XzGrid>
           {{#unless @store.saves}}
-            <CanonStatus
+            <XzStatus
               @text="This browser is not keeping projects. Use Save file to keep your work."
               @tone="warn"
               @row={{true}}
             />
           {{/unless}}
-        </CanonRows>
+        </XzRows>
 
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="{{this.info.name}} plan" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="{{this.info.name}} plan" />
           <Questions
             @type={{@project.type}}
             @questions={{this.typeQuestions}}
             @answers={{this.answers}}
             @onChange={{this.answer}}
           />
-        </CanonRows>
+        </XzRows>
 
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="What you already have" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="What you already have" />
           <Questions
             @type={{@project.type}}
             @questions={{this.haveQuestions}}
@@ -197,36 +197,36 @@ export default class PlanTab extends Component<PlanTabSignature> {
             @heading="What you already have"
             @onChange={{this.answer}}
           />
-        </CanonRows>
+        </XzRows>
 
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Look and motion" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Look and motion" />
           <Questions
             @type={{@project.type}}
             @questions={{this.lookQuestions}}
             @answers={{this.answers}}
             @onChange={{this.answer}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Your plan" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Your plan" />
           <PlanSummary @type={{@project.type}} @answers={{this.answers}} />
-        </CanonRows>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Outline" />
+        </XzRows>
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Outline" />
           <Outline
             @type={{@project.type}}
             @answers={{@project.answers}}
             @parts={{@project.parts}}
             @onRename={{this.renamePart}}
           />
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
 
-    <CanonDialog
+    <XzDialog
       @open={{this.asking}}
       @alert={{true}}
       @title={{this.askTitle}}
@@ -234,13 +234,13 @@ export default class PlanTab extends Component<PlanTabSignature> {
       @onClose={{this.settled}}
     >
       <:footer as |close|>
-        <CanonButton @text="Keep my plan" @onClick={{fn close "keep"}} />
-        <CanonButton
+        <XzButton @text="Keep my plan" @onClick={{fn close "keep"}} />
+        <XzButton
           @kind="primary"
           @text="Remove them"
           @onClick={{fn close "remove"}}
         />
       </:footer>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

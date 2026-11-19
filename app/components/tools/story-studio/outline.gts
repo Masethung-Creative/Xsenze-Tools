@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { fn } from '@ember/helper';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonTextCell from 'delphicanon/components/canon-text-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzTextCell from 'xsenze-tools/components/xz/text-cell';
 import {
   choice,
   clock,
@@ -90,7 +90,7 @@ export default class Outline extends Component<OutlineSignature> {
   <template>
     {{#each this.groups key="key" as |group|}}
       {{#if @compact}}
-        <CanonRow @title={{group.title}} @detail={{group.meta}} />
+        <XzRow @title={{group.title}} @detail={{group.meta}} />
       {{else}}
         <details class="ss-group" open={{group.open}}>
           <summary class="ss-group-head">
@@ -98,14 +98,14 @@ export default class Outline extends Component<OutlineSignature> {
             <span class="ss-group-meta">{{group.meta}}</span>
           </summary>
           {{#each group.rows key="id" as |row|}}
-            <CanonRow @title={{row.label}} @form="flush" as |titleId|>
-              <CanonTextCell
+            <XzRow @title={{row.label}} @form="flush" as |titleId|>
+              <XzTextCell
                 @value={{row.title}}
                 @placeholder={{row.hint}}
                 @onChange={{fn this.rename row.id}}
                 aria-labelledby={{titleId}}
               />
-            </CanonRow>
+            </XzRow>
           {{/each}}
         </details>
       {{/if}}

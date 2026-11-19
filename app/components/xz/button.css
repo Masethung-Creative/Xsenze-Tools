@@ -1,0 +1,82 @@
+/* Fill-the-container buttons; the kit's .xz-panel__action supplies the look. */
+.xz-button.xz-button--primary,
+.xz-button.xz-button--secondary,
+.xz-button.xz-button--segment {
+  display: flex;
+  width: 100%;
+}
+
+.xz-button {
+  --xz-icon-inline: var(--xz-icon-sm);
+}
+
+.xz-button.xz-button--cell {
+  display: inline-flex;
+}
+
+.xz-button.xz-button--filled:not(.xz-button--primary) {
+  background: var(--xz-accent);
+  color: var(--xz-on-accent);
+}
+
+.xz-button.xz-button--filled:not(.xz-button--primary):hover {
+  background: var(--xz-accent-hover);
+}
+
+.xz-button.xz-button--filled:not(.xz-button--primary):focus-visible {
+  outline-color: var(--xz-on-accent);
+}
+
+.xz-button.xz-button--filled:disabled {
+  background: var(--xz-surface-3);
+  color: var(--xz-disabled-text);
+}
+
+.xz-button__icon {
+  display: inline-flex;
+  flex: none;
+  width: var(--xz-icon-sm);
+  height: var(--xz-icon-sm);
+}
+
+.xz-button__icon svg,
+.xz-button__watermark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.xz-button__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xz-button.xz-button--symbol {
+  min-width: var(--xz-panel-row, 3rem);
+  padding-inline: 0;
+}
+
+/* data-xz-fit: a grid that cannot fit the titles sets data-symbol-only */
+[data-symbol-only] > .xz-button[data-xz-fit] .xz-button__title {
+  display: none;
+}
+
+.xz-button.xz-button--oversized {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.xz-button__watermark {
+  position: absolute;
+  inset-block-end: -0.6rem;
+  inset-inline-end: -0.4rem;
+  z-index: -1;
+  width: 4.5rem;
+  height: 4.5rem;
+  opacity: 0.14;
+  rotate: -12deg;
+  pointer-events: none;
+}

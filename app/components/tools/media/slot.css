@@ -8,11 +8,11 @@
   block-size: 100%;
   padding: 0;
   border: 0;
-  background: var(--canon-muted);
-  color: var(--canon-muted-foreground);
-  font-family: var(--canon-font);
-  font-size: var(--canon-text-footnote);
-  font-weight: var(--canon-weight-semibold);
+  background: var(--xz-surface-2);
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-sans);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
   cursor: pointer;
 }
 
@@ -42,15 +42,14 @@
   position: relative;
   z-index: 1;
   display: flex;
-  gap: var(--canon-hairline);
+  gap: 1px;
   margin-block-start: 4px;
-  border: var(--canon-hairline) solid var(--canon-border);
-  background: var(--canon-border);
+  border: 1px solid var(--xz-border);
+  background: var(--xz-border);
 }
 
 .media-slot--dashed {
-  border: var(--canon-frame) dashed
-    color-mix(in srgb, var(--canon-muted-foreground) 50%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--xz-text-muted) 50%, transparent);
   background: none;
 }
 
@@ -68,10 +67,10 @@
 
 .media-slot-bar {
   display: flex;
-  background: var(--canon-muted);
+  background: var(--xz-surface-2);
 }
 
-.media-slot-bar > .canon-button {
+.media-slot-bar > .xz-button {
   flex: none;
 }
 
@@ -81,9 +80,9 @@
   flex-direction: row;
   gap: 10px;
 
-  /* two-line CanonRow height */
+  /* two-line XzRow height */
   block-size: calc(
-    22px + 1.3 * (var(--canon-text-body) + var(--canon-text-caption))
+    22px + 1.3 * (var(--xz-font-size-sm) + var(--xz-font-size-xs))
   );
 }
 
@@ -93,8 +92,8 @@
 }
 
 .media-slot--over {
-  background: var(--canon-accent-bg);
-  color: var(--canon-primary);
+  background: var(--xz-accent-2-soft);
+  color: var(--xz-accent-2-text);
 }
 
 .media-slot-icon {

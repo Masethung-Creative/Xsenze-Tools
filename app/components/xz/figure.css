@@ -1,0 +1,44 @@
+/* A large calculated figure; the kit's xz-panel__value is its small, in-row sibling. */
+.xz-figure {
+  /* digits and unit keep reading order in RTL */
+  direction: ltr;
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(var(--xz-figure-size) * 0.08);
+  color: var(--xz-figure-colour, var(--xz-accent-2-text));
+  font-family: var(--xz-font-display);
+  line-height: 1.1;
+  white-space: nowrap;
+  transition: color 200ms ease-out;
+}
+
+.xz-figure__said {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.xz-figure__text {
+  font-size: var(--xz-figure-size);
+  font-weight: var(--xz-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.xz-figure__char {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+}
+
+.xz-figure__ghost {
+  position: absolute;
+  inset: 0;
+}
+
+.xz-figure__unit {
+  font-size: calc(var(--xz-figure-size) * 0.55);
+  font-weight: var(--xz-font-weight-semibold);
+}

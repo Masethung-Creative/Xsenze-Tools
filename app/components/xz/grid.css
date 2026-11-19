@@ -1,0 +1,12 @@
+/* On top of the kit's xz-panel__cells (columns from --xz-cols, hairline gaps). */
+.xz-cellgrid {
+  grid-auto-rows: 1fr;
+}
+
+.xz-cellgrid--boxed {
+  padding: 1px;
+}
+
+.xz-cellgrid > * {
+  min-inline-size: 0;
+}

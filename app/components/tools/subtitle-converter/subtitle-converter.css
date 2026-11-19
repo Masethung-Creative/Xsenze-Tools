@@ -1,20 +1,20 @@
 /* the input is the main pane's editor, and it is code */
-.subtitle-converter .canon-text-area.tt-source {
+.subtitle-converter .xz-text-area.tt-source {
   block-size: 360px;
-  font-family: var(--canon-mono-font);
-  font-size: var(--canon-text-footnote);
+  font-family: var(--xz-font-mono);
+  font-size: var(--xz-font-size-xs);
 }
 
-.sc-file .canon-row-title {
+.sc-file .xz-panel__key {
   overflow-wrap: anywhere;
 }
 
-.sc-stats .canon-row-title {
+.sc-stats .xz-panel__key {
   font-variant-numeric: tabular-nums;
 }
 
 /* width 120 */
-.canon-text-cell.sc-language-cell {
+.xz-text-cell.sc-language-cell {
   inline-size: 120px;
 }
 
@@ -24,11 +24,11 @@
   inset: 0;
   grid-auto-rows: minmax(8px, 1fr);
   row-gap: 10px;
-  padding: 16px var(--canon-panel-padding);
+  padding: 16px var(--xz-panel-pad, var(--xz-space-4));
 }
 
 .sc-timeline .cue-timeline-lane {
-  border-block-end: var(--canon-hairline) solid var(--canon-border);
+  border-block-end: 1px solid var(--xz-border);
 }
 
 .sc-timeline .cue-timeline-cue {

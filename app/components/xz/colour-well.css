@@ -1,0 +1,32 @@
+/* A panel row: the label at the start, the swatch and hex field at the end. */
+.xz-colourwell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 11rem);
+  align-items: center;
+  gap: var(--xz-space-1) var(--xz-space-3);
+  min-inline-size: 0;
+  min-block-size: var(--xz-panel-row, 3rem);
+  padding: var(--xz-space-2) var(--xz-panel-pad, var(--xz-space-4));
+  background: var(--xz-surface);
+}
+
+.xz-colourwell > .xz-label {
+  margin: 0;
+  font-size: var(--xz-font-size-sm);
+  font-weight: var(--xz-font-weight-medium);
+}
+
+.xz-colourwell > .xz-colorfield {
+  grid-column: 2;
+}
+
+.xz-colourwell__echo {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-mono);
+  font-size: var(--xz-font-size-xs);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

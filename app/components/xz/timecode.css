@@ -1,0 +1,10 @@
+/* sits over waveforms and video: no pointer, a halo keeps the digits clear */
+.xz-timecode {
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.08em var(--xz-timecode-halo, var(--xz-surface-3)));
+}
+
+/* leading zeros that carry no value */
+.xz-timecode .xz-readout__char.is-dim .xz-readout__seg.is-on {
+  opacity: 0.3;
+}

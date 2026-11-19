@@ -1,10 +1,10 @@
 import Component from '@glimmer/component';
 import { fn } from '@ember/helper';
 import { htmlSafe } from '@ember/template';
-import CanonMenu, {
-  type CanonMenuEntry,
-  type CanonMenuItem,
-} from 'delphicanon/components/canon-menu';
+import XzMenu, {
+  type XzMenuEntry,
+  type XzMenuItem,
+} from 'xsenze-tools/components/xz/menu';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { downloadIcon, passAlong } from 'xsenze-tools/lib/flow-hooks';
 
@@ -38,14 +38,14 @@ export default class Stills extends Component<{
     return htmlSafe(`--fx-aspect: ${this.args.aspect}`);
   }
 
-  get menu(): CanonMenuEntry[] {
+  get menu(): XzMenuEntry[] {
     return [
       { title: passAlong('Download'), icon: Save },
       { title: 'Remove', icon: Remove, destructive: true },
     ];
   }
 
-  pick = (still: Still, item: CanonMenuItem) => {
+  pick = (still: Still, item: XzMenuItem) => {
     if (item.destructive) this.args.onRemove(still);
     else this.args.onSave(still);
   };
@@ -53,7 +53,7 @@ export default class Stills extends Component<{
   <template>
     <div class="fx-stills" style={{this.style}}>
       {{#each @stills key="id" as |still|}}
-        <CanonMenu @items={{this.menu}} @onSelect={{fn this.pick still}} as |m|>
+        <XzMenu @items={{this.menu}} @onSelect={{fn this.pick still}} as |m|>
           <button
             type="button"
             class="fx-still"
@@ -68,7 +68,7 @@ export default class Stills extends Component<{
             />
             <span class="fx-still-time">{{still.label}}</span>
           </button>
-        </CanonMenu>
+        </XzMenu>
       {{/each}}
     </div>
   </template>

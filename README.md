@@ -10,7 +10,7 @@ Every file is processed on the user's device.
 | Framework          | [Ember.js](https://emberjs.com) 7.1, Octane, strict-mode `.gts` components                                             |
 | Build              | [Vite](https://vite.dev) 8 + [Embroider](https://github.com/embroider-build/embroider)                                 |
 | Language           | TypeScript 6 + [Glint](https://typed-ember.gitbook.io/glint) (type-checked templates)                                  |
-| Styles             | SCSS via `sass-embedded` + [crayon-css](https://crayoncss.com) utilities/tokens, plain co-located `.css` per component |
+| Styles             | The Xsenze UI Kit (bundled in `vendor/xsenze-ui/`), SCSS via `sass-embedded`, plain co-located `.css` per component |
 | Icons              | [lucide-static](https://lucide.dev)                                                                                    |
 | Audio/video engine | [mediabunny](https://mediabunny.dev) (WebCodecs decode/encode, in-browser)                                             |
 | Local storage      | [Dexie](https://dexie.org) (IndexedDB), `browser-fs-access` for open/save                                              |
@@ -49,7 +49,7 @@ app/
   components/tools/       one .gts per tool UI
   routes/tools/tool.ts    /tools/:tool_id
   templates/              route templates (.gts)
-  styles/app.scss         crayon + theme tokens (light/dark CSS variables)
+  styles/app.scss         site-wide styles on the Xsenze UI Kit tokens
 ```
 
 ## Adding a tool

@@ -1,0 +1,8 @@
+/* A status that fills a row of an XzRows. */
+.xz-status.xz-status--row {
+  display: flex;
+  min-height: var(--xz-panel-row, 3rem);
+  padding: var(--xz-space-2) var(--xz-panel-pad, var(--xz-space-4));
+  background: var(--xz-surface);
+  white-space: normal;
+}

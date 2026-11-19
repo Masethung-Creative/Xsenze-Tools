@@ -14,7 +14,7 @@
   object-fit: contain;
 }
 
-.vg-source .canon-row-title {
+.vg-source .xz-panel__key {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -27,6 +27,6 @@
   block-size: auto;
   max-inline-size: none;
   max-block-size: 340px;
-  background: var(--canon-muted);
+  background: var(--xz-surface-2);
   object-fit: contain;
 }

@@ -1,6 +1,6 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonRows from 'delphicanon/components/canon-rows';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzRows from 'xsenze-tools/components/xz/rows';
 import AtlasOpenIn from 'xsenze-tools/components/atlas-open-in';
 import type { Tool } from 'xsenze-tools/lib/tools';
 import './open-in.css';
@@ -14,10 +14,10 @@ const OpenIn: TOC<{
   };
   Element: HTMLDivElement;
 }> = <template>
-  <CanonRows class="media-open" @framed={{true}} ...attributes>
-    <CanonHeading @text="Open in" />
+  <XzRows class="media-open" @framed={{true}} ...attributes>
+    <XzHeading @text="Open in" />
     <AtlasOpenIn @file={{@file}} @self={{@self}} @tools={{@tools}} />
-  </CanonRows>
+  </XzRows>
 </template>;
 
 export default OpenIn;

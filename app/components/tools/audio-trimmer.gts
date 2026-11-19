@@ -1,17 +1,17 @@
 import Component from '@glimmer/component';
 import { cached, tracked } from '@glimmer/tracking';
 import { on } from '@ember/modifier';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonDecimalField from 'delphicanon/components/canon-decimal-field';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonReadoutBand from 'delphicanon/components/canon-readout-band';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSlider from 'delphicanon/components/canon-slider';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDecimalField from 'xsenze-tools/components/xz/decimal-field';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSlider from 'xsenze-tools/components/xz/slider';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import filePaste from 'xsenze-tools/modifiers/file-paste';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -377,7 +377,7 @@ export default class AudioTrimmer extends Component {
   };
 
   <template>
-    <CanonSplit
+    <XzSplit
       class="audio-trimmer"
       @sidebarWidth={{380}}
       @bannerSticks={{true}}
@@ -387,8 +387,8 @@ export default class AudioTrimmer extends Component {
       {{on "drop" this.drop.drop}}
     >
       <:banner>
-        <CanonCanvas @height={{bandHeight}}>
-          <CanonReadoutBand
+        <XzCanvas @height={{bandHeight}}>
+          <XzReadoutBand
             @transport={{this.playback.transport}}
             @idle={{if this.decoded this.length null}}
           >
@@ -403,26 +403,26 @@ export default class AudioTrimmer extends Component {
               @onScrub={{this.playback.scrub}}
               @blank={{this.blank}}
             />
-          </CanonReadoutBand>
-        </CanonCanvas>
+          </XzReadoutBand>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Source" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Source" />
           {{#if this.loaded}}
-            <CanonRow
+            <XzRow
               class="at-source {{if this.intake.error 'at-source--failed'}}"
               @title={{this.intake.fileName}}
               @detail={{this.detail}}
               @form="flush"
             >
-              <CanonButton
+              <XzButton
                 @kind="cell"
                 @text="Clear"
                 @icon={{Trash}}
                 @onClick={{this.clear}}
               />
-            </CanonRow>
+            </XzRow>
           {{else}}
             <Slot
               class="at-slot"
@@ -434,21 +434,21 @@ export default class AudioTrimmer extends Component {
               @onFile={{this.intake.load}}
             />
             {{#if this.intake.error}}
-              <CanonStatus
+              <XzStatus
                 @text={{this.intake.error}}
                 @tone="warn"
                 @row={{true}}
               />
             {{/if}}
           {{/if}}
-          <CanonHeading @text="Fades" />
-          <CanonRow
+          <XzHeading @text="Fades" />
+          <XzRow
             class="at-fade at-fade-in {{if this.blank 'at-fade--off'}}"
             @title="Fade in (s)"
             @form="flush"
             as |titleId|
           >
-            <CanonSlider
+            <XzSlider
               @value={{this.fadeIn}}
               @max={{this.fadeMax}}
               @step={{0.01}}
@@ -458,14 +458,14 @@ export default class AudioTrimmer extends Component {
               aria-disabled={{if this.blank "true"}}
               tabindex={{if this.blank "-1" "0"}}
             />
-          </CanonRow>
-          <CanonRow
+          </XzRow>
+          <XzRow
             class="at-fade at-fade-out {{if this.blank 'at-fade--off'}}"
             @title="Fade out (s)"
             @form="flush"
             as |titleId|
           >
-            <CanonSlider
+            <XzSlider
               @value={{this.fadeOut}}
               @max={{this.fadeMax}}
               @step={{0.01}}
@@ -476,7 +476,7 @@ export default class AudioTrimmer extends Component {
               aria-disabled={{if this.blank "true"}}
               tabindex={{if this.blank "-1" "0"}}
             />
-          </CanonRow>
+          </XzRow>
           <Job
             @title="Export WAV"
             @icon={{Save}}
@@ -489,14 +489,14 @@ export default class AudioTrimmer extends Component {
             @onSave={{this.save}}
             @onPreview={{this.preview}}
           />
-        </CanonRows>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonCanvas
+        <XzCanvas
           class="at-editor"
           @height={{editorHeight}}
           @boxing="unlessWide"
-          @background="var(--canon-muted)"
+          @background="var(--xz-surface-2)"
         >
           <Trim
             @duration={{this.view.span}}
@@ -525,31 +525,31 @@ export default class AudioTrimmer extends Component {
               {{/if}}
             </div>
           </Trim>
-        </CanonCanvas>
-        <CanonRows @framed={{true}}>
-          <CanonRow
+        </XzCanvas>
+        <XzRows @framed={{true}}>
+          <XzRow
             class="at-start"
             @title="Start"
             @detail={{this.startText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.start}}
               @max={{this.startMax}}
               @labelledBy={{titleId}}
               @disabled={{this.undecoded}}
               @onChange={{this.selectStart}}
             />
-          </CanonRow>
-          <CanonRow
+          </XzRow>
+          <XzRow
             class="at-end"
             @title="End"
             @detail={{this.endText}}
             @form="flush"
             as |titleId|
           >
-            <CanonDecimalField
+            <XzDecimalField
               @value={{this.end}}
               @min={{this.endMin}}
               @max={{this.duration}}
@@ -557,54 +557,50 @@ export default class AudioTrimmer extends Component {
               @disabled={{this.undecoded}}
               @onChange={{this.selectEnd}}
             />
-          </CanonRow>
-          <CanonGrid>
-            <CanonButton
+          </XzRow>
+          <XzGrid>
+            <XzButton
               class="at-set-in"
               @text="Set in"
               @icon={{SetIn}}
               @disabled={{this.noPlayhead}}
               @onClick={{this.setIn}}
             />
-            <CanonButton
+            <XzButton
               class="at-set-out"
               @text="Set out"
               @icon={{SetOut}}
               @disabled={{this.noPlayhead}}
               @onClick={{this.setOut}}
             />
-          </CanonGrid>
-          <CanonGrid class="at-zoom">
-            <CanonButton
+          </XzGrid>
+          <XzGrid class="at-zoom">
+            <XzButton
               class="at-zoom-out"
               @label="Zoom out"
               @icon={{ZoomOut}}
               @disabled={{if this.view.isZoomed false true}}
               @onClick={{this.zoomOut}}
             />
-            <CanonButton
+            <XzButton
               class="at-zoom-in"
               @label="Zoom in"
               @icon={{ZoomIn}}
               @disabled={{this.undecoded}}
               @onClick={{this.zoomIn}}
             />
-            <CanonButton
+            <XzButton
               class="at-fit"
               @label="Reset zoom"
               @icon={{Fit}}
               @disabled={{if this.view.isZoomed false true}}
               @onClick={{this.fit}}
             />
-          </CanonGrid>
+          </XzGrid>
           {{#if this.viewLabel}}
-            <CanonRow
-              class="at-view"
-              @title="View"
-              @detail={{this.viewLabel}}
-            />
+            <XzRow class="at-view" @title="View" @detail={{this.viewLabel}} />
           {{/if}}
-        </CanonRows>
+        </XzRows>
         {{! last: kit first-child spacing }}
         {{#if this.loaded}}
           {{! the transport is its control; user media lacks captions }}
@@ -622,6 +618,6 @@ export default class AudioTrimmer extends Component {
       <:footer>
         <Transport @playback={{this.playback}} @ready={{this.decoded}} />
       </:footer>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }

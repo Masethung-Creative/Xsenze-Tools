@@ -1,18 +1,18 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonTimecode from 'delphicanon/components/canon-timecode';
+import XzTimecode from 'xsenze-tools/components/xz/timecode';
 
 interface PictureSignature {
   Args: { a: string; b: string; subtracts: boolean; result: string };
 }
 
 const size = 30;
-const halo = 'var(--canon-card)';
+const halo = 'var(--xz-surface)';
 
 /** The sum as it is written out: A, then the sign and B, a rule, and the result under it, all in the segment font. */
 const Picture: TOC<PictureSignature> = <template>
   <div class="tcc-picture">
     <div class="tcc-sum">
-      <CanonTimecode
+      <XzTimecode
         class="tcc-line tcc-operand"
         @text={{@a}}
         @size={{size}}
@@ -21,7 +21,7 @@ const Picture: TOC<PictureSignature> = <template>
       />
       <div class="tcc-row">
         <span class="tcc-sign">{{if @subtracts "−" "+"}}</span>
-        <CanonTimecode
+        <XzTimecode
           class="tcc-line tcc-operand"
           @text={{@b}}
           @size={{size}}
@@ -30,7 +30,7 @@ const Picture: TOC<PictureSignature> = <template>
         />
       </div>
       <div class="tcc-rule"></div>
-      <CanonTimecode
+      <XzTimecode
         class="tcc-line"
         @text={{@result}}
         @size={{size}}

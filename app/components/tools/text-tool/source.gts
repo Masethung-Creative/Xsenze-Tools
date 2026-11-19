@@ -1,7 +1,7 @@
 import type { TOC } from '@ember/component/template-only';
-import CanonGrid from 'delphicanon/components/canon-grid';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonTextArea from 'delphicanon/components/canon-text-area';
+import XzGrid from 'xsenze-tools/components/xz/grid';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzTextArea from 'xsenze-tools/components/xz/text-area';
 import PasteClear from 'xsenze-tools/components/tools/text-tool/paste-clear';
 import './text-tool.css';
 
@@ -17,22 +17,22 @@ interface SourceSignature {
 }
 
 /**
- * CanonTextInput without its 0.4 s typing pause: the web tools answered on
- * every keystroke. Goes inside a CanonRows.
+ * XzTextInput without its 0.4 s typing pause: the web tools answered on
+ * every keystroke. Goes inside a XzRows.
  */
 const Source: TOC<SourceSignature> = <template>
-  <CanonHeading @text={{@heading}} />
-  <CanonTextArea
+  <XzHeading @text={{@heading}} />
+  <XzTextArea
     class="tt-source"
     @value={{@text}}
     @placeholder="Type or paste"
     @onChange={{@onChange}}
     aria-label={{if @label @label "Input"}}
   />
-  <CanonGrid>
+  <XzGrid>
     <PasteClear @text={{@text}} @onChange={{@onChange}} />
     {{yield}}
-  </CanonGrid>
+  </XzGrid>
 </template>;
 
 export default Source;

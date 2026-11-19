@@ -4,8 +4,8 @@ Version 0.10.0, MIT licence. Built files from the kit's `dist/` folder, kept in
 the repo so the site loads nothing from a CDN.
 
 - `xsenze.min.css`: tokens, reset, fonts and components, imported in
-  `app/app.ts`. The production build runs out of memory on the readable
-  `xsenze.css`, so that copy is kept only for reading the class names.
+  `app/app.ts`. `xsenze.css` is the same sheet, readable, kept for looking up
+  class names.
 - `xsenze-tools.css`: the optional tools pack (panels, faders, number fields)
 - `xsenze.js`, `xsenze-tools.js`: the kit scripts, not loaded yet; the site
   drives its parts from Ember

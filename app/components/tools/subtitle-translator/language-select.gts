@@ -2,14 +2,14 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { fn } from '@ember/helper';
 import type { ComponentLike } from '@glint/template';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCommand, {
-  type CanonCommandItem,
-} from 'delphicanon/components/canon-command';
-import CanonDialog, {
-  type CanonDialogClose,
-} from 'delphicanon/components/canon-dialog';
-import CanonRow from 'delphicanon/components/canon-row';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCommand, {
+  type XzCommandItem,
+} from 'xsenze-tools/components/xz/command';
+import XzDialog, {
+  type XzDialogClose,
+} from 'xsenze-tools/components/xz/dialog';
+import XzRow from 'xsenze-tools/components/xz/row';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { TRANSLATE_LANGUAGES, type Language } from 'xsenze-tools/lib/translate';
 
@@ -86,7 +86,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
     return n ? `Done · ${n} picked` : 'Done';
   }
 
-  #item(language: Language, group: string, prefix = ''): CanonCommandItem {
+  #item(language: Language, group: string, prefix = ''): XzCommandItem {
     const ticked = this.args.selected.includes(language.code);
     if (this.args.unavailable?.has(language.code))
       return {
@@ -108,7 +108,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
   }
 
   // a query lists each language once; picked ones lead in multiple mode
-  get items(): CanonCommandItem[] {
+  get items(): XzCommandItem[] {
     const usable = TRANSLATE_LANGUAGES.filter(
       (l) => l.code !== this.args.exclude,
     );
@@ -125,7 +125,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
     const common = usable
       .slice(0, COMMON_COUNT)
       .map((l) => this.#item(l, 'Common', 'common-'));
-    const auto: CanonCommandItem[] = this.args.auto
+    const auto: XzCommandItem[] = this.args.auto
       ? [{ id: 'auto', title: AUTO, keywords: ['auto', 'detect'], icon: Globe }]
       : [];
     return [...auto, ...picked, ...common, ...all];
@@ -140,7 +140,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
 
   search = (query: string) => (this.query = query);
 
-  pick = (close: CanonDialogClose, item: CanonCommandItem) => {
+  pick = (close: XzDialogClose, item: XzCommandItem) => {
     const code = item.id.replace(/^(common|picked)-/, '');
     if (this.args.unavailable?.has(code)) return;
     if (code === 'auto') {
@@ -162,8 +162,8 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
   };
 
   <template>
-    <CanonRow class="st-language" @title={{@title}} @form="flush" as |titleId|>
-      <CanonButton
+    <XzRow class="st-language" @title={{@title}} @form="flush" as |titleId|>
+      <XzButton
         class="st-language-pick"
         @kind="cell"
         @text={{this.text}}
@@ -173,15 +173,15 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
         aria-haspopup="dialog"
         @onClick={{this.show}}
       />
-    </CanonRow>
-    <CanonDialog
+    </XzRow>
+    <XzDialog
       class="st-language-dialog"
       @open={{this.open}}
       @onClose={{this.closed}}
       aria-label={{@title}}
     >
       <:default as |close|>
-        <CanonCommand
+        <XzCommand
           @items={{this.items}}
           @placeholder="Search languages…"
           @label={{@title}}
@@ -190,7 +190,7 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
           @onQuery={{this.search}}
         />
         {{#if @multiple}}
-          <CanonButton
+          <XzButton
             class="st-language-done"
             @kind="primary"
             @text={{this.doneText}}
@@ -198,6 +198,6 @@ export default class LanguageSelect extends Component<LanguageSelectSignature> {
           />
         {{/if}}
       </:default>
-    </CanonDialog>
+    </XzDialog>
   </template>
 }

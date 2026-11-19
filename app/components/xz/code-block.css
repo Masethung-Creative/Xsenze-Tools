@@ -1,0 +1,21 @@
+/* Without a language the copy button sits below the code, at the end. */
+.xz-codeblock--bare {
+  flex-direction: column-reverse;
+}
+
+.xz-codeblock--bare > .xz-codeblock__bar {
+  justify-content: flex-end;
+  min-height: 0;
+  padding: var(--xz-space-1);
+  border-top: 1px solid var(--xz-border);
+  border-bottom: 0;
+}
+
+.xz-codeblock__pre {
+  white-space: pre;
+  scrollbar-width: thin;
+}
+
+.xz-codeblock__copy {
+  flex: none;
+}

@@ -1,7 +1,7 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { isDestroying } from '@ember/destroyable';
-import CanonButton from 'delphicanon/components/canon-button';
+import XzButton from 'xsenze-tools/components/xz/button';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import { JobProgress } from 'xsenze-tools/components/tools/media/job';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -23,7 +23,7 @@ export interface DownloadAllSignature {
     files: () => NamedBlob[] | Promise<NamedBlob[]>;
     /** The archive's file name, with `.zip`. */
     zipName: string;
-    /** As CanonButton's kind for Download all; default primary. */
+    /** As XzButton's kind for Download all; default primary. */
     kind?: 'primary' | 'secondary';
     disabled?: boolean;
     /** 0 to 1 while the caller builds the files; shows Job's busy rows below the buttons. */
@@ -68,7 +68,7 @@ export default class DownloadAll extends Component<DownloadAllSignature> {
 
   <template>
     <div class="media-download-all" ...attributes>
-      <CanonButton
+      <XzButton
         class="media-download-all-each"
         @kind={{if @kind @kind "primary"}}
         @text={{passAlong "Download all"}}
@@ -76,7 +76,7 @@ export default class DownloadAll extends Component<DownloadAllSignature> {
         @disabled={{this.off}}
         @onClick={{this.all}}
       />
-      <CanonButton
+      <XzButton
         class="media-download-all-zip"
         @kind="cell"
         @text="Zip"

@@ -2,17 +2,17 @@ import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
 import type Owner from '@ember/owner';
-import type CanonToastService from 'delphicanon/services/canon-toast';
-import CanonButton from 'delphicanon/components/canon-button';
-import CanonCanvas from 'delphicanon/components/canon-canvas';
-import CanonHeading from 'delphicanon/components/canon-heading';
-import CanonMenuCell from 'delphicanon/components/canon-menu-cell';
-import CanonRow from 'delphicanon/components/canon-row';
-import CanonRows from 'delphicanon/components/canon-rows';
-import CanonSegmented from 'delphicanon/components/canon-segmented';
-import CanonSplit from 'delphicanon/components/canon-split';
-import CanonStatus from 'delphicanon/components/canon-status';
-import CanonTiles from 'delphicanon/components/canon-tiles';
+import type XzToastService from 'xsenze-tools/services/xz-toast';
+import XzButton from 'xsenze-tools/components/xz/button';
+import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzHeading from 'xsenze-tools/components/xz/heading';
+import XzMenuCell from 'xsenze-tools/components/xz/menu-cell';
+import XzRow from 'xsenze-tools/components/xz/row';
+import XzRows from 'xsenze-tools/components/xz/rows';
+import XzSegmented from 'xsenze-tools/components/xz/segmented';
+import XzSplit from 'xsenze-tools/components/xz/split';
+import XzStatus from 'xsenze-tools/components/xz/status';
+import XzTiles from 'xsenze-tools/components/xz/tiles';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import TimecodeField from 'xsenze-tools/components/tools/timecode-calc/field';
 import Picture from 'xsenze-tools/components/tools/timecode-calc/picture';
@@ -60,7 +60,7 @@ function note(parsed: ParseResult, rate: Rate) {
 
 /** The port of TimecodeCalcViewController. */
 export default class TimecodeCalc extends Component {
-  @service('canon-toast') declare toast: CanonToastService;
+  @service('xz-toast') declare toast: XzToastService;
 
   @tracked rateIndex = defaultRate;
   @tracked subtracts = false;
@@ -164,20 +164,20 @@ export default class TimecodeCalc extends Component {
   };
 
   <template>
-    <CanonSplit class="timecode-calc">
+    <XzSplit class="timecode-calc">
       <:banner>
-        <CanonCanvas @fitting={{true}}>
+        <XzCanvas @fitting={{true}}>
           <Picture
             @a={{this.lineA}}
             @b={{this.lineB}}
             @subtracts={{this.subtracts}}
             @result={{this.lineResult}}
           />
-        </CanonCanvas>
+        </XzCanvas>
       </:banner>
       <:sidebar>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Timecode A" />
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Timecode A" />
           <TimecodeField
             @value={{this.startA}}
             @dropFrame={{this.rate.drop}}
@@ -185,21 +185,21 @@ export default class TimecodeCalc extends Component {
             @onChange={{this.typeA}}
           />
           {{#if this.noteA}}
-            <CanonStatus
+            <XzStatus
               class="tcc-note"
               @text={{this.noteA.text}}
               @tone={{this.noteA.tone}}
               @row={{true}}
             />
           {{/if}}
-          <CanonHeading @text="Operation" />
-          <CanonSegmented
+          <XzHeading @text="Operation" />
+          <XzSegmented
             aria-label="Operation"
             @items={{operations}}
             @selected={{if this.subtracts 1 0}}
             @onChange={{this.pickOperation}}
           />
-          <CanonHeading @text="Timecode B" />
+          <XzHeading @text="Timecode B" />
           <TimecodeField
             @value={{this.startB}}
             @dropFrame={{this.rate.drop}}
@@ -207,31 +207,31 @@ export default class TimecodeCalc extends Component {
             @onChange={{this.typeB}}
           />
           {{#if this.noteB}}
-            <CanonStatus
+            <XzStatus
               class="tcc-note"
               @text={{this.noteB.text}}
               @tone={{this.noteB.tone}}
               @row={{true}}
             />
           {{/if}}
-        </CanonRows>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Frame rate" />
-          <CanonRow @title="Frame rate" @form="flush" as |titleId|>
-            <CanonMenuCell
+        </XzRows>
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Frame rate" />
+          <XzRow @title="Frame rate" @form="flush" as |titleId|>
+            <XzMenuCell
               @items={{rateLabels}}
               @selected={{this.rateIndex}}
               @labelledBy={{titleId}}
               @onChange={{this.pickRate}}
             />
-          </CanonRow>
-        </CanonRows>
+          </XzRow>
+        </XzRows>
       </:sidebar>
       <:main>
-        <CanonRows @framed={{true}}>
-          <CanonHeading @text="Result" />
-          <CanonTiles @items={{this.tiles}} />
-          <CanonButton
+        <XzRows @framed={{true}}>
+          <XzHeading @text="Result" />
+          <XzTiles @items={{this.tiles}} />
+          <XzButton
             @text="Copy"
             @icon={{CopyIcon}}
             @iconStyle="oversized"
@@ -239,8 +239,8 @@ export default class TimecodeCalc extends Component {
             @disabled={{this.copyDisabled}}
             @onClick={{this.copyResult}}
           />
-        </CanonRows>
+        </XzRows>
       </:main>
-    </CanonSplit>
+    </XzSplit>
   </template>
 }
