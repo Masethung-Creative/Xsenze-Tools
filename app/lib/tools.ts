@@ -85,6 +85,12 @@ export interface ToolCategory {
  */
 const STORY_STUDIO_LIVE = import.meta.env.DEV;
 
+/**
+ * Video Edit is built in steps the user reviews; until export is in, it shows
+ * only in dev builds. Set to true to put it live.
+ */
+const VIDEO_EDIT_LIVE = import.meta.env.DEV;
+
 export const toolCategories: ToolCategory[] = [
   {
     id: 'audio',
@@ -337,6 +343,29 @@ export const toolCategories: ToolCategory[] = [
           'mp4',
         ],
       },
+      ...(VIDEO_EDIT_LIVE
+        ? [
+            {
+              id: 'video-edit',
+              name: 'Video Edit',
+              description: 'Join clips, trim, split and cut parts out',
+              icon: 'clapperboard',
+              accepts: VIDEO_ACCEPT,
+              produces: ['video/mp4', 'video/webm'],
+              keywords: [
+                'edit',
+                'editor',
+                'merge',
+                'join',
+                'combine',
+                'cut',
+                'split',
+                'clips',
+                'video',
+              ],
+            },
+          ]
+        : []),
       {
         id: 'video-muter',
         name: 'Video Muter',

@@ -25,8 +25,10 @@ import iClipboard from 'lucide-static/icons/clipboard.svg?raw';
 import iClipboardPaste from 'lucide-static/icons/clipboard-paste.svg?raw';
 import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCodeXml from 'lucide-static/icons/code-xml.svg?raw';
+import iCombine from 'lucide-static/icons/combine.svg?raw';
 import iComponent from 'lucide-static/icons/component.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
+import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
 import iCpu from 'lucide-static/icons/cpu.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
@@ -66,6 +68,7 @@ import iLink from 'lucide-static/icons/link.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
+import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMerge from 'lucide-static/icons/merge.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
@@ -80,11 +83,13 @@ import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw
 import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
+import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
 import iReplace from 'lucide-static/icons/replace.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRoute from 'lucide-static/icons/route.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
+import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
 import iScroll from 'lucide-static/icons/scroll.svg?raw';
 import iSearch from 'lucide-static/icons/search.svg?raw';
 import iSettings from 'lucide-static/icons/settings.svg?raw';
@@ -99,6 +104,7 @@ import iSpace from 'lucide-static/icons/space.svg?raw';
 import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSpeech from 'lucide-static/icons/speech.svg?raw';
+import iSplit from 'lucide-static/icons/split.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
 import iSummary from 'lucide-static/icons/summary.svg?raw';
@@ -108,6 +114,7 @@ import iText from 'lucide-static/icons/text.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
+import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iUsers from 'lucide-static/icons/users.svg?raw';
 import iVan from 'lucide-static/icons/van.svg?raw';
@@ -147,8 +154,10 @@ export const icons: Record<string, string> = {
   'clipboard-paste': iClipboardPaste,
   clock: iClock,
   'code-xml': iCodeXml,
+  combine: iCombine,
   component: iComponent,
   copy: iCopy,
+  'copy-plus': iCopyPlus,
   cpu: iCpu,
   delete: iDelete,
   dices: iDices,
@@ -188,6 +197,7 @@ export const icons: Record<string, string> = {
   lock: iLock,
   map: iMap,
   maximize: iMaximize,
+  'maximize-2': iMaximize2,
   menu: iMenu,
   merge: iMerge,
   mic: iMic,
@@ -202,11 +212,13 @@ export const icons: Record<string, string> = {
   play: iPlay,
   podcast: iPodcast,
   radio: iRadio,
+  'redo-2': iRedo2,
   repeat: iRepeat,
   replace: iReplace,
   'rotate-ccw': iRotateCcw,
   route: iRoute,
   scissors: iScissors,
+  'scissors-line-dashed': iScissorsLineDashed,
   scroll: iScroll,
   search: iSearch,
   settings: iSettings,
@@ -221,6 +233,7 @@ export const icons: Record<string, string> = {
   sparkles: iSparkles,
   speaker: iSpeaker,
   speech: iSpeech,
+  split: iSplit,
   square: iSquare,
   subtitles: iSubtitles,
   summary: iSummary,
@@ -230,6 +243,7 @@ export const icons: Record<string, string> = {
   'trash-2': iTrash2,
   'triangle-alert': iTriangleAlert,
   'type-outline': iTypeOutline,
+  'undo-2': iUndo2,
   upload: iUpload,
   users: iUsers,
   van: iVan,

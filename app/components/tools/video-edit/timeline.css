@@ -1,0 +1,172 @@
+/* Video Edit's one video track: ruler, pieces as filmstrips, playhead. */
+.ve-timeline {
+  block-size: 100%;
+  overflow: auto hidden;
+  background: var(--xz-surface-2);
+  scrollbar-width: thin;
+}
+
+.ve-track {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1.5rem 1fr;
+  min-block-size: 100%;
+  touch-action: pan-y;
+  user-select: none;
+  cursor: text;
+}
+
+.ve-ruler {
+  position: relative;
+  border-block-end: 1px solid var(--xz-border);
+  color: var(--xz-text-muted);
+  font-family: var(--xz-font-mono);
+  font-size: 0.6875rem;
+}
+
+.ve-tick {
+  position: absolute;
+  inset-block: 0;
+  padding-inline-start: 4px;
+  border-inline-start: 1px solid var(--xz-border);
+  line-height: 1.5rem;
+  white-space: nowrap;
+}
+
+.ve-lane {
+  position: relative;
+  margin-block: var(--xz-space-2);
+}
+
+.ve-piece {
+  position: absolute;
+  inset-block: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--xz-border-strong);
+  border-radius: var(--xz-radius-control);
+  background: var(--xz-surface-3);
+  cursor: grab;
+  transition:
+    opacity var(--xz-duration-fast) var(--xz-ease-out),
+    box-shadow var(--xz-duration-fast) var(--xz-ease-out);
+}
+
+.ve-piece--selected {
+  z-index: 1;
+  border-color: var(--xz-accent-2);
+  box-shadow: 0 0 0 1px var(--xz-accent-2);
+}
+
+.ve-piece--dragging {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.ve-film {
+  display: flex;
+  block-size: 100%;
+  pointer-events: none;
+}
+
+.ve-film img {
+  flex: none;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.ve-piece__name,
+.ve-piece__muted {
+  position: absolute;
+  inset-block-start: 4px;
+  max-inline-size: calc(100% - 20px);
+  overflow: hidden;
+  padding: 1px 6px;
+  border-radius: var(--xz-radius-sm);
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: var(--xz-font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ve-piece__name {
+  inset-inline-start: 10px;
+}
+
+.ve-piece__muted {
+  inset-block: auto 4px;
+  inset-inline-start: 10px;
+}
+
+/* trim handles on the selected piece */
+.ve-handle {
+  position: absolute;
+  inset-block: 0;
+  z-index: 2;
+  inline-size: 10px;
+  background: var(--xz-accent-2);
+  cursor: ew-resize;
+}
+
+.ve-handle::after {
+  position: absolute;
+  inset: 30% 4px;
+  border-radius: 1px;
+  background: var(--xz-on-accent-2);
+  content: "";
+}
+
+.ve-handle--in {
+  inset-inline-start: 0;
+}
+
+.ve-handle--out {
+  inset-inline-end: 0;
+}
+
+.ve-range {
+  position: absolute;
+  inset-block: 1.5rem 0;
+  z-index: 2;
+  border-inline: 2px solid var(--xz-accent-2);
+  background: var(--xz-accent-2-soft);
+  pointer-events: none;
+}
+
+.ve-drop {
+  position: absolute;
+  inset-block: 1.5rem 0;
+  z-index: 3;
+  inline-size: 3px;
+  margin-inline-start: -1px;
+  background: var(--xz-accent-2);
+  pointer-events: none;
+}
+
+.ve-playhead {
+  position: absolute;
+  inset-block: 0;
+  z-index: 4;
+  inline-size: 2px;
+  margin-inline-start: -1px;
+  background: var(--xz-text);
+  pointer-events: none;
+}
+
+.ve-playhead::before {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -5px;
+  border: 6px solid transparent;
+  border-block-start-color: var(--xz-text);
+  content: "";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ve-piece {
+    transition: none;
+  }
+}

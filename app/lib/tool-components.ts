@@ -28,6 +28,7 @@ const loaders: Record<string, Loader> = {
   'video-to-gif': () => import('xsenze-tools/components/tools/video-to-gif'),
   'video-atlas': () => import('xsenze-tools/components/tools/video-atlas'),
   'video-trimmer': () => import('xsenze-tools/components/tools/video-trimmer'),
+  'video-edit': () => import('xsenze-tools/components/tools/video-edit'),
   'video-muter': () => import('xsenze-tools/components/tools/video-muter'),
   'video-compressor': () =>
     import('xsenze-tools/components/tools/video-compressor'),

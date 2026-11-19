@@ -1,0 +1,28 @@
+/* Video Edit: the preview canvas fills its frame; the timeline sits below. */
+.ve-canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.ve-timeline-empty {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  margin: 0;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-sm);
+}
+
+.ve-clip .xz-cellgrid {
+  min-inline-size: 6rem;
+}
+
+.ve-keys {
+  margin: 0;
+  color: var(--xz-text-subtle);
+  font-size: var(--xz-font-size-xs);
+  line-height: 1.6;
+}

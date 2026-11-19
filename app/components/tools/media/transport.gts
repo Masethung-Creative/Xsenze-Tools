@@ -2,7 +2,16 @@ import type { TOC } from '@ember/component/template-only';
 import XzButton from 'xsenze-tools/components/xz/button';
 import XzGrid from 'xsenze-tools/components/xz/grid';
 import { IconSvg } from 'xsenze-tools/components/icon';
-import type Playback from 'xsenze-tools/components/tools/media/playback';
+
+/** What the footer drives: the single-file Playback, or Video Edit's player. */
+export interface TransportControls {
+  playing: boolean;
+  looping: boolean;
+  active: boolean;
+  toggle: () => void;
+  toggleLoop: () => void;
+  stop: () => void;
+}
 
 const PlayIcon = <template><IconSvg @name="play" /></template>;
 const PauseIcon = <template><IconSvg @name="pause" /></template>;
@@ -13,7 +22,7 @@ const off = (on: boolean | undefined) => !on;
 
 /** The transport footer: any `before` cells, Loop, Play or Pause, Stop, then any extra cells. */
 const Transport: TOC<{
-  Args: { playback: Playback; ready?: boolean };
+  Args: { playback: TransportControls; ready?: boolean };
   Blocks: { default: []; before: [] };
 }> = <template>
   <XzGrid class="media-transport">

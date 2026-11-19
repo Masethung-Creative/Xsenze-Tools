@@ -76,6 +76,14 @@ their `soon` line from `lib/tools.ts`):
   project type is locked after Create. No server: the chatbot steps are the user's own copy and
   paste.
 
+- Video Edit (`video-edit`, Video category) is built in steps the user checks (B1 timeline and
+  preview, B2 export, B3 sound, fades and polish). `VIDEO_EDIT_LIVE` in `lib/tools.ts` keeps it to
+  dev builds until export is in. The edit is plain data in `lib/video-edit/timeline.ts` (clips
+  and pieces, pure split/cutRange/move/trim and a History for undo; unit tests in
+  `tests/unit/video-edit-timeline-test.ts`). `lib/video-edit/player.ts` plays the pieces across
+  clips onto one canvas with black bars, one hidden video per clip. A modifier must not read
+  tracked state it does not mean to follow: the canvas modifier once reread the playhead every
+  frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.
 - Done: audio-trimmer, audio-normaliser, voice-recorder, waveform-genny, audio-atlas,
   audio-extractor, video-muter, video-trimmer, video-atlas, video-to-gif, frame-extractor, screen-recorder, subtitle-converter, subtitle-studio, auto-subtitle, timecode-calc (all 16 ported), plus our own video-compressor (one or many videos; mediabunny transcode
