@@ -76,12 +76,13 @@ their `soon` line from `lib/tools.ts`):
   project type is locked after Create. No server: the chatbot steps are the user's own copy and
   paste.
 
-- Video Edit (`video-edit`, Video category) is built in steps the user checks (B1 timeline and
-  preview, B2 export, B3 sound, fades and polish). `VIDEO_EDIT_LIVE` in `lib/tools.ts` keeps it to
-  dev builds until export is in. The edit is plain data in `lib/video-edit/timeline.ts` (clips
-  and pieces, pure split/cutRange/move/trim and a History for undo; unit tests in
-  `tests/unit/video-edit-timeline-test.ts`). `lib/video-edit/player.ts` plays the pieces across
-  clips onto one canvas with black bars, one hidden video per clip. A modifier must not read
+- Video Edit (`video-edit`, Video category) is built in steps the user checks: (1) layers (Video,
+  Music, Voice), audio, volume up to 200 %, fades; (2) an Overlay layer (pictures, a small video,
+  text) and speed 0.5–2×; (3) export with every layer and the mixed sound. `VIDEO_EDIT_LIVE` in `lib/tools.ts` keeps it to
+  dev builds until export is in. The edit is plain data in `lib/video-edit/timeline.ts` (clips,
+  video pieces, audio items placed in time, a level per layer; pure functions and a History for undo; unit tests in
+  `tests/unit/video-edit-timeline-test.ts`). `lib/video-edit/player.ts` plays the edit on one clock: the
+  video track onto one canvas with black bars, every sound through its own Web Audio gain. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.

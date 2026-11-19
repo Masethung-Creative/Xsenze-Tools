@@ -1,6 +1,15 @@
 import { module, test } from 'qunit';
 import {
   History,
+  cutRangeAudio,
+  editLength,
+  emptyEdit,
+  fadeAt,
+  moveAudio,
+  settle,
+  splitAudio,
+  trimAudio,
+  type AudioItem,
   cutRange,
   duplicate,
   minimumPiece,
@@ -20,6 +29,8 @@ const piece = (id: string, clip: string, a: number, b: number): Piece => ({
   out: b,
   volume: 1,
   muted: false,
+  fadeIn: 0,
+  fadeOut: 0,
 });
 
 // clip A 0–10 s, clip B 2–6 s: 14 s in all
@@ -102,5 +113,85 @@ module('Unit | video edit | timeline', function () {
     assert.strictEqual(pieces.length, 3);
     history.record(pieces);
     assert.false(history.canRedo, 'a new change drops the redo list');
+  });
+
+  test('audio items keep their layer clear', function (assert) {
+    const sound = (
+      id: string,
+      start: number,
+      a: number,
+      b: number,
+    ): AudioItem => ({
+      id,
+      clip: 'S',
+      lane: 'music',
+      start,
+      in: a,
+      out: b,
+      volume: 1,
+      muted: false,
+      fadeIn: 0,
+      fadeOut: 0,
+    });
+    const items = [sound('m1', 0, 0, 4), sound('m2', 6, 0, 3)];
+    // dropped over m1: it moves past it
+    assert.strictEqual(settle(items, sound('x', 2, 0, 1)).start, 4);
+    // a gap that is too short: past m2 too
+    assert.strictEqual(settle(items, sound('x', 3, 0, 3)).start, 9);
+    assert.strictEqual(moveAudio(items, 'm2', 1)[1]!.start, 4);
+    assert.strictEqual(
+      moveAudio(items, 'm2', 1, 'voice')[1]!.start,
+      1,
+      'another layer is free',
+    );
+    const split = splitAudio(items, 'm1', 1.5);
+    assert.deepEqual(
+      split.map((i) => [i.start, i.in, i.out]),
+      [
+        [0, 0, 1.5],
+        [1.5, 1.5, 4],
+        [6, 0, 3],
+      ],
+    );
+    // the in point moves the start with it
+    const trimmed = trimAudio(items, 'm2', 1, 3, 5)[1]!;
+    assert.deepEqual([trimmed.start, trimmed.in, trimmed.out], [7, 1, 3]);
+    // a cut on the timeline closes the gap on the layers too
+    const cut = cutRangeAudio(items, 3, 5);
+    assert.deepEqual(
+      cut.map((i) => [i.start, i.in, i.out]),
+      [
+        [0, 0, 3],
+        [4, 0, 3],
+      ],
+    );
+  });
+
+  test('length and fades', function (assert) {
+    const edit = emptyEdit();
+    edit.pieces = [piece('a', 'A', 0, 10)];
+    assert.strictEqual(editLength(edit), 10);
+    edit.audio = [
+      {
+        id: 'm',
+        clip: 'S',
+        lane: 'voice',
+        start: 8,
+        in: 0,
+        out: 5,
+        volume: 1,
+        muted: false,
+        fadeIn: 0,
+        fadeOut: 0,
+      },
+    ];
+    assert.strictEqual(
+      editLength(edit),
+      13,
+      'a sound past the video lengthens the edit',
+    );
+    assert.strictEqual(fadeAt(0.5, 10, 1, 2), 0.5);
+    assert.strictEqual(fadeAt(5, 10, 1, 2), 1);
+    assert.strictEqual(fadeAt(9, 10, 1, 2), 0.5);
   });
 });

@@ -26,3 +26,18 @@
   font-size: var(--xz-font-size-xs);
   line-height: 1.6;
 }
+
+/* a layer's level: the slider takes the line, the on switch sits at its end */
+.ve-level .xz-prow__control {
+  align-items: center;
+  gap: var(--xz-space-3);
+  padding-inline-end: var(--xz-panel-pad, var(--xz-space-4));
+}
+
+.ve-level .xz-slider-cell {
+  flex: 1 1 auto;
+}
+
+.ve-level .xz-toggle {
+  flex: none;
+}
