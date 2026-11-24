@@ -36,6 +36,7 @@ import iCombine from 'lucide-static/icons/combine.svg?raw';
 import iComponent from 'lucide-static/icons/component.svg?raw';
 import iContrast from 'lucide-static/icons/contrast.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
+import iCopyCheck from 'lucide-static/icons/copy-check.svg?raw';
 import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
 import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
@@ -184,6 +185,7 @@ export const icons: Record<string, string> = {
   component: iComponent,
   contrast: iContrast,
   copy: iCopy,
+  'copy-check': iCopyCheck,
   'copy-plus': iCopyPlus,
   crop: iCrop,
   delete: iDelete,

@@ -86,6 +86,7 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Save and open a project file; save the current frame as PNG                                                                                                               | ✅     |
 | **Animations**                                                                                                                                                            |        |
 | In and out picker with moving tiles for titles, overlays and clips: fade, blur, zoom, slide, soft reveal, circle, pop, typewriter                                         | ✅     |
+| Rotate and Flip as two sections on a clip: Left / Right 90°, an angle picker (0–270°), flip left to right or upside down, reset, and use on every clip                    | ✅     |
 
 ## Image
 

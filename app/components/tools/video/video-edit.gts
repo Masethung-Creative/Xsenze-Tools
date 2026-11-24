@@ -175,6 +175,8 @@ import './video-edit/video-edit.css';
 
 const ACCEPT = acceptAttr([...VIDEO_ACCEPT, ...AUDIO_ACCEPT, ...IMAGE_ACCEPT]);
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+const ANGLES: Look['rotate'][] = [0, 90, 180, 270];
+const ANGLE_LABELS = ANGLES.map((angle) => `${angle}°`);
 const SPEED_LABELS = SPEEDS.map((s) => `${s}×`);
 const FILTER_IDS = Object.keys(FILTERS) as Filter[];
 const FILTER_LABELS = FILTER_IDS.map((id) => FILTERS[id].label);
@@ -204,6 +206,7 @@ const ResetIcon = icon('rotate-ccw-square');
 const ReverseIcon = icon('rewind');
 const FreezeIcon = icon('snowflake');
 const LayersIcon = icon('layers');
+const CopyAllIcon = icon('copy-check');
 const SHAPE_ICON_PARTS = {
   rect: icon('square'),
   circle: icon('circle'),
@@ -2168,6 +2171,45 @@ export default class VideoEdit extends Component {
   flipH = () => this.#setLook({ flipH: !this.look.flipH });
   flipV = () => this.#setLook({ flipV: !this.look.flipV });
 
+  get angleIndex() {
+    return ANGLES.indexOf(this.look.rotate);
+  }
+
+  get turnPlain() {
+    const look = this.look;
+    return !look.rotate && !look.flipH && !look.flipV;
+  }
+
+  /** Every other clip already turned and flipped like this one. */
+  get turnShared() {
+    const { rotate, flipH, flipV } = this.look;
+    return this.pieces.every(
+      (piece) =>
+        piece.look.rotate === rotate &&
+        piece.look.flipH === flipH &&
+        piece.look.flipV === flipV,
+    );
+  }
+
+  pickAngle = (index: number) => {
+    const rotate = ANGLES[index];
+    if (rotate !== undefined) this.#setLook({ rotate });
+  };
+
+  resetTurn = () => this.#setLook({ rotate: 0, flipH: false, flipV: false });
+
+  /** This clip's turn and flips on every clip, as one undo step. */
+  turnEveryClip = () => {
+    const { rotate, flipH, flipV } = this.look;
+    this.#change({
+      pieces: this.pieces.map((piece) => ({
+        ...piece,
+        look: { ...piece.look, rotate, flipH, flipV },
+      })),
+    });
+    this.toast.notify('Rotate and flip used on every clip');
+  };
+
   setCrop = (side: keyof Look['crop'], value: number, dragging: boolean) =>
     this.#setLook(
       { crop: { ...this.look.crop, [side]: value } },
@@ -3718,33 +3760,59 @@ export default class VideoEdit extends Component {
                         </XzRow>
                       {{/if}}
                     {{/if}}
-                    <XzHeading @text="Rotate and flip" />
+                    <XzHeading @text="Rotate" />
                     <XzGrid>
                       <XzButton
                         class="ve-rotate-left"
-                        @label="Rotate left"
+                        @text="Left 90°"
                         @icon={{RotateLeftIcon}}
                         @onClick={{this.rotateLeft}}
                       />
                       <XzButton
                         class="ve-rotate-right"
-                        @label="Rotate right"
+                        @text="Right 90°"
                         @icon={{RotateRightIcon}}
                         @onClick={{this.rotateRight}}
                       />
+                    </XzGrid>
+                    <XzSegmented
+                      class="ve-angle"
+                      aria-label="Angle"
+                      @items={{ANGLE_LABELS}}
+                      @selected={{this.angleIndex}}
+                      @onChange={{this.pickAngle}}
+                    />
+                    <XzHeading @text="Flip" />
+                    <XzGrid @columns={{1}}>
                       <XzButton
                         class="ve-flip-h"
-                        @label="Flip left to right"
+                        @text="Left to right"
                         @icon={{FlipHIcon}}
                         @selected={{this.look.flipH}}
                         @onClick={{this.flipH}}
                       />
                       <XzButton
                         class="ve-flip-v"
-                        @label="Flip upside down"
+                        @text="Upside down"
                         @icon={{FlipVIcon}}
                         @selected={{this.look.flipV}}
                         @onClick={{this.flipV}}
+                      />
+                    </XzGrid>
+                    <XzGrid @columns={{1}}>
+                      <XzButton
+                        class="ve-turn-reset"
+                        @text="Reset rotate and flip"
+                        @icon={{ResetIcon}}
+                        @disabled={{this.turnPlain}}
+                        @onClick={{this.resetTurn}}
+                      />
+                      <XzButton
+                        class="ve-turn-all"
+                        @text="Use on every clip"
+                        @icon={{CopyAllIcon}}
+                        @disabled={{this.turnShared}}
+                        @onClick={{this.turnEveryClip}}
                       />
                     </XzGrid>
                     <XzHeading @text="Crop" />
