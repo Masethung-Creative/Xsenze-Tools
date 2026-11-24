@@ -16,6 +16,10 @@ interface Signature {
     onNavigate?: () => void;
     /** Shown in the drawer: adds a close button to the header. */
     onClose?: () => void;
+    /** Folded to a strip of icons. */
+    rail?: boolean;
+    /** Folds or opens the sidebar; adds the button for it to the header. */
+    onToggleRail?: () => void;
   };
   Element: HTMLElement;
 }
@@ -84,14 +88,34 @@ export default class AppSidebar extends Component<Signature> {
   };
 
   close = () => this.args.onClose?.();
+  toggleRail = () => this.args.onToggleRail?.();
 
   <template>
-    <aside class="xz-sidebar app-sidebar" ...attributes>
+    <aside
+      class="xz-sidebar app-sidebar {{if @rail 'xz-sidebar--rail'}}"
+      ...attributes
+    >
       <div class="xz-sidebar__header">
         <LinkTo @route="index" class="xz-logo" {{on "click" this.navigated}}>
           <BrandLogo class="xz-logo__mark" @size={{28}} />
           <span>xsenze tools</span>
         </LinkTo>
+        {{#if @onToggleRail}}
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon xz-sidebar__toggle app-sidebar__fold"
+            aria-label={{if @rail "Open the sidebar" "Close the sidebar"}}
+            title={{if
+              @rail
+              "Open the sidebar (Ctrl B)"
+              "Close the sidebar (Ctrl B)"
+            }}
+            aria-expanded={{if @rail "false" "true"}}
+            {{on "click" this.toggleRail}}
+          >
+            <Icon @name={{if @rail "panel-left-open" "panel-left-close"}} />
+          </button>
+        {{/if}}
         {{#if @onClose}}
           <button
             type="button"
@@ -151,7 +175,7 @@ export default class AppSidebar extends Component<Signature> {
                       @route="tools.tool"
                       @model={{tool.id}}
                       class="xz-sidebar__link"
-                      title={{tool.description}}
+                      title={{if @rail tool.name tool.description}}
                       aria-current={{this.current tool.id}}
                       {{on "click" this.navigated}}
                     >

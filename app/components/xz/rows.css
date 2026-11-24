@@ -4,6 +4,7 @@
   background: var(--xz-border);
 }
 
-.xz-panel--framed > * {
+/* no weight: a part that sets its own fill (a primary button) keeps it */
+:where(.xz-panel--framed > *) {
   background: var(--xz-surface);
 }

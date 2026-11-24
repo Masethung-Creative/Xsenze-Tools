@@ -1,10 +1,489 @@
-/* Video Edit: the preview canvas fills its frame; the timeline sits below. */
-.ve-canvas {
-  display: block;
+/*
+ * Video Edit's layout: a tool rail, the chosen tool's panel (closable), the
+ * preview, the selected item's settings, and the timeline across the bottom.
+ * Every panel keeps the same inner gutter and row height.
+ */
+.xz-tool-frame > .ve {
+  max-inline-size: none;
+  border-inline: 0;
+}
+
+.ve {
+  --ve-gutter: var(--xz-space-3);
+  --ve-panel: 17.5rem;
+  --ve-props: 19rem;
+  --ve-timeline: 15.5rem;
+
+  display: grid;
+  grid-template:
+    "rail stage props" minmax(0, 1fr)
+    "tl tl tl" var(--ve-timeline)
+    / 4rem minmax(0, 1fr) var(--ve-props);
+  block-size: 100%;
+  min-block-size: 0;
+  background: var(--xz-bg);
+}
+
+.ve--panel {
+  grid-template-areas:
+    "rail panel stage props"
+    "tl tl tl tl";
+  grid-template-columns: 4rem var(--ve-panel) minmax(0, 1fr) var(--ve-props);
+}
+
+/* ---------- tool rail ---------- */
+.ve-rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--xz-space-2) 6px;
+  border-inline-end: 1px solid var(--xz-border);
+  background: var(--xz-surface);
+}
+
+.ve-rail__tool {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  border: 0;
+  border-radius: var(--xz-radius-control);
+  background: transparent;
+  color: var(--xz-text-muted);
+  font: var(--xz-font-weight-semibold) 0.6875rem / 1 var(--xz-font-display);
+  cursor: pointer;
+}
+
+.ve-rail__tool svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.ve-rail__tool:hover {
+  background: var(--xz-surface-2);
+  color: var(--xz-text);
+}
+
+.ve-rail__tool.is-on {
+  background: var(--xz-accent-2-soft);
+  color: var(--xz-accent-2-text);
+}
+
+.ve-rail__tool:focus-visible {
+  outline: 2px solid var(--xz-focus);
+  outline-offset: -2px;
+}
+
+/* ---------- panels: shared head and body ---------- */
+.ve-panel,
+.ve-props {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+  background: var(--xz-surface);
+}
+
+.ve-panel {
+  grid-area: panel;
+  border-inline-end: 1px solid var(--xz-border);
+}
+
+.ve-props {
+  grid-area: props;
+  border-inline-start: 1px solid var(--xz-border);
+}
+
+.ve-head,
+.ve-props__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xz-space-2);
+  min-block-size: 2.75rem;
+  padding: 0 6px 0 var(--ve-gutter);
+  border-block-end: 1px solid var(--xz-border);
+}
+
+.ve-head h2 {
+  margin: 0;
+  font: var(--xz-font-weight-bold) var(--xz-font-size-sm) / 1.2
+    var(--xz-font-display);
+}
+
+.ve-props__head {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1px;
+  padding: var(--xz-space-2) var(--ve-gutter);
+}
+
+.ve-props__head strong {
+  overflow: hidden;
+  font: var(--xz-font-weight-bold) var(--xz-font-size-sm) / 1.3
+    var(--xz-font-display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ve-props__head small {
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+}
+
+.ve-panel__body,
+.ve-props__body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--ve-gutter);
+  min-block-size: 0;
+  padding: var(--ve-gutter);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.ve-hint,
+.ve-keys {
+  margin: 0;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+  line-height: 1.6;
+}
+
+/* ---------- media list ---------- */
+.ve-drop-zone {
+  --xz-drop-height: 6.5rem;
+}
+
+.ve-media {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ve-clip {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--xz-space-2);
+  padding: 6px;
+  border: 1px solid var(--xz-border);
+  border-radius: var(--xz-radius-control);
+  background: var(--xz-bg);
+}
+
+.ve-clip__thumb {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: calc(var(--xz-radius-control) - 1px);
+  background: var(--xz-surface-3);
+  color: var(--xz-text-muted);
+}
+
+.ve-clip__thumb img {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: contain;
+  object-fit: cover;
+}
+
+.ve-clip__thumb--sound {
+  background: var(--xz-info-soft);
+  color: var(--xz-info-text);
+}
+
+.ve-clip__thumb svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.ve-clip__text {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.ve-clip__text strong,
+.ve-clip__text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ve-clip__text strong {
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
+}
+
+.ve-clip__text small {
+  color: var(--xz-text-muted);
+  font-size: 0.6875rem;
+}
+
+.ve-clip__actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* ---------- compact slider rows: label, fader, value ---------- */
+.ve-slide,
+.ve-level {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--xz-space-2);
+  min-block-size: 2.75rem;
+  padding: 4px var(--ve-gutter);
+  background: var(--xz-surface);
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-medium);
+}
+
+.ve-level {
+  grid-template-columns: 5rem minmax(0, 1fr) auto;
+}
+
+.ve-slide .xz-slider,
+.ve-level .xz-slider {
+  height: 1.75rem;
+}
+
+.ve-slide .xz-slider-cell__readout,
+.ve-level .xz-slider-cell__readout {
+  min-inline-size: 2.75rem;
+  font-size: var(--xz-font-size-xs);
+}
+
+/* rows inside a framed panel get hairlines between them */
+.ve .xz-panel > .ve-slide + .ve-slide,
+.ve .xz-panel > .ve-level + .ve-level {
+  border-block-start: 1px solid var(--xz-border);
+}
+
+/* ---------- tabs ---------- */
+.ve-tabs {
+  display: grid;
+  flex: none;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  border-block-end: 1px solid var(--xz-border);
+}
+
+.ve-tab {
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--xz-text-muted);
+  font: var(--xz-font-weight-semibold) var(--xz-font-size-xs) / 1
+    var(--xz-font-display);
+  cursor: pointer;
+}
+
+.ve-tab:hover {
+  color: var(--xz-text);
+}
+
+.ve-tab.is-on {
+  box-shadow: inset 0 -2px 0 var(--xz-accent-2);
+  color: var(--xz-text);
+}
+
+.ve-tab:focus-visible {
+  outline: 2px solid var(--xz-focus);
+  outline-offset: -2px;
+}
+
+.ve-empty,
+.ve-soon {
+  display: grid;
+  justify-items: center;
+  gap: var(--xz-space-2);
+  padding: var(--xz-space-6) var(--xz-space-3);
+  border: 1px dashed var(--xz-border);
+  border-radius: var(--xz-radius-surface);
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+  text-align: center;
+}
+
+.ve-empty p,
+.ve-soon p {
+  margin: 0;
+}
+
+.ve-soon strong {
+  color: var(--xz-text);
+  font-size: var(--xz-font-size-sm);
+}
+
+.ve-empty svg,
+.ve-soon svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+/* ---------- preview ---------- */
+.ve-stage {
+  grid-area: stage;
+  display: grid;
+  grid-template-rows: 2.5rem minmax(0, 1fr) 3.25rem;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+.ve-stage__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--xz-space-2);
+  padding: 0 var(--ve-gutter);
+  border-block-end: 1px solid var(--xz-border);
+}
+
+.ve-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--xz-border);
+  border-radius: 999px;
+  background: var(--xz-surface);
+  color: var(--xz-text);
+  font: var(--xz-font-weight-semibold) 0.6875rem / 1.4 var(--xz-font-display);
+  cursor: pointer;
+}
+
+.ve-chip:hover {
+  border-color: var(--xz-border-strong);
+}
+
+.ve-stage__size {
+  margin-inline-start: auto;
+  color: var(--xz-text-muted);
+  font: 0.6875rem var(--xz-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ve-stage__canvas {
+  display: grid;
+  place-items: center;
+  min-block-size: 0;
+  padding: var(--xz-space-4);
+  overflow: hidden;
+}
+
+.ve-canvas {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 100%;
   background: #000;
+  box-shadow: 0 0 0 1px var(--xz-border);
+}
+
+.ve-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--xz-space-1);
+  padding: 0 var(--ve-gutter);
+  border-block-start: 1px solid var(--xz-border);
+}
+
+.ve-play {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--xz-accent);
+  color: var(--xz-on-accent);
+  cursor: pointer;
+}
+
+.ve-play:disabled {
+  background: var(--xz-disabled-bg);
+  color: var(--xz-disabled-text);
+  cursor: not-allowed;
+}
+
+.ve-play svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.ve-time {
+  min-inline-size: 9.5rem;
+  margin: 0 var(--xz-space-2);
+  color: var(--xz-text-muted);
+  font: var(--xz-font-size-xs) var(--xz-font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ve-time b {
+  color: var(--xz-text);
+  font-weight: var(--xz-font-weight-medium);
+}
+
+.ve-loop.is-on {
+  background: var(--xz-accent-2-soft);
+  color: var(--xz-accent-2-text);
+}
+
+/* ---------- timeline ---------- */
+.ve-timeline-area {
+  grid-area: tl;
+  display: grid;
+  grid-template-rows: 2.75rem minmax(0, 1fr);
+  min-inline-size: 0;
+  min-block-size: 0;
+  border-block-start: 1px solid var(--xz-border);
+  background: var(--xz-surface);
+}
+
+.ve-tl-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-inline-size: 0;
+  padding: 0 var(--xz-space-2);
+  overflow-x: auto;
+  border-block-end: 1px solid var(--xz-border);
+  scrollbar-width: none;
+}
+
+.ve-tl-bar .xz-btn {
+  flex: none;
+  gap: 6px;
+}
+
+.ve-tl-bar .xz-btn svg {
+  inline-size: 15px;
+  block-size: 15px;
+}
+
+.ve-tl-bar small {
+  color: var(--xz-accent-2-text);
+  font: 0.625rem var(--xz-font-mono);
+}
+
+.ve-tl-sep {
+  flex: none;
+  inline-size: 1px;
+  block-size: 1.5rem;
+  margin: 0 var(--xz-space-2);
+  background: var(--xz-border);
+}
+
+.ve-tl-grow {
+  flex: 1;
+}
+
+.ve-tl-body {
+  min-block-size: 0;
 }
 
 .ve-timeline-empty {
@@ -16,28 +495,70 @@
   font-size: var(--xz-font-size-sm);
 }
 
-.ve-clip .xz-cellgrid {
-  min-inline-size: 6rem;
+/* ---------- export dialog ---------- */
+.ve-export {
+  --xz-modal-width: 34rem;
 }
 
-.ve-keys {
-  margin: 0;
-  color: var(--xz-text-subtle);
-  font-size: var(--xz-font-size-xs);
-  line-height: 1.6;
+/* ---------- narrower screens ---------- */
+@media (width < 1280px) {
+  .ve {
+    --ve-panel: 15rem;
+    --ve-props: 16.5rem;
+  }
 }
 
-/* a layer's level: the slider takes the line, the on switch sits at its end */
-.ve-level .xz-prow__control {
-  align-items: center;
-  gap: var(--xz-space-3);
-  padding-inline-end: var(--xz-panel-pad, var(--xz-space-4));
+/* phones and small tablets: one column that scrolls, the rail along the bottom */
+@media (width < 860px) {
+  .ve,
+  .ve--panel {
+    grid-template: "stage" auto "tl" 15rem "panel" auto "props" auto "rail" auto / minmax(
+        0,
+        1fr
+      );
+    block-size: auto;
+  }
+
+  .ve-stage {
+    grid-template-rows: 2.5rem auto 3.25rem;
+  }
+
+  .ve-stage__canvas {
+    block-size: 56vw;
+    max-block-size: 22rem;
+  }
+
+  .ve-panel,
+  .ve-props {
+    border: 0;
+    border-block-start: 1px solid var(--xz-border);
+  }
+
+  .ve-rail {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 5;
+    flex-direction: row;
+    justify-content: space-around;
+    border: 0;
+    border-block-start: 1px solid var(--xz-border);
+  }
+
+  .ve-rail__tool {
+    flex: 1;
+  }
 }
 
-.ve-level .xz-slider-cell {
-  flex: 1 1 auto;
-}
+/* on a phone the editor is taller than the screen: it starts at the top and
+   the page scrolls, so no part is squeezed */
+@media (width < 860px) {
+  .xz-tool-frame > .ve {
+    align-self: start;
+  }
 
-.ve-level .xz-toggle {
-  flex: none;
+  .ve-stage,
+  .ve-panel,
+  .ve-props {
+    min-block-size: auto;
+  }
 }

@@ -68,6 +68,7 @@ import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
+import iLayers from 'lucide-static/icons/layers.svg?raw';
 import iLink from 'lucide-static/icons/link.svg?raw';
 import iListPlus from 'lucide-static/icons/list-plus.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
@@ -80,8 +81,11 @@ import iMic from 'lucide-static/icons/mic.svg?raw';
 import iMicVocal from 'lucide-static/icons/mic-vocal.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
+import iMousePointerClick from 'lucide-static/icons/mouse-pointer-click.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
 import iOrigami from 'lucide-static/icons/origami.svg?raw';
+import iPanelLeftClose from 'lucide-static/icons/panel-left-close.svg?raw';
+import iPanelLeftOpen from 'lucide-static/icons/panel-left-open.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
@@ -120,6 +124,7 @@ import iTags from 'lucide-static/icons/tags.svg?raw';
 import iText from 'lucide-static/icons/text.svg?raw';
 import iTrash2 from 'lucide-static/icons/trash-2.svg?raw';
 import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
+import iType from 'lucide-static/icons/type.svg?raw';
 import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
 import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
@@ -204,6 +209,7 @@ export const icons: Record<string, string> = {
   inspect: iInspect,
   key: iKey,
   languages: iLanguages,
+  layers: iLayers,
   link: iLink,
   'list-plus': iListPlus,
   lock: iLock,
@@ -216,8 +222,11 @@ export const icons: Record<string, string> = {
   'mic-vocal': iMicVocal,
   'monitor-up': iMonitorUp,
   moon: iMoon,
+  'mouse-pointer-click': iMousePointerClick,
   music: iMusic,
   origami: iOrigami,
+  'panel-left-close': iPanelLeftClose,
+  'panel-left-open': iPanelLeftOpen,
   pause: iPause,
   pencil: iPencil,
   'picture-in-picture-2': iPictureInPicture2,
@@ -256,6 +265,7 @@ export const icons: Record<string, string> = {
   text: iText,
   'trash-2': iTrash2,
   'triangle-alert': iTriangleAlert,
+  type: iType,
   'type-outline': iTypeOutline,
   'undo-2': iUndo2,
   upload: iUpload,

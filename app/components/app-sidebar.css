@@ -50,3 +50,21 @@
   width: 14px;
   height: 14px;
 }
+
+/* Folded to a strip of icons (the kit's sidebar rail): only the fold
+   button, the tool icons and dividers between categories stay. */
+.app-sidebar.xz-sidebar--rail .app-sidebar__search,
+.app-sidebar.xz-sidebar--rail .app-sidebar__empty,
+.app-sidebar.xz-sidebar--rail .xz-sidebar__footer {
+  display: none;
+}
+
+.app-sidebar.xz-sidebar--rail .xz-sidebar__link .icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* the drawer on small screens never folds */
+.xz-drawer .app-sidebar__fold {
+  display: none;
+}

@@ -43,7 +43,9 @@ Design:
   Space Grotesk body, the kit's corner rounding. Dark is the default theme; `data-theme` on
   <html> (plus the old `dark`/`light` class) is set in `index.html`.
 - Shell: the kit's `xz-shell` with `xz-sidebar` (drawer below 1024px), `xz-navbar` top bar; only
-  the content area scrolls. Home: omnibox over a faint icon backdrop, then `xz-card` tool cards.
+  the content area scrolls. The desktop sidebar folds to the kit's icon rail (header button or Ctrl B, kept in
+  localStorage `xsenze.sidebar-rail`). A tool can put buttons in the top bar with `<PageTools>`
+  (`components/page-tools.gts`, an in-element into `#page-tools`). Home: omnibox over a faint icon backdrop, then `xz-card` tool cards.
 - Tool UIs use the kit parts in `app/components/xz/` (XzSplit, XzRows, XzRow, XzButton, XzSegmented,
   XzSlider, XzDropZone, XzDialog…), with shared helpers in `lib/xz/`, `modifiers/xz/` and the
   `xz-toast` service (`<XzToast />` is mounted in `templates/application.gts`). Tool pages sit in

@@ -23,3 +23,14 @@
   overflow: auto;
   outline: none;
 }
+
+/* buttons a tool puts in the top bar */
+.app-shell__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--xz-space-2);
+}
+
+.app-shell__tools:empty {
+  display: none;
+}

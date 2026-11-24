@@ -5,23 +5,21 @@ import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import { modifier } from 'ember-modifier';
 import XzButton from 'xsenze-tools/components/xz/button';
-import XzCanvas from 'xsenze-tools/components/xz/canvas';
+import XzDialog from 'xsenze-tools/components/xz/dialog';
+import PageTools from 'xsenze-tools/components/page-tools';
+import { htmlSafe } from '@ember/template';
 import XzDecimalField from 'xsenze-tools/components/xz/decimal-field';
 import XzDropZone from 'xsenze-tools/components/xz/drop-zone';
-import XzEmptyRow from 'xsenze-tools/components/xz/empty-row';
 import XzGrid from 'xsenze-tools/components/xz/grid';
 import XzHeading from 'xsenze-tools/components/xz/heading';
-import XzReadoutBand from 'xsenze-tools/components/xz/readout-band';
 import XzRow from 'xsenze-tools/components/xz/row';
 import XzRows from 'xsenze-tools/components/xz/rows';
 import XzSegmented from 'xsenze-tools/components/xz/segmented';
 import XzSlider from 'xsenze-tools/components/xz/slider';
-import XzSplit from 'xsenze-tools/components/xz/split';
 import XzStatus from 'xsenze-tools/components/xz/status';
 import XzSwitch from 'xsenze-tools/components/xz/switch';
 import { IconSvg } from 'xsenze-tools/components/icon';
 import Drop from 'xsenze-tools/components/tools/shared/media/drop';
-import Transport from 'xsenze-tools/components/tools/shared/media/transport';
 import {
   peaks,
   release,
@@ -116,34 +114,15 @@ const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 // height over width at most 1.25, at most 380 px tall
 const tallest = 1.25;
-const tallestPreview = 380;
-const timelineHeight = 216;
 const zoomSteps = [1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32];
 // a waveform needs the whole file decoded: skip it for very large files
 const peaksLimit = 300 * 1024 * 1024;
 const laneLabels = ['Music', 'Voice'];
 
 const icon = (name: string) => <template><IconSvg @name={{name}} /></template>;
-const SplitIcon = icon('scissors');
-const CutIcon = icon('scissors-line-dashed');
-const DeleteIcon = icon('trash-2');
-const CopyIcon = icon('copy-plus');
 const LeftIcon = icon('arrow-left');
 const RightIcon = icon('arrow-right');
-const UndoIcon = icon('undo-2');
-const RedoIcon = icon('redo-2');
-const ZoomOutIcon = icon('zoom-out');
-const ZoomInIcon = icon('zoom-in');
-const FitIcon = icon('maximize-2');
-const SetInIcon = icon('arrow-right-to-line');
-const SetOutIcon = icon('arrow-left-to-line');
-const ClearIcon = icon('x');
-const BackIcon = icon('chevron-left');
-const ForwardIcon = icon('chevron-right');
 const FilmIcon = icon('film');
-const AddIcon = icon('list-plus');
-const MusicIcon = icon('music');
-const VoiceIcon = icon('mic');
 const ExportIcon = icon('download');
 const RotateLeftIcon = icon('rotate-ccw');
 const RotateRightIcon = icon('rotate-cw');
@@ -189,6 +168,43 @@ const BITS_PER_PIXEL = [0.04, 0.07, 0.11];
 const SOUND_BITS = 192_000;
 const EXPORT_ERROR = "Couldn't export. Try another format or a smaller size.";
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
+
+type ToolId = 'media' | 'text' | 'overlay' | 'audio' | 'canvas';
+type TabId = 'edit' | 'adjust' | 'audio';
+
+/** The editor's tool rail. */
+const TOOLS: { id: ToolId; label: string; icon: string; soon?: string }[] = [
+  { id: 'media', label: 'Media', icon: 'film' },
+  {
+    id: 'text',
+    label: 'Text',
+    icon: 'type',
+    soon: 'Titles with font, size, colour, background and position.',
+  },
+  {
+    id: 'overlay',
+    label: 'Overlay',
+    icon: 'layers',
+    soon: 'A logo, watermark or small video over the picture, moved and sized on the preview.',
+  },
+  { id: 'audio', label: 'Audio', icon: 'audio-lines' },
+  { id: 'canvas', label: 'Canvas', icon: 'frame' },
+];
+const TAB_LABELS: Record<TabId, string> = {
+  edit: 'Edit',
+  adjust: 'Adjust',
+  audio: 'Audio',
+};
+
+/** 0:05.20, 1:02:03.40: minutes, seconds and hundredths. */
+function clock(seconds: number): string {
+  const s = Math.max(0, seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const rest = (s % 60).toFixed(2).padStart(5, '0');
+  const mm = String(m).padStart(2, '0');
+  return h ? `${h}:${mm}:${rest}` : `${m}:${rest}`;
+}
 
 /** Typing in a field keeps its keys; switches and buttons do not. */
 function typing(target: EventTarget | null) {
@@ -496,6 +512,7 @@ export default class VideoEdit extends Component {
     return this.clips.map((clip) => ({
       clip,
       isVideo: clip.kind !== 'audio',
+      thumb: clip.frames[0] ?? null,
       detail: (clip.kind === 'video'
         ? [
             `${clip.width} × ${clip.height}`,
@@ -1255,95 +1272,804 @@ export default class VideoEdit extends Component {
     return () => document.removeEventListener('keydown', onKey);
   });
 
+  // ----- layout: tool rail, panel, tabs, export dialog -----
+
+  @tracked tool: ToolId = 'media';
+  @tracked panelOpen = true;
+  @tracked tab: TabId = 'edit';
+  @tracked exportOpen = false;
+  /** The preview area's size in px, for the canvas at the frame's shape. */
+  @tracked stageW = 0;
+  @tracked stageH = 0;
+
+  get toolButtons() {
+    return TOOLS.map((t) => ({
+      ...t,
+      on: this.panelOpen && t.id === this.tool,
+    }));
+  }
+
+  get #tool() {
+    return TOOLS.find((t) => t.id === this.tool) ?? TOOLS[0]!;
+  }
+
+  get toolLabel() {
+    return this.#tool.label;
+  }
+
+  get toolIcon() {
+    return this.#tool.icon;
+  }
+
+  get toolSoon() {
+    return this.#tool.soon ?? '';
+  }
+
+  get toolIsMedia() {
+    return this.tool === 'media';
+  }
+
+  get toolIsAudio() {
+    return this.tool === 'audio';
+  }
+
+  get toolIsCanvas() {
+    return this.tool === 'canvas';
+  }
+
+  /** A rail icon opens its panel; the open one's icon closes it. */
+  pickTool = (id: ToolId) => {
+    if (id === this.tool && this.panelOpen) {
+      this.panelOpen = false;
+      return;
+    }
+    this.tool = id;
+    this.panelOpen = true;
+  };
+
+  closePanel = () => (this.panelOpen = false);
+
+  /** The tabs the selected item has. */
+  get tabs(): TabId[] {
+    const c = this.chosen;
+    if (!c) return [];
+    if (c.kind === 'audio') return ['edit', 'audio'];
+    return this.chosenIsPhoto
+      ? ['edit', 'adjust']
+      : ['edit', 'adjust', 'audio'];
+  }
+
+  /** The tab on show: the chosen one when the item has it. */
+  get tabShown(): TabId {
+    return this.tabs.includes(this.tab) ? this.tab : 'edit';
+  }
+
+  get tabButtons() {
+    return this.tabs.map((id) => ({
+      id,
+      label: TAB_LABELS[id],
+      on: id === this.tabShown,
+    }));
+  }
+
+  get tabIsEdit() {
+    return this.tabShown === 'edit';
+  }
+
+  get tabIsAdjust() {
+    return this.tabShown === 'adjust';
+  }
+
+  pickTab = (id: TabId) => (this.tab = id);
+
+  openExport = () => (this.exportOpen = true);
+  closeExport = () => (this.exportOpen = false);
+
+  get shapeLabel() {
+    return SHAPE_LABELS[this.shapeIndex] ?? '';
+  }
+
+  get fitLabel() {
+    return FIT_LABELS[this.fitIndex] ?? '';
+  }
+
+  get sizeText() {
+    const { width, height } = this.outSize;
+    return `${width} × ${height} · ${this.outFps} fps`;
+  }
+
+  get timeText() {
+    return clock(this.player.time);
+  }
+
+  get lengthText() {
+    return clock(this.length);
+  }
+
+  get notActive() {
+    return !this.player.active;
+  }
+
+  get markInShort() {
+    return this.markIn === null ? '' : clock(this.markIn);
+  }
+
+  get markOutShort() {
+    return this.markOut === null ? '' : clock(this.markOut);
+  }
+
+  get cropRows() {
+    const crop = this.look.crop;
+    return (['left', 'right', 'top', 'bottom'] as const).map((side) => ({
+      side,
+      label: side[0]!.toUpperCase() + side.slice(1),
+      value: crop[side],
+    }));
+  }
+
+  get adjustRows() {
+    const look = this.look;
+    return (
+      [
+        ['brightness', 'Brightness'],
+        ['contrast', 'Contrast'],
+        ['saturation', 'Saturation'],
+      ] as const
+    ).map(([key, label]) => ({ key, label, value: look[key] }));
+  }
+
+  /** The canvas at the frame's shape, as large as the preview area allows. */
+  get canvasStyle() {
+    const W = this.stageW;
+    const H = this.stageH;
+    if (!W || !H) return htmlSafe('');
+    const aspect = this.outAspect;
+    const width = Math.min(W, H * aspect);
+    return htmlSafe(
+      `width: ${Math.floor(width)}px; height: ${Math.floor(width / aspect)}px`,
+    );
+  }
+
+  measureStage = modifier((box: HTMLElement) => {
+    const observer = new ResizeObserver(() => {
+      const style = getComputedStyle(box);
+      this.stageW =
+        box.clientWidth -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight);
+      this.stageH =
+        box.clientHeight -
+        parseFloat(style.paddingTop) -
+        parseFloat(style.paddingBottom);
+    });
+    observer.observe(box);
+    return () => observer.disconnect();
+  });
+
   <template>
-    <XzSplit
-      class="video-edit"
-      @mainLeadsStacked={{true}}
+    <PageTools>
+      <button
+        type="button"
+        class="xz-btn xz-btn--ghost xz-btn--icon"
+        aria-label="Undo"
+        title="Undo (Ctrl Z)"
+        disabled={{this.cannotUndo}}
+        {{on "click" this.undo}}
+      ><IconSvg @name="undo-2" /></button>
+      <button
+        type="button"
+        class="xz-btn xz-btn--ghost xz-btn--icon"
+        aria-label="Redo"
+        title="Redo (Ctrl Y)"
+        disabled={{this.cannotRedo}}
+        {{on "click" this.redo}}
+      ><IconSvg @name="redo-2" /></button>
+      <button
+        type="button"
+        class="xz-btn xz-btn--primary ve-export-open"
+        disabled={{this.empty}}
+        {{on "click" this.openExport}}
+      >
+        <IconSvg @name="download" />
+        Export
+      </button>
+    </PageTools>
+
+    <div
+      class="ve {{if this.panelOpen 've--panel'}}"
       {{this.keys}}
       {{on "dragover" this.drop.enter}}
       {{on "dragleave" this.drop.leave}}
       {{on "drop" this.drop.drop}}
     >
-      <:banner>
-        <XzCanvas
-          class="ve-preview"
-          @aspect={{this.previewAspect}}
-          @maxHeight={{tallestPreview}}
-          @background="#000"
-        >
-          <XzReadoutBand @transport={{this.player.transport}} @readout="over">
-            <canvas
-              class="ve-canvas"
-              aria-label="Preview of the edit"
-              {{this.player.register}}
-            ></canvas>
-          </XzReadoutBand>
-        </XzCanvas>
-      </:banner>
-      <:main>
-        <XzGrid class="ve-tools">
-          <XzButton
-            class="ve-split"
-            @text="Split"
-            @icon={{SplitIcon}}
-            @disabled={{this.cannotSplit}}
-            @onClick={{this.splitHere}}
-          />
-          <XzButton
-            class="ve-delete"
-            @text="Delete"
-            @icon={{DeleteIcon}}
-            @disabled={{this.nothingChosen}}
-            @onClick={{this.deleteSelected}}
-          />
-          <XzButton
-            class="ve-duplicate"
-            @text="Duplicate"
-            @icon={{CopyIcon}}
-            @disabled={{this.nothingChosen}}
-            @onClick={{this.duplicateSelected}}
-          />
-          <XzButton
-            class="ve-undo"
-            @label="Undo"
-            @icon={{UndoIcon}}
-            @disabled={{this.cannotUndo}}
-            @onClick={{this.undo}}
-          />
-          <XzButton
-            class="ve-redo"
-            @label="Redo"
-            @icon={{RedoIcon}}
-            @disabled={{this.cannotRedo}}
-            @onClick={{this.redo}}
-          />
-          <XzButton
-            class="ve-zoom-out"
-            @label="Zoom out"
-            @icon={{ZoomOutIcon}}
-            @disabled={{this.cannotZoomOut}}
-            @onClick={{this.zoomOut}}
-          />
-          <XzButton
-            class="ve-zoom-in"
-            @label="Zoom in"
-            @icon={{ZoomInIcon}}
-            @disabled={{this.cannotZoomIn}}
-            @onClick={{this.zoomIn}}
-          />
-          <XzButton
-            class="ve-zoom-fit"
-            @label="Fit the whole edit"
-            @icon={{FitIcon}}
-            @disabled={{this.cannotZoomOut}}
-            @onClick={{this.zoomFit}}
-          />
-        </XzGrid>
-        <XzCanvas
-          class="ve-timeline-canvas"
-          @height={{timelineHeight}}
-          @background="var(--xz-surface-2)"
-        >
+      {{! ----- tool rail ----- }}
+      <nav class="ve-rail" aria-label="Editor tools">
+        {{#each this.toolButtons as |tool|}}
+          <button
+            type="button"
+            class="ve-rail__tool {{if tool.on 'is-on'}}"
+            aria-pressed={{if tool.on "true" "false"}}
+            {{on "click" (fn this.pickTool tool.id)}}
+          >
+            <IconSvg @name={{tool.icon}} />
+            <span>{{tool.label}}</span>
+          </button>
+        {{/each}}
+      </nav>
+
+      {{! ----- tool panel ----- }}
+      {{#if this.panelOpen}}
+        <section class="ve-panel" aria-label={{this.toolLabel}}>
+          <header class="ve-head">
+            <h2>{{this.toolLabel}}</h2>
+            <button
+              type="button"
+              class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm"
+              aria-label="Close the panel"
+              title="Close the panel"
+              {{on "click" this.closePanel}}
+            ><IconSvg @name="x" /></button>
+          </header>
+          <div class="ve-panel__body">
+            {{#if this.toolIsMedia}}
+              <XzDropZone
+                class="ve-drop-zone"
+                @prompt="Drop videos, photos and sounds here, or press Files"
+                @icon={{FilmIcon}}
+                @accept={{ACCEPT}}
+                @multiple={{true}}
+                @onFiles={{this.addFiles}}
+              />
+              {{#if this.reading}}
+                <XzStatus @text={{this.readingText}} @tone="muted" />
+              {{/if}}
+              {{#if this.problems.length}}
+                <XzStatus @text={{this.problemText}} @tone="warn" />
+              {{/if}}
+              {{#if this.clipRows.length}}
+                <ul class="ve-media">
+                  {{#each this.clipRows as |row|}}
+                    <li class="ve-clip">
+                      <div
+                        class="ve-clip__thumb
+                          {{if row.isVideo '' 've-clip__thumb--sound'}}"
+                      >
+                        {{#if row.thumb}}
+                          <img src={{row.thumb}} alt="" />
+                        {{else}}
+                          <IconSvg @name={{if row.isVideo "film" "music"}} />
+                        {{/if}}
+                      </div>
+                      <div class="ve-clip__text">
+                        <strong
+                          title={{row.clip.name}}
+                        >{{row.clip.name}}</strong>
+                        <small>{{row.detail}}</small>
+                      </div>
+                      <div class="ve-clip__actions">
+                        {{#if row.isVideo}}
+                          <button
+                            type="button"
+                            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm"
+                            aria-label="Add {{row.clip.name}} to the end"
+                            title="Add to the end"
+                            {{on "click" (fn this.addVideoAgain row.clip.id)}}
+                          ><IconSvg @name="list-plus" /></button>
+                        {{else}}
+                          <button
+                            type="button"
+                            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-to-music"
+                            aria-label="Add {{row.clip.name}} to Music at the playhead"
+                            title="Add to Music at the playhead"
+                            {{on "click" (fn this.addToMusic row.clip.id)}}
+                          ><IconSvg @name="music" /></button>
+                          <button
+                            type="button"
+                            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-to-voice"
+                            aria-label="Add {{row.clip.name}} to Voice at the playhead"
+                            title="Add to Voice at the playhead"
+                            {{on "click" (fn this.addToVoice row.clip.id)}}
+                          ><IconSvg @name="mic" /></button>
+                        {{/if}}
+                        <button
+                          type="button"
+                          class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm"
+                          aria-label="Remove {{row.clip.name}}"
+                          title="Remove"
+                          {{on "click" (fn this.removeClip row.clip.id)}}
+                        ><IconSvg @name="trash-2" /></button>
+                      </div>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{else}}
+                <p class="ve-hint">Videos and photos join in the order you add
+                  them; sounds go on the Music layer.</p>
+              {{/if}}
+            {{else if this.toolIsAudio}}
+              <p class="ve-hint">How loud each layer plays. Each clip has its
+                own volume too, under Selected › Audio.</p>
+              <XzRows @framed={{true}}>
+                {{#each this.mixRows as |row|}}
+                  <div class="ve-level ve-level--{{row.key}}">
+                    <span class="ve-level__name">{{row.title}}</span>
+                    <XzSlider
+                      @value={{row.level.volume}}
+                      @max={{2}}
+                      @step={{0.01}}
+                      @readout={{percent}}
+                      @label="{{row.title}} volume"
+                      @onChange={{fn this.levelVolume row.key}}
+                    />
+                    <XzSwitch
+                      @on={{if row.level.muted false true}}
+                      @onChange={{fn this.levelOn row.key}}
+                      aria-label="{{row.title}} on"
+                    />
+                  </div>
+                {{/each}}
+              </XzRows>
+            {{else if this.toolIsCanvas}}
+              <XzRows @framed={{true}}>
+                <XzHeading @text="Shape" />
+                <XzSegmented
+                  class="ve-shape"
+                  @items={{SHAPE_LABELS}}
+                  @selected={{this.shapeIndex}}
+                  @columns={{3}}
+                  @onChange={{this.pickShape}}
+                />
+                <XzHeading @text="Fit" />
+                <XzSegmented
+                  class="ve-fit"
+                  @items={{FIT_LABELS}}
+                  @selected={{this.fitIndex}}
+                  @onChange={{this.pickFit}}
+                />
+                <XzHeading @text="Background" />
+                <XzSegmented
+                  class="ve-background"
+                  @items={{BACKGROUND_LABELS}}
+                  @selected={{this.backgroundIndex}}
+                  @onChange={{this.pickBackground}}
+                />
+                {{#if this.backgroundIsColour}}
+                  <XzColourWell
+                    class="ve-background-colour"
+                    @label="Colour"
+                    @colour={{this.backgroundRgb}}
+                    @onChange={{this.setBackgroundColour}}
+                  />
+                {{/if}}
+              </XzRows>
+              <p class="ve-hint">The background shows around a clip whose shape
+                differs from the frame's.</p>
+            {{else}}
+              <div class="ve-soon">
+                <IconSvg @name={{this.toolIcon}} />
+                <strong>{{this.toolLabel}} comes in the next step</strong>
+                <p>{{this.toolSoon}}</p>
+              </div>
+            {{/if}}
+          </div>
+        </section>
+      {{/if}}
+
+      {{! ----- preview ----- }}
+      <section class="ve-stage" aria-label="Preview">
+        <div class="ve-stage__bar">
+          <button
+            type="button"
+            class="ve-chip"
+            title="Shape, fit and background"
+            {{on "click" (fn this.pickTool "canvas")}}
+          >{{this.shapeLabel}}</button>
+          <button
+            type="button"
+            class="ve-chip"
+            title="Shape, fit and background"
+            {{on "click" (fn this.pickTool "canvas")}}
+          >{{this.fitLabel}}</button>
+          <span class="ve-stage__size">{{this.sizeText}}</span>
+        </div>
+        <div class="ve-stage__canvas" {{this.measureStage}}>
+          <canvas
+            class="ve-canvas"
+            style={{this.canvasStyle}}
+            aria-label="Preview of the edit"
+            {{this.player.register}}
+          ></canvas>
+        </div>
+        <div class="ve-transport">
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon ve-back"
+            aria-label="Back one frame"
+            disabled={{this.empty}}
+            {{on "click" this.stepBack}}
+          ><IconSvg @name="chevron-left" /></button>
+          <button
+            type="button"
+            class="ve-play"
+            aria-label={{if this.player.playing "Pause" "Play"}}
+            title="Play or pause (Space)"
+            disabled={{this.empty}}
+            {{on "click" this.player.toggle}}
+          ><IconSvg @name={{if this.player.playing "pause" "play"}} /></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon ve-forward"
+            aria-label="Forward one frame"
+            disabled={{this.empty}}
+            {{on "click" this.stepForward}}
+          ><IconSvg @name="chevron-right" /></button>
+          <span class="ve-time"><b>{{this.timeText}}</b>
+            /
+            {{this.lengthText}}</span>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon ve-loop
+              {{if this.player.looping 'is-on'}}"
+            aria-label="Loop"
+            aria-pressed={{if this.player.looping "true" "false"}}
+            disabled={{this.empty}}
+            {{on "click" this.player.toggleLoop}}
+          ><IconSvg @name="repeat" /></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon ve-stop"
+            aria-label="Stop"
+            disabled={{this.notActive}}
+            {{on "click" this.player.stop}}
+          ><IconSvg @name="square" /></button>
+        </div>
+      </section>
+
+      {{! ----- selected item ----- }}
+      <aside class="ve-props" aria-label="Selected">
+        <header class="ve-props__head">
+          <strong>{{if this.chosen this.chosen.name "Project"}}</strong>
+          <small>{{if this.chosen this.chosenDetail this.summary}}</small>
+        </header>
+        {{#if this.chosen}}
+          <div class="ve-tabs" role="tablist">
+            {{#each this.tabButtons as |tab|}}
+              <button
+                type="button"
+                role="tab"
+                class="ve-tab {{if tab.on 'is-on'}}"
+                aria-selected={{if tab.on "true" "false"}}
+                {{on "click" (fn this.pickTab tab.id)}}
+              >{{tab.label}}</button>
+            {{/each}}
+          </div>
+          <div class="ve-props__body">
+            {{#if this.tabIsEdit}}
+              <XzRows @framed={{true}}>
+                {{#if this.chosenIsAudio}}
+                  <XzSegmented
+                    class="ve-lane-pick"
+                    @items={{laneLabels}}
+                    @selected={{this.laneIndex}}
+                    @onChange={{this.setLane}}
+                  />
+                  <XzRow @title="Starts at" @form="flush" as |titleId|>
+                    <XzDecimalField
+                      class="ve-start"
+                      @value={{this.chosen.start}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setStart}}
+                    />
+                  </XzRow>
+                {{/if}}
+                {{#if this.chosenIsPhoto}}
+                  <XzRow @title="Shows for" @form="flush" as |titleId|>
+                    <XzDecimalField
+                      class="ve-photo-seconds"
+                      @value={{this.photoSeconds}}
+                      @min={{0.1}}
+                      @max={{photoLimit}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setPhotoSeconds}}
+                    />
+                  </XzRow>
+                {{else}}
+                  <XzRow @title="From" @form="flush" as |titleId|>
+                    <XzDecimalField
+                      class="ve-in"
+                      @value={{this.chosen.in}}
+                      @max={{this.inMax}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setIn}}
+                    />
+                  </XzRow>
+                  <XzRow @title="To" @form="flush" as |titleId|>
+                    <XzDecimalField
+                      class="ve-out"
+                      @value={{this.chosen.out}}
+                      @min={{this.outMin}}
+                      @max={{this.outMax}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setOut}}
+                    />
+                  </XzRow>
+                {{/if}}
+                <XzRow @title="Length" @detail={{this.chosenLength}} />
+                {{#if this.chosenIsVideo}}
+                  {{#if this.chosenHasTimes}}
+                    <XzHeading @text="Speed" />
+                    <XzSegmented
+                      class="ve-speed"
+                      @items={{SPEED_LABELS}}
+                      @selected={{this.speedIndex}}
+                      @columns={{3}}
+                      @onChange={{this.pickSpeed}}
+                    />
+                  {{/if}}
+                  <XzHeading @text="Rotate and flip" />
+                  <XzGrid>
+                    <XzButton
+                      class="ve-rotate-left"
+                      @label="Rotate left"
+                      @icon={{RotateLeftIcon}}
+                      @onClick={{this.rotateLeft}}
+                    />
+                    <XzButton
+                      class="ve-rotate-right"
+                      @label="Rotate right"
+                      @icon={{RotateRightIcon}}
+                      @onClick={{this.rotateRight}}
+                    />
+                    <XzButton
+                      class="ve-flip-h"
+                      @label="Flip left to right"
+                      @icon={{FlipHIcon}}
+                      @selected={{this.look.flipH}}
+                      @onClick={{this.flipH}}
+                    />
+                    <XzButton
+                      class="ve-flip-v"
+                      @label="Flip upside down"
+                      @icon={{FlipVIcon}}
+                      @selected={{this.look.flipV}}
+                      @onClick={{this.flipV}}
+                    />
+                  </XzGrid>
+                  <XzHeading @text="Crop" />
+                  {{#each this.cropRows as |row|}}
+                    <div class="ve-slide">
+                      <span>{{row.label}}</span>
+                      <XzSlider
+                        class="ve-crop-{{row.side}}"
+                        @value={{row.value}}
+                        @max={{0.45}}
+                        @step={{0.01}}
+                        @readout={{cropReadout}}
+                        @label="Crop {{row.label}}"
+                        @onChange={{fn this.setCrop row.side}}
+                      />
+                    </div>
+                  {{/each}}
+                  <XzGrid>
+                    <XzButton
+                      class="ve-move-left"
+                      @text="Earlier"
+                      @icon={{LeftIcon}}
+                      @disabled={{this.cannotMoveLeft}}
+                      @onClick={{this.moveLeft}}
+                    />
+                    <XzButton
+                      class="ve-move-right"
+                      @text="Later"
+                      @icon={{RightIcon}}
+                      @disabled={{this.cannotMoveRight}}
+                      @onClick={{this.moveRight}}
+                    />
+                  </XzGrid>
+                {{/if}}
+              </XzRows>
+            {{else if this.tabIsAdjust}}
+              <XzRows @framed={{true}}>
+                {{#each this.adjustRows as |row|}}
+                  <div class="ve-slide">
+                    <span>{{row.label}}</span>
+                    <XzSlider
+                      class="ve-{{row.key}}"
+                      @value={{row.value}}
+                      @max={{2}}
+                      @step={{0.01}}
+                      @readout={{percent}}
+                      @label={{row.label}}
+                      @onChange={{fn this.setAdjust row.key}}
+                    />
+                  </div>
+                {{/each}}
+                <XzHeading @text="Filter" />
+                <XzSegmented
+                  class="ve-filter"
+                  @items={{FILTER_LABELS}}
+                  @selected={{this.filterIndex}}
+                  @columns={{3}}
+                  @onChange={{this.pickFilter}}
+                />
+                <XzGrid>
+                  <XzButton
+                    class="ve-reset-look"
+                    @text="Reset picture"
+                    @icon={{ResetIcon}}
+                    @disabled={{this.lookPlain}}
+                    @onClick={{this.resetLook}}
+                  />
+                </XzGrid>
+              </XzRows>
+            {{else}}
+              <XzRows @framed={{true}}>
+                <div class="ve-slide">
+                  <span>Volume</span>
+                  <XzSlider
+                    class="ve-volume"
+                    @value={{this.chosen.volume}}
+                    @max={{2}}
+                    @step={{0.01}}
+                    @readout={{percent}}
+                    @label="Volume"
+                    @onChange={{this.setVolume}}
+                  />
+                </div>
+                <XzRow @title="Mute">
+                  <XzSwitch
+                    class="ve-mute"
+                    @on={{this.chosen.muted}}
+                    @onChange={{this.setMuted}}
+                    aria-label="Mute"
+                  />
+                </XzRow>
+                <XzRow
+                  @title="Fade in"
+                  @detail={{if
+                    this.chosenIsVideo
+                    "From black and silence"
+                    "From silence"
+                  }}
+                  @form="flush"
+                  as |titleId|
+                >
+                  <XzDecimalField
+                    class="ve-fade-in"
+                    @value={{this.chosen.fadeIn}}
+                    @max={{this.fadeMax}}
+                    @unit="s"
+                    @labelledBy={{titleId}}
+                    @onChange={{this.setFadeIn}}
+                  />
+                </XzRow>
+                <XzRow
+                  @title="Fade out"
+                  @detail={{if
+                    this.chosenIsVideo
+                    "To black and silence"
+                    "To silence"
+                  }}
+                  @form="flush"
+                  as |titleId|
+                >
+                  <XzDecimalField
+                    class="ve-fade-out"
+                    @value={{this.chosen.fadeOut}}
+                    @max={{this.fadeMax}}
+                    @unit="s"
+                    @labelledBy={{titleId}}
+                    @onChange={{this.setFadeOut}}
+                  />
+                </XzRow>
+              </XzRows>
+            {{/if}}
+          </div>
+        {{else}}
+          <div class="ve-props__body">
+            <div class="ve-empty">
+              <IconSvg @name="mouse-pointer-click" />
+              <p>Click a clip or sound on the timeline to change it here.</p>
+            </div>
+            <XzRows @framed={{true}}>
+              <XzRow @title="Frame" @detail={{this.sizeText}} />
+              <XzRow @title="Length" @detail={{this.lengthText}} />
+            </XzRows>
+            <p class="ve-keys">
+              Space play · S split · I / O mark · X cut out · Delete · Alt+← →
+              move · ← → frame · Ctrl Z / Y undo, redo · Ctrl B sidebar
+            </p>
+          </div>
+        {{/if}}
+      </aside>
+
+      {{! ----- timeline ----- }}
+      <section class="ve-timeline-area" aria-label="Timeline">
+        <div class="ve-tl-bar">
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-split"
+            title="Split at the playhead (S)"
+            disabled={{this.cannotSplit}}
+            {{on "click" this.splitHere}}
+          ><IconSvg @name="scissors" /> Split</button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-delete"
+            title="Delete (Delete)"
+            disabled={{this.nothingChosen}}
+            {{on "click" this.deleteSelected}}
+          ><IconSvg @name="trash-2" /> Delete</button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-duplicate"
+            title="Duplicate"
+            disabled={{this.nothingChosen}}
+            {{on "click" this.duplicateSelected}}
+          ><IconSvg @name="copy-plus" /> Duplicate</button>
+          <span class="ve-tl-sep" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-set-in"
+            title="Mark in at the playhead (I)"
+            disabled={{this.empty}}
+            {{on "click" this.markInHere}}
+          ><IconSvg @name="arrow-right-to-line" />
+            In
+            <small>{{this.markInShort}}</small></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-set-out"
+            title="Mark out at the playhead (O)"
+            disabled={{this.empty}}
+            {{on "click" this.markOutHere}}
+          ><IconSvg @name="arrow-left-to-line" />
+            Out
+            <small>{{this.markOutShort}}</small></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--sm ve-cut-out"
+            title="Cut the marked part out of every layer (X)"
+            disabled={{this.noRange}}
+            {{on "click" this.cutOut}}
+          ><IconSvg @name="scissors-line-dashed" /> Cut out</button>
+          {{#unless this.noMarks}}
+            <button
+              type="button"
+              class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-clear-marks"
+              aria-label="Clear the marks"
+              title="Clear the marks (Esc)"
+              {{on "click" this.clearMarks}}
+            ><IconSvg @name="x" /></button>
+          {{/unless}}
+          <span class="ve-tl-grow"></span>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-zoom-out"
+            aria-label="Zoom out"
+            disabled={{this.cannotZoomOut}}
+            {{on "click" this.zoomOut}}
+          ><IconSvg @name="zoom-out" /></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-zoom-in"
+            aria-label="Zoom in"
+            disabled={{this.cannotZoomIn}}
+            {{on "click" this.zoomIn}}
+          ><IconSvg @name="zoom-in" /></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-zoom-fit"
+            aria-label="Fit the whole edit"
+            disabled={{this.cannotZoomOut}}
+            {{on "click" this.zoomFit}}
+          ><IconSvg @name="maximize-2" /></button>
+        </div>
+        <div class="ve-tl-body">
           {{#if this.hasItems}}
             <Timeline
               @clips={{this.clipMap}}
@@ -1362,539 +2088,79 @@ export default class VideoEdit extends Component {
               @onAudioMove={{this.moveSound}}
             />
           {{else}}
-            <p class="ve-timeline-empty">Add videos and sounds and they line up
-              here.</p>
+            <p class="ve-timeline-empty">Add videos, photos and sounds in Media
+              and they line up here.</p>
           {{/if}}
-        </XzCanvas>
+        </div>
+      </section>
+    </div>
 
-        <XzRows @framed={{true}}>
-          <XzHeading @text="Selected" />
-          <XzRow
-            class="ve-chosen"
-            @title={{if this.chosen this.chosen.name "Nothing selected"}}
-            @detail={{this.chosenDetail}}
+    {{! ----- export ----- }}
+    <XzDialog
+      class="ve-export"
+      @open={{this.exportOpen}}
+      @title="Export"
+      @onClose={{this.closeExport}}
+    >
+      <XzRows @framed={{true}}>
+        <XzHeading @text="Format" />
+        <XzSegmented
+          class="ve-format"
+          @items={{FORMAT_LABELS}}
+          @selected={{this.formatIndex}}
+          @onChange={{this.pickFormat}}
+        />
+        <XzSegmented
+          class="ve-codec"
+          @items={{this.codecLabels}}
+          @selected={{this.codecIndex}}
+          @onChange={{this.pickCodec}}
+        />
+        <XzHeading @text="Size" />
+        <XzSegmented
+          class="ve-size"
+          @items={{SIZE_LABELS}}
+          @selected={{this.sizeIndexShown}}
+          @onChange={{this.pickSize}}
+        />
+        <XzHeading @text="Frame rate" />
+        <XzSegmented
+          class="ve-rate"
+          @items={{RATE_LABELS}}
+          @selected={{this.rateIndex}}
+          @onChange={{this.pickRate}}
+        />
+        <XzHeading @text="Quality" />
+        <XzSegmented
+          class="ve-quality"
+          @items={{QUALITY_LABELS}}
+          @selected={{this.qualityIndex}}
+          @onChange={{this.pickQuality}}
+        />
+        <XzRow @title="Sound" @detail="The video's sound, Music and Voice">
+          <XzSwitch
+            class="ve-sound-on"
+            @on={{this.keepSound}}
+            @onChange={{this.pickSound}}
+            aria-label="Keep sound"
           />
-          {{#if this.chosen}}
-            {{#if this.chosenIsAudio}}
-              <XzSegmented
-                class="ve-lane-pick"
-                @items={{laneLabels}}
-                @selected={{this.laneIndex}}
-                @onChange={{this.setLane}}
-              />
-              <XzRow
-                @title="On the timeline at"
-                @detail="Seconds"
-                @form="flush"
-                as |titleId|
-              >
-                <XzDecimalField
-                  class="ve-start"
-                  @value={{this.chosen.start}}
-                  @labelledBy={{titleId}}
-                  @onChange={{this.setStart}}
-                />
-              </XzRow>
-            {{/if}}
-            {{#if this.chosenIsPhoto}}
-              <XzRow
-                @title="Shows for"
-                @detail="Seconds"
-                @form="flush"
-                as |titleId|
-              >
-                <XzDecimalField
-                  class="ve-photo-seconds"
-                  @value={{this.photoSeconds}}
-                  @min={{0.1}}
-                  @max={{photoLimit}}
-                  @labelledBy={{titleId}}
-                  @onChange={{this.setPhotoSeconds}}
-                />
-              </XzRow>
-            {{else}}
-              <XzRow
-                @title="From"
-                @detail="Seconds into the file"
-                @form="flush"
-                as |titleId|
-              >
-                <XzDecimalField
-                  class="ve-in"
-                  @value={{this.chosen.in}}
-                  @max={{this.inMax}}
-                  @labelledBy={{titleId}}
-                  @onChange={{this.setIn}}
-                />
-              </XzRow>
-              <XzRow
-                @title="To"
-                @detail="Seconds into the file"
-                @form="flush"
-                as |titleId|
-              >
-                <XzDecimalField
-                  class="ve-out"
-                  @value={{this.chosen.out}}
-                  @min={{this.outMin}}
-                  @max={{this.outMax}}
-                  @labelledBy={{titleId}}
-                  @onChange={{this.setOut}}
-                />
-              </XzRow>
-            {{/if}}
-            <XzRow @title="Length" @detail={{this.chosenLength}} />
-            {{#if this.chosenHasTimes}}
-              <XzRow @title="Volume" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-volume"
-                  @value={{this.chosen.volume}}
-                  @max={{2}}
-                  @step={{0.01}}
-                  @readout={{percent}}
-                  @labelledBy={{titleId}}
-                  @onChange={{this.setVolume}}
-                />
-              </XzRow>
-              <XzRow @title="Mute">
-                <XzSwitch
-                  class="ve-mute"
-                  @on={{this.chosen.muted}}
-                  @onChange={{this.setMuted}}
-                  aria-label="Mute"
-                />
-              </XzRow>
-            {{/if}}
-            <XzRow
-              @title="Fade in"
-              @detail={{if
-                this.chosenIsVideo
-                "From black and silence"
-                "From silence"
-              }}
-              @form="flush"
-              as |titleId|
-            >
-              <XzDecimalField
-                class="ve-fade-in"
-                @value={{this.chosen.fadeIn}}
-                @max={{this.fadeMax}}
-                @labelledBy={{titleId}}
-                @onChange={{this.setFadeIn}}
-              />
-            </XzRow>
-            <XzRow
-              @title="Fade out"
-              @detail={{if
-                this.chosenIsVideo
-                "To black and silence"
-                "To silence"
-              }}
-              @form="flush"
-              as |titleId|
-            >
-              <XzDecimalField
-                class="ve-fade-out"
-                @value={{this.chosen.fadeOut}}
-                @max={{this.fadeMax}}
-                @labelledBy={{titleId}}
-                @onChange={{this.setFadeOut}}
-              />
-            </XzRow>
-            {{#if this.chosenIsVideo}}
-              {{#if this.chosenHasTimes}}
-                <XzHeading @text="Speed" />
-                <XzSegmented
-                  class="ve-speed"
-                  @items={{SPEED_LABELS}}
-                  @selected={{this.speedIndex}}
-                  @columns={{5}}
-                  @onChange={{this.pickSpeed}}
-                />
-              {{/if}}
-              <XzHeading @text="Rotate and flip" />
-              <XzGrid>
-                <XzButton
-                  class="ve-rotate-left"
-                  @label="Rotate left"
-                  @icon={{RotateLeftIcon}}
-                  @onClick={{this.rotateLeft}}
-                />
-                <XzButton
-                  class="ve-rotate-right"
-                  @label="Rotate right"
-                  @icon={{RotateRightIcon}}
-                  @onClick={{this.rotateRight}}
-                />
-                <XzButton
-                  class="ve-flip-h"
-                  @label="Flip left to right"
-                  @icon={{FlipHIcon}}
-                  @selected={{this.look.flipH}}
-                  @onClick={{this.flipH}}
-                />
-                <XzButton
-                  class="ve-flip-v"
-                  @label="Flip upside down"
-                  @icon={{FlipVIcon}}
-                  @selected={{this.look.flipV}}
-                  @onClick={{this.flipV}}
-                />
-              </XzGrid>
-              <XzHeading @text="Crop" />
-              <XzRow @title="Left" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-crop-left"
-                  @value={{this.look.crop.left}}
-                  @max={{0.45}}
-                  @step={{0.01}}
-                  @readout={{cropReadout}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setCrop "left"}}
-                />
-              </XzRow>
-              <XzRow @title="Right" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-crop-right"
-                  @value={{this.look.crop.right}}
-                  @max={{0.45}}
-                  @step={{0.01}}
-                  @readout={{cropReadout}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setCrop "right"}}
-                />
-              </XzRow>
-              <XzRow @title="Top" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-crop-top"
-                  @value={{this.look.crop.top}}
-                  @max={{0.45}}
-                  @step={{0.01}}
-                  @readout={{cropReadout}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setCrop "top"}}
-                />
-              </XzRow>
-              <XzRow @title="Bottom" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-crop-bottom"
-                  @value={{this.look.crop.bottom}}
-                  @max={{0.45}}
-                  @step={{0.01}}
-                  @readout={{cropReadout}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setCrop "bottom"}}
-                />
-              </XzRow>
-              <XzHeading @text="Adjust" />
-              <XzRow @title="Brightness" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-brightness"
-                  @value={{this.look.brightness}}
-                  @max={{2}}
-                  @step={{0.01}}
-                  @readout={{percent}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setAdjust "brightness"}}
-                />
-              </XzRow>
-              <XzRow @title="Contrast" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-contrast"
-                  @value={{this.look.contrast}}
-                  @max={{2}}
-                  @step={{0.01}}
-                  @readout={{percent}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setAdjust "contrast"}}
-                />
-              </XzRow>
-              <XzRow @title="Saturation" @form="flush" as |titleId|>
-                <XzSlider
-                  class="ve-saturation"
-                  @value={{this.look.saturation}}
-                  @max={{2}}
-                  @step={{0.01}}
-                  @readout={{percent}}
-                  @labelledBy={{titleId}}
-                  @onChange={{fn this.setAdjust "saturation"}}
-                />
-              </XzRow>
-              <XzHeading @text="Filter" />
-              <XzSegmented
-                class="ve-filter"
-                @items={{FILTER_LABELS}}
-                @selected={{this.filterIndex}}
-                @columns={{3}}
-                @onChange={{this.pickFilter}}
-              />
-              <XzGrid>
-                <XzButton
-                  class="ve-reset-look"
-                  @text="Reset picture"
-                  @icon={{ResetIcon}}
-                  @disabled={{this.lookPlain}}
-                  @onClick={{this.resetLook}}
-                />
-              </XzGrid>
-              <XzGrid>
-                <XzButton
-                  class="ve-move-left"
-                  @text="Earlier"
-                  @icon={{LeftIcon}}
-                  @disabled={{this.cannotMoveLeft}}
-                  @onClick={{this.moveLeft}}
-                />
-                <XzButton
-                  class="ve-move-right"
-                  @text="Later"
-                  @icon={{RightIcon}}
-                  @disabled={{this.cannotMoveRight}}
-                  @onClick={{this.moveRight}}
-                />
-              </XzGrid>
-            {{/if}}
-          {{/if}}
-        </XzRows>
-        <p class="ve-keys">
-          Keys: Space play · S split · I / O mark · X cut out · Delete · Alt+← →
-          move · ← → frame · Ctrl Z / Y undo, redo
-        </p>
-      </:main>
-      <:sidebar>
-        <XzRows @framed={{true}}>
-          <XzHeading @text="Files" />
-          <XzDropZone
-            class="ve-drop-zone"
-            @prompt="Drop videos, photos and sounds here, or press Files"
-            @icon={{FilmIcon}}
-            @accept={{ACCEPT}}
-            @multiple={{true}}
-            @onFiles={{this.addFiles}}
-          />
-          {{#if this.reading}}
-            <XzStatus @text={{this.readingText}} @tone="muted" @row={{true}} />
-          {{/if}}
-          {{#if this.problems.length}}
-            <XzStatus @text={{this.problemText}} @tone="warn" @row={{true}} />
-          {{/if}}
-          {{#each this.clipRows as |row|}}
-            <XzRow
-              class="ve-clip"
-              @title={{row.clip.name}}
-              @detail={{row.detail}}
-              @form="stacked"
-            >
-              <XzGrid>
-                {{#if row.isVideo}}
-                  <XzButton
-                    @text="Add again"
-                    @icon={{AddIcon}}
-                    @onClick={{fn this.addVideoAgain row.clip.id}}
-                  />
-                {{else}}
-                  <XzButton
-                    class="ve-to-music"
-                    @label="Add {{row.clip.name}} to Music at the playhead"
-                    @icon={{MusicIcon}}
-                    @onClick={{fn this.addToMusic row.clip.id}}
-                  />
-                  <XzButton
-                    class="ve-to-voice"
-                    @label="Add {{row.clip.name}} to Voice at the playhead"
-                    @icon={{VoiceIcon}}
-                    @onClick={{fn this.addToVoice row.clip.id}}
-                  />
-                {{/if}}
-                <XzButton
-                  @label="Remove {{row.clip.name}}"
-                  @icon={{DeleteIcon}}
-                  @onClick={{fn this.removeClip row.clip.id}}
-                />
-              </XzGrid>
-            </XzRow>
-          {{else}}
-            <XzEmptyRow
-              @text="Nothing yet. Videos join in the order you add them; sounds go on the Music layer."
-            />
-          {{/each}}
-
-          <XzHeading @text="Background" />
-          <XzSegmented
-            class="ve-background"
-            @items={{BACKGROUND_LABELS}}
-            @selected={{this.backgroundIndex}}
-            @onChange={{this.pickBackground}}
-          />
-          {{#if this.backgroundIsColour}}
-            <XzColourWell
-              class="ve-background-colour"
-              @label="Colour"
-              @colour={{this.backgroundRgb}}
-              @onChange={{this.setBackgroundColour}}
-            />
-          {{/if}}
-
-          <XzHeading @text="Layers" />
-          {{#each this.mixRows as |row|}}
-            <XzRow
-              class="ve-level ve-level--{{row.key}}"
-              @title={{row.title}}
-              @form="stacked"
-              as |titleId|
-            >
-              <XzSlider
-                @value={{row.level.volume}}
-                @max={{2}}
-                @step={{0.01}}
-                @readout={{percent}}
-                @labelledBy={{titleId}}
-                @onChange={{fn this.levelVolume row.key}}
-              />
-              <XzSwitch
-                @on={{if row.level.muted false true}}
-                @onChange={{fn this.levelOn row.key}}
-                aria-label="{{row.title}} on"
-              />
-            </XzRow>
-          {{/each}}
-
-          <XzHeading @text="Cut out a part" />
-          <XzRow @title="In" @detail={{this.markInText}} />
-          <XzRow @title="Out" @detail={{this.markOutText}} />
-          {{#if this.range}}
-            <XzStatus @text={{this.rangeText}} @tone="muted" @row={{true}} />
-          {{/if}}
-          <XzGrid @columns={{2}}>
-            <XzButton
-              class="ve-set-in"
-              @text="Set in"
-              @icon={{SetInIcon}}
-              @disabled={{this.empty}}
-              @onClick={{this.markInHere}}
-            />
-            <XzButton
-              class="ve-set-out"
-              @text="Set out"
-              @icon={{SetOutIcon}}
-              @disabled={{this.empty}}
-              @onClick={{this.markOutHere}}
-            />
-            <XzButton
-              class="ve-clear-marks"
-              @text="Clear"
-              @icon={{ClearIcon}}
-              @disabled={{this.noMarks}}
-              @onClick={{this.clearMarks}}
-            />
-            <XzButton
-              class="ve-cut-out"
-              @kind="primary"
-              @text="Cut out"
-              @icon={{CutIcon}}
-              @disabled={{this.noRange}}
-              @onClick={{this.cutOut}}
-            />
-          </XzGrid>
-
-          <XzHeading @text="Export" />
-          <XzSegmented
-            class="ve-format"
-            @items={{FORMAT_LABELS}}
-            @selected={{this.formatIndex}}
-            @onChange={{this.pickFormat}}
-          />
-          <XzSegmented
-            class="ve-codec"
-            @items={{this.codecLabels}}
-            @selected={{this.codecIndex}}
-            @onChange={{this.pickCodec}}
-          />
-          <XzHeading @text="Shape" />
-          <XzSegmented
-            class="ve-shape"
-            @items={{SHAPE_LABELS}}
-            @selected={{this.shapeIndex}}
-            @columns={{3}}
-            @onChange={{this.pickShape}}
-          />
-          <XzSegmented
-            class="ve-fit"
-            @items={{FIT_LABELS}}
-            @selected={{this.fitIndex}}
-            @onChange={{this.pickFit}}
-          />
-          <XzHeading @text="Size" />
-          <XzSegmented
-            class="ve-size"
-            @items={{SIZE_LABELS}}
-            @selected={{this.sizeIndexShown}}
-            @columns={{2}}
-            @onChange={{this.pickSize}}
-          />
-          <XzHeading @text="Frame rate" />
-          <XzSegmented
-            class="ve-rate"
-            @items={{RATE_LABELS}}
-            @selected={{this.rateIndex}}
-            @onChange={{this.pickRate}}
-          />
-          <XzHeading @text="Quality" />
-          <XzSegmented
-            class="ve-quality"
-            @items={{QUALITY_LABELS}}
-            @selected={{this.qualityIndex}}
-            @onChange={{this.pickQuality}}
-          />
-          <XzRow @title="Sound" @detail="The video's sound, Music and Voice">
-            <XzSwitch
-              class="ve-sound-on"
-              @on={{this.keepSound}}
-              @onChange={{this.pickSound}}
-              aria-label="Keep sound"
-            />
-          </XzRow>
-          <XzRow class="ve-estimate" @title="File" @detail={{this.estimate}} />
-          <Job
-            @title="Export"
-            @icon={{ExportIcon}}
-            @failure={{EXPORT_ERROR}}
-            @disabled={{this.cannotExport}}
-            @busy={{this.busy}}
-            @progress={{this.progress}}
-            @failed={{this.failed}}
-            @result={{this.resultRow}}
-            @onRun={{this.runExport}}
-            @onCancel={{this.cancelExport}}
-            @onSave={{this.saveExport}}
-            @onPreview={{this.previewExport}}
-          />
-        </XzRows>
-      </:sidebar>
-      <:footer>
-        <Transport @playback={{this.player}} @ready={{this.hasItems}}>
-          <:before>
-            <XzButton
-              class="ve-back"
-              @label="Back one frame"
-              @icon={{BackIcon}}
-              @repeats={{true}}
-              @disabled={{this.empty}}
-              @onClick={{this.stepBack}}
-            />
-          </:before>
-          <:default>
-            <XzButton
-              class="ve-forward"
-              @label="Forward one frame"
-              @icon={{ForwardIcon}}
-              @repeats={{true}}
-              @disabled={{this.empty}}
-              @onClick={{this.stepForward}}
-            />
-          </:default>
-        </Transport>
-      </:footer>
-    </XzSplit>
+        </XzRow>
+        <XzRow class="ve-estimate" @title="File" @detail={{this.estimate}} />
+        <Job
+          @title="Export"
+          @icon={{ExportIcon}}
+          @failure={{EXPORT_ERROR}}
+          @disabled={{this.cannotExport}}
+          @busy={{this.busy}}
+          @progress={{this.progress}}
+          @failed={{this.failed}}
+          @result={{this.resultRow}}
+          @onRun={{this.runExport}}
+          @onCancel={{this.cancelExport}}
+          @onSave={{this.saveExport}}
+          @onPreview={{this.previewExport}}
+        />
+      </XzRows>
+    </XzDialog>
   </template>
 }
