@@ -644,3 +644,70 @@
     min-block-size: auto;
   }
 }
+
+/* recording: a pulsing dot, the time, and the mic's level */
+.ve-record__live {
+  display: flex;
+  gap: var(--xz-space-2);
+  align-items: center;
+  padding: var(--xz-space-2) var(--xz-space-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.ve-record__dot {
+  flex: none;
+  inline-size: 10px;
+  block-size: 10px;
+  background: var(--xz-danger);
+  border-radius: var(--xz-radius-full);
+  animation: ve-record-pulse 1.2s ease-in-out infinite;
+}
+
+.ve-record__meter {
+  flex: 1;
+  block-size: 6px;
+  overflow: hidden;
+  background: var(--xz-surface-3);
+  border-radius: var(--xz-radius-full);
+}
+
+.ve-record__meter > span {
+  display: block;
+  block-size: 100%;
+  background: var(--xz-accent-2);
+  border-radius: inherit;
+  transition: inline-size 80ms linear;
+}
+
+@keyframes ve-record-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ve-record__dot {
+    animation: none;
+  }
+}
+
+/* the project file picker is a label around a hidden input */
+.ve-project-open {
+  cursor: pointer;
+}
+
+.ve-project-open:focus-within {
+  outline: 2px solid var(--xz-accent-2);
+  outline-offset: 2px;
+}
+
+/* a phone's top bar has room for the export icon only */
+@media (width < 520px) {
+  .ve-export-open {
+    padding-inline: var(--xz-space-2);
+  }
+
+  .ve-export-open__text {
+    display: none;
+  }
+}

@@ -81,10 +81,10 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Detach a video’s sound onto its own layer                                                                                                                                 | ✅     |
 | Noise reduction on voice clips                                                                                                                                            | ✅     |
 | **Phase 3: effects and finishing**                                                                                                                                        |        |
-| Vignette and blur effects; green screen for overlay videos                                                                                                                | 📋     |
-| Reverse a clip, freeze a frame, zoom and pan on photos                                                                                                                    | 📋     |
-| Export 4K, GIF, or sound only (MP3/WAV)                                                                                                                                   | 📋     |
-| Save and open a project file; save the current frame as PNG                                                                                                               | 📋     |
+| Vignette and blur effects; green screen for overlay videos                                                                                                                | ✅     |
+| Reverse a clip, freeze a frame, zoom and pan on photos                                                                                                                    | ✅     |
+| Export 4K, GIF, or sound only (MP3/WAV)                                                                                                                                   | ✅     |
+| Save and open a project file; save the current frame as PNG                                                                                                               | ✅     |
 
 ## Image
 

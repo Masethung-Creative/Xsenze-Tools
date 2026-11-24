@@ -5,6 +5,7 @@
  * here, and the preview's drag box uses the same sizes.
  */
 import type { Context2D } from 'xsenze-tools/lib/video/edit/draw';
+import { keyed } from 'xsenze-tools/lib/video/edit/chroma';
 import type {
   Anim,
   FontId,
@@ -416,7 +417,9 @@ export function drawLayer(
       }
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(source!, -w / 2, -h / 2, w, h);
+      // a green screen is keyed at the size it is drawn
+      const image = layer.key?.on ? keyed(source!, w, h, layer.key) : source!;
+      ctx.drawImage(image, -w / 2, -h / 2, w, h);
     }
   }
   ctx.restore();

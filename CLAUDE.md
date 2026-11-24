@@ -107,6 +107,16 @@ their `soon` line from `lib/tools.ts`):
   from speech" mixes the videos and Voice at 16 kHz (`mixSpeech`) for the site's Whisper worker,
   drops bracketed sound notes and keeps captions inside the sound; noise reduction is spectral
   gating in `lib/audio/denoise.ts`, making a hidden cleaned clip (`cleanOf`) the item switches to.
+  Effects and finishing: a look also has `vignette`, `blur` and `motion` (zoom or pan over
+  the piece, `movedBox` in `draw.ts`; a Shot carries its `progress`); overlay pictures and
+  videos have a `key` (green screen, `lib/video/edit/chroma.ts`, keyed at the drawn size).
+  `clip-tools.ts` makes new files from a clip: `reverseClip` (picture and sound backwards, read
+  in half-second windows from the end; a hidden clip with `reverseOf` the piece swaps to) and
+  `clipStill` (an upright PNG for Freeze frame). `export.ts` also makes a GIF (`gif.ts`), the
+  sound alone (WAV, or MP3 through `@mediabunny/mp3-encoder`) and one frame as PNG; 4K is
+  offered where `exportCodecs(3840, 2160)` finds an encoder. A project file is a zip of
+  project.json and a media folder (`packProject` / `unpackProject` in `store.ts`); older records
+  are filled in by `fullLook` and `plainKey`.
   Tools' own messages use `toast.notify`; `toast.show` stays the "Copied" note. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.

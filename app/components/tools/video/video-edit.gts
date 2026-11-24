@@ -46,7 +46,16 @@ import {
   acceptAttr,
 } from 'xsenze-tools/lib/tools';
 import XzColourWell from 'xsenze-tools/components/xz/colour-well';
-import { FILTERS, TRANSITIONS } from 'xsenze-tools/lib/video/edit/draw';
+import {
+  FILTERS,
+  MOTIONS,
+  TRANSITIONS,
+} from 'xsenze-tools/lib/video/edit/draw';
+import {
+  clipStill,
+  reverseClip,
+  reverseLimit,
+} from 'xsenze-tools/lib/video/edit/clip-tools';
 import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import {
   mediaKind,
@@ -110,8 +119,10 @@ import {
   type ShapeKind,
   type TextPreset,
   type TransitionKind,
+  type MotionKind,
   laneFree,
   lengthOf,
+  plainMotion,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import Job from 'xsenze-tools/components/tools/shared/media/job';
 import type { StreamTargetChunk } from 'mediabunny';
@@ -133,8 +144,10 @@ import {
   dropFile,
   keepClip,
   loadProject,
+  packProject,
   saveFile,
   saveState,
+  unpackProject,
   type Saved,
 } from 'xsenze-tools/lib/video/edit/store';
 import { CLIP_DRAG } from 'xsenze-tools/components/tools/video/video-edit/timeline';
@@ -143,7 +156,11 @@ import {
   CONTAINER_CODECS,
   exportCodecs,
   exportEdit,
+  exportFrame,
+  exportGif,
+  exportSound,
   mixSpeech,
+  type SoundFormat,
   type ExportCodec,
   type ExportContainer,
   type ExportResult,
@@ -180,6 +197,8 @@ const RotateRightIcon = icon('rotate-cw');
 const FlipHIcon = icon('flip-horizontal-2');
 const FlipVIcon = icon('flip-vertical-2');
 const ResetIcon = icon('rotate-ccw-square');
+const ReverseIcon = icon('rewind');
+const FreezeIcon = icon('snowflake');
 const LayersIcon = icon('layers');
 const SHAPE_ICON_PARTS = {
   rect: icon('square'),
@@ -192,7 +211,22 @@ const shapeIcon = (shape: ShapeKind) => SHAPE_ICON_PARTS[shape];
 // ----- export settings -----
 
 const CONTAINERS: ExportContainer[] = ['mp4', 'webm'];
-const FORMAT_LABELS = ['MP4', 'WebM'];
+const FORMAT_LABELS = ['MP4', 'WebM', 'GIF', 'Sound'];
+type ExportKind = 'video' | 'gif' | 'sound';
+const GIF_SIZES = [240, 360, 480];
+const GIF_SIZE_LABELS = ['Small', 'Medium', 'Large'];
+const GIF_RATES = [10, 15, 20];
+const GIF_RATE_LABELS = ['10', '15', '20'];
+/** GIF bytes per pixel per frame, roughly, for the estimate. */
+const GIF_BYTES = 0.35;
+const SOUND_FORMATS: SoundFormat[] = ['mp3', 'wav'];
+const SOUND_FORMAT_LABELS = ['MP3', 'WAV'];
+const MOTION_IDS: MotionKind[] = (Object.keys(MOTIONS) as MotionKind[]).filter(
+  (kind) => kind !== 'none',
+);
+const MOTION_LABELS = MOTION_IDS.map((id) => MOTIONS[id]);
+/** Seconds a freeze frame holds. */
+const freezeSeconds = 3;
 const CODEC_NAMES: Record<ExportCodec, string> = {
   avc: 'H.264',
   hevc: 'H.265',
@@ -216,9 +250,10 @@ const SHAPES: { label: string; ratio: number | null }[] = [
 const SHAPE_LABELS = SHAPES.map((s) => s.label);
 const FITS: Fit[] = ['contain', 'cover'];
 const FIT_LABELS = ['Black bars', 'Fill'];
-/** The output's short side; 0 is the first clip's. */
+/** The output's short side; 0 is the first clip's. 4K joins where it can be made. */
 const SIZES = [1080, 720, 480, 0];
-const SIZE_LABELS = ['1080p', '720p', '480p', 'First clip'];
+const sizeLabel = (short: number) =>
+  short === 2160 ? '4K' : short ? `${short}p` : 'First clip';
 const RATES = [0, 24, 25, 30, 60];
 const RATE_LABELS = ['First clip', '24', '25', '30', '60'];
 const QUALITY_LABELS = ['Small', 'Balanced', 'High'];
@@ -396,12 +431,17 @@ export default class VideoEdit extends Component {
   @tracked codecChoice: ExportCodec | null = null;
   @tracked shapeIndex = 0;
   @tracked fitIndex = 0;
-  /** -1 picks 1080p, or the first clip's size when it is smaller. */
-  @tracked sizeIndex = -1;
+  /** The short side picked; -1 picks 1080p, or the first clip's size when it is smaller. */
+  @tracked sizeShort = -1;
+  @tracked gifSizeIndex = 1;
+  @tracked gifRateIndex = 1;
+  @tracked soundFormatIndex = 0;
   @tracked rateIndex = 0;
   @tracked qualityIndex = 1;
   @tracked keepSound = true;
   @tracked encoders: Set<ExportCodec> | null = null;
+  /** The codecs this browser can encode at 4K. */
+  @tracked encoders4k: Set<ExportCodec> | null = null;
   @tracked busy = false;
   @tracked progress = 0;
   @tracked failed = false;
@@ -416,6 +456,9 @@ export default class VideoEdit extends Component {
     super(owner, args);
     void exportCodecs(1920, 1080).then((set) => {
       if (this.#live) this.encoders = set;
+    });
+    void exportCodecs(3840, 2160).then((set) => {
+      if (this.#live) this.encoders4k = set;
     });
     void this.#restore();
   }
@@ -435,7 +478,10 @@ export default class VideoEdit extends Component {
       formatIndex: this.formatIndex,
       shapeIndex: this.shapeIndex,
       fitIndex: this.fitIndex,
-      sizeIndex: this.sizeIndex,
+      sizeShort: this.sizeShort,
+      gifSizeIndex: this.gifSizeIndex,
+      gifRateIndex: this.gifRateIndex,
+      soundFormatIndex: this.soundFormatIndex,
       rateIndex: this.rateIndex,
       qualityIndex: this.qualityIndex,
       keepSound: this.keepSound,
@@ -451,7 +497,12 @@ export default class VideoEdit extends Component {
       this.#restored = true;
       return;
     }
-    const { saved, files } = kept;
+    this.#load(kept.saved, kept.files);
+    this.toast.notify('Your last edit is back');
+  }
+
+  /** Puts a kept or opened edit in place of an empty editor. */
+  #load(saved: Saved, files: ReadonlyMap<string, File>) {
     const clips: Clip[] = saved.clips.map((clip) => {
       const file = files.get(clip.id)!;
       const url = URL.createObjectURL(file);
@@ -469,7 +520,10 @@ export default class VideoEdit extends Component {
     this.formatIndex = num('formatIndex', 0);
     this.shapeIndex = num('shapeIndex', 0);
     this.fitIndex = num('fitIndex', 0);
-    this.sizeIndex = num('sizeIndex', -1);
+    this.sizeShort = num('sizeShort', -1);
+    this.gifSizeIndex = num('gifSizeIndex', 1);
+    this.gifRateIndex = num('gifRateIndex', 1);
+    this.soundFormatIndex = num('soundFormatIndex', 0);
     this.rateIndex = num('rateIndex', 0);
     this.qualityIndex = num('qualityIndex', 1);
     this.presetIndex = num('presetIndex', -1);
@@ -478,8 +532,116 @@ export default class VideoEdit extends Component {
     this.#restored = true;
     this.#commit(saved.edit, false);
     for (const clip of clips) void this.#describe(clip);
-    this.toast.notify('Your last edit is back');
   }
+
+  // ----- project file -----
+
+  @tracked openOpen = false;
+  @tracked packing = false;
+  #pendingProject: File | null = null;
+
+  get #record(): Saved {
+    return {
+      version: 1,
+      clips: this.clips.map(keepClip),
+      edit: this.edit,
+      settings: this.#settings,
+      savedAt: Date.now(),
+    };
+  }
+
+  /** The whole edit and its files as one .zip, to open on another device. */
+  saveProject = async () => {
+    if (this.packing || !this.clips.length) return;
+    this.packing = true;
+    try {
+      const blob = await packProject(
+        this.#record,
+        new Map(this.clips.map((clip) => [clip.id, clip.file])),
+      );
+      downloadBlob(blob, `${this.exportName} project.zip`);
+    } catch (error) {
+      console.error('Saving the project failed:', error);
+      this.toast.notify("Couldn't save the project file.");
+    } finally {
+      if (this.#live) this.packing = false;
+    }
+  };
+
+  pickProjectFile = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (this.clips.length) {
+      this.#pendingProject = file;
+      this.openOpen = true;
+    } else void this.#openProject(file);
+  };
+
+  closeOpen = () => {
+    this.openOpen = false;
+    this.#pendingProject = null;
+  };
+
+  confirmOpen = () => {
+    const file = this.#pendingProject;
+    this.closeOpen();
+    if (file) void this.#openProject(file);
+  };
+
+  async #openProject(file: File) {
+    this.packing = true;
+    try {
+      const { saved, files } = await unpackProject(file);
+      if (!this.#live) return;
+      if (!saved.clips.length) {
+        this.toast.notify('This project file has no media in it.');
+        return;
+      }
+      this.startOver();
+      this.#load(saved, files);
+      for (const clip of this.clips) this.#keepFile(clip);
+      this.#keep();
+      this.toast.notify(`Opened ${file.name}`);
+    } catch (error) {
+      console.error('Opening the project failed:', error);
+      this.toast.notify("That isn't a Video Edit project file.");
+    } finally {
+      if (this.#live) this.packing = false;
+    }
+  }
+
+  // ----- the frame as a picture -----
+
+  @tracked savingFrame = false;
+
+  /** The frame at the playhead, at the export's size, as a PNG. */
+  saveFrame = async () => {
+    if (this.savingFrame || !this.hasItems) return;
+    this.savingFrame = true;
+    const t = this.player.time;
+    try {
+      const { width, height } = this.outSize;
+      const blob = await exportFrame(
+        this.clips,
+        this.edit,
+        t,
+        width,
+        height,
+        this.fit,
+      );
+      downloadBlob(
+        blob,
+        `${this.exportName} ${clock(t).replace(/:/g, '-')}.png`,
+      );
+    } catch (error) {
+      console.error('Saving the frame failed:', error);
+      this.toast.notify("Couldn't save this frame.");
+    } finally {
+      if (this.#live) this.savingFrame = false;
+    }
+  };
 
   /** Keeps the edit and settings soon after a change. */
   #keep() {
@@ -942,7 +1104,7 @@ export default class VideoEdit extends Component {
     this.#setting(() => {
       this.presetIndex = index;
       this.shapeIndex = preset.shape;
-      this.sizeIndex = 0;
+      this.sizeShort = 1080;
     });
   };
 
@@ -1093,7 +1255,7 @@ export default class VideoEdit extends Component {
   get clipRows() {
     // cleaned copies stay out of sight: they follow their original
     return this.clips
-      .filter((clip) => !clip.cleanOf)
+      .filter((clip) => !clip.cleanOf && !clip.reverseOf)
       .map((clip) => ({
         clip,
         isVideo: clip.kind !== 'audio',
@@ -1195,11 +1357,79 @@ export default class VideoEdit extends Component {
     return first?.width ? first.width / first.height : 16 / 9;
   }
 
-  get sizeIndexShown() {
-    if (this.sizeIndex >= 0) return this.sizeIndex;
+  get exportKind(): ExportKind {
+    return this.formatIndex === 2
+      ? 'gif'
+      : this.formatIndex === 3
+        ? 'sound'
+        : 'video';
+  }
+
+  get exportIsVideo() {
+    return this.exportKind === 'video';
+  }
+
+  get exportIsGif() {
+    return this.exportKind === 'gif';
+  }
+
+  get exportIsSound() {
+    return this.exportKind === 'sound';
+  }
+
+  get showToDisk() {
+    return this.canWriteToDisk && this.exportIsVideo;
+  }
+
+  get cannotPack() {
+    return this.packing || this.empty;
+  }
+
+  get cannotSaveFrame() {
+    return this.savingFrame || this.empty;
+  }
+
+  get can4k() {
+    return !!this.encoders4k?.size;
+  }
+
+  /** The sizes on offer: 4K first where this browser can make it. */
+  get sizeChoices(): number[] {
+    return this.can4k ? [2160, ...SIZES] : SIZES;
+  }
+
+  get sizeLabels() {
+    return this.sizeChoices.map(sizeLabel);
+  }
+
+  get sizeShortShown() {
+    if (this.sizeChoices.includes(this.sizeShort)) return this.sizeShort;
     const first = this.firstVideo;
     const short = first?.width ? Math.min(first.width, first.height) : 1080;
-    return short < 1080 ? 3 : 0;
+    return short < 1080 ? 0 : 1080;
+  }
+
+  get sizeIndexShown() {
+    return this.sizeChoices.indexOf(this.sizeShortShown);
+  }
+
+  #sized(short: number) {
+    const aspect = this.outAspect;
+    return aspect >= 1
+      ? { width: even(short * aspect), height: even(short) }
+      : { width: even(short), height: even(short / aspect) };
+  }
+
+  get gifSize() {
+    return this.#sized(GIF_SIZES[this.gifSizeIndex] ?? 360);
+  }
+
+  get gifFps() {
+    return GIF_RATES[this.gifRateIndex] ?? 15;
+  }
+
+  get soundFormat(): SoundFormat {
+    return SOUND_FORMATS[this.soundFormatIndex] ?? 'mp3';
   }
 
   get outSize() {
@@ -1207,7 +1437,7 @@ export default class VideoEdit extends Component {
     const firstShort = first?.width
       ? Math.min(first.width, first.height)
       : 1080;
-    const short = SIZES[this.sizeIndexShown] || firstShort;
+    const short = this.sizeShortShown || firstShort;
     const aspect = this.outAspect;
     return aspect >= 1
       ? { width: even(short * aspect), height: even(short) }
@@ -1222,7 +1452,9 @@ export default class VideoEdit extends Component {
   /** The codecs the chosen format holds that this browser can encode. */
   get codecs(): ExportCodec[] {
     const held = CONTAINER_CODECS[this.container].video;
-    const encoders = this.encoders;
+    const { width, height } = this.outSize;
+    const encoders =
+      Math.min(width, height) > 1440 ? this.encoders4k : this.encoders;
     return encoders ? held.filter((c) => encoders.has(c)) : held;
   }
 
@@ -1261,6 +1493,18 @@ export default class VideoEdit extends Component {
 
   get estimate() {
     if (!this.hasItems) return DASH;
+    if (this.exportKind === 'gif') {
+      const { width, height } = this.gifSize;
+      const bytes = width * height * GIF_BYTES * this.gifFps * this.length;
+      return `Roughly ${formatBytes(bytes)} · ${width} × ${height} · ${this.gifFps} fps · no sound`;
+    }
+    if (this.exportKind === 'sound') {
+      const bytes =
+        this.soundFormat === 'wav'
+          ? 48000 * 4 * this.length
+          : (SOUND_BITS * this.length) / 8;
+      return `About ${formatBytes(bytes)} · ${tc(this.length)} · 48 kHz stereo`;
+    }
     const { width, height } = this.outSize;
     return `About ${formatBytes(this.estimateBytes)} · ${width} × ${height} · ${this.outFps} fps`;
   }
@@ -1276,6 +1520,7 @@ export default class VideoEdit extends Component {
   get toDisk() {
     return (
       this.canWriteToDisk &&
+      this.exportIsVideo &&
       (this.toDiskChoice ?? this.estimateBytes > diskBytes)
     );
   }
@@ -1288,7 +1533,7 @@ export default class VideoEdit extends Component {
   @tracked savedToDisk = false;
 
   get cannotExport() {
-    return this.busy || !this.hasItems || !this.codec;
+    return this.busy || !this.hasItems || (this.exportIsVideo && !this.codec);
   }
 
   get exportName() {
@@ -1332,7 +1577,12 @@ export default class VideoEdit extends Component {
       this.presetIndex = -1;
     });
   pickFit = (i: number) => this.#setting(() => (this.fitIndex = i));
-  pickSize = (i: number) => this.#setting(() => (this.sizeIndex = i));
+  pickSize = (i: number) =>
+    this.#setting(() => (this.sizeShort = this.sizeChoices[i] ?? -1));
+  pickGifSize = (i: number) => this.#setting(() => (this.gifSizeIndex = i));
+  pickGifRate = (i: number) => this.#setting(() => (this.gifRateIndex = i));
+  pickSoundFormat = (i: number) =>
+    this.#setting(() => (this.soundFormatIndex = i));
   pickRate = (i: number) => this.#setting(() => (this.rateIndex = i));
   pickQuality = (i: number) => this.#setting(() => (this.qualityIndex = i));
   pickSound = (on: boolean) => this.#setting(() => (this.keepSound = on));
@@ -1340,8 +1590,9 @@ export default class VideoEdit extends Component {
   runExport = () => void this.#export();
 
   async #export() {
-    const codec = this.codec;
-    if (this.cannotExport || !codec) return;
+    const codec = this.codec ?? 'avc';
+    if (this.cannotExport) return;
+    const kind = this.exportKind;
     const job = ++this.#job;
     this.#stale();
     this.busy = true;
@@ -1351,7 +1602,36 @@ export default class VideoEdit extends Component {
     this.#abort = abort;
     const ext = this.container === 'webm' ? 'webm' : 'mp4';
     const name = `${this.exportName}.${ext}`;
+    const onProgress = (fraction: number) => {
+      if (job === this.#job) this.progress = fraction;
+    };
     try {
+      if (kind !== 'video') {
+        const blob =
+          kind === 'gif'
+            ? await exportGif(this.clips, this.edit, {
+                ...this.gifSize,
+                fps: this.gifFps,
+                fit: this.fit,
+                signal: abort.signal,
+                onProgress,
+              })
+            : await exportSound(this.clips, this.edit, {
+                format: this.soundFormat,
+                signal: abort.signal,
+                onProgress,
+              });
+        if (job !== this.#job) return;
+        const other = kind === 'gif' ? 'gif' : this.soundFormat;
+        const file = new File([blob], `${this.exportName}.${other}`, {
+          type: blob.type,
+        });
+        this.result = { blob, ext: other };
+        this.resultFile = file;
+        this.savedToDisk = false;
+        this.resultUrl = URL.createObjectURL(file);
+        return;
+      }
       // the file is picked first, while the click still counts
       const handle = this.toDisk
         ? await (
@@ -1377,9 +1657,7 @@ export default class VideoEdit extends Component {
         bitrate: this.bitrate,
         sound: this.keepSound,
         signal: abort.signal,
-        onProgress: (fraction) => {
-          if (job === this.#job) this.progress = fraction;
-        },
+        onProgress,
       });
       if (job !== this.#job) return;
       const file =
@@ -1501,7 +1779,9 @@ export default class VideoEdit extends Component {
   removeClip = (id: string) => {
     const clip = this.clipMap.get(id);
     if (!clip) return;
-    const gone = this.clips.filter((c) => c.id === id || c.cleanOf === id);
+    const gone = this.clips.filter(
+      (c) => c.id === id || c.cleanOf === id || c.reverseOf === id,
+    );
     const ids = new Set(gone.map((c) => c.id));
     for (const c of gone) void dropFile(c.id);
     this.clips = this.clips.filter((c) => !ids.has(c.id));
@@ -1902,6 +2182,157 @@ export default class VideoEdit extends Component {
   };
 
   resetLook = () => this.#setPiece({ look: plainLook() });
+
+  setEffect = (key: 'vignette' | 'blur', value: number, dragging: boolean) =>
+    this.#setLook({ [key]: value }, this.#liveRecord(dragging));
+
+  get motionIndex() {
+    return MOTION_IDS.indexOf(this.look.motion.kind);
+  }
+
+  get motionOn() {
+    return this.look.motion.kind !== 'none';
+  }
+
+  setMotionOn = (on: boolean) =>
+    this.#setLook({
+      motion: { ...this.look.motion, kind: on ? 'in' : 'none' },
+    });
+
+  pickMotion = (index: number) => {
+    const kind = MOTION_IDS[index];
+    if (kind) this.#setLook({ motion: { ...this.look.motion, kind } });
+  };
+
+  setMotionAmount = (amount: number, dragging: boolean) =>
+    this.#setLook(
+      { motion: { ...this.look.motion, amount } },
+      this.#liveRecord(dragging),
+    );
+
+  @tracked reversing = false;
+  @tracked reverseProgress = 0;
+  @tracked freezing = false;
+  #reverseAbort: AbortController | null = null;
+
+  get chosenClip(): Clip | undefined {
+    return this.clipMap.get(this.chosenPiece?.clip ?? '');
+  }
+
+  get chosenIsReversed() {
+    return !!this.chosenClip?.reverseOf;
+  }
+
+  get reverseText() {
+    return `Reversing… ${Math.round(this.reverseProgress * 100)}%`;
+  }
+
+  /** Swaps a piece to the same stretch of another copy of its clip. */
+  #swapClip(piece: Piece, to: Clip, from: Clip) {
+    const length = Math.min(to.duration, from.duration);
+    const inAt = Math.max(0, Math.min(length, from.duration - piece.out));
+    const outAt = Math.max(inAt + minimumPiece, from.duration - piece.in);
+    this.#change({
+      pieces: this.pieces.map((p) =>
+        p.id === piece.id
+          ? { ...p, clip: to.id, in: inAt, out: Math.min(to.duration, outAt) }
+          : p,
+      ),
+    });
+  }
+
+  /** Plays the piece backwards: its clip is swapped for a reversed copy. */
+  toggleReverse = async () => {
+    const piece = this.chosenPiece;
+    const clip = this.chosenClip;
+    if (!piece || !clip || clip.kind !== 'video' || this.reversing) return;
+    if (clip.reverseOf) {
+      const original = this.clipMap.get(clip.reverseOf);
+      if (original) this.#swapClip(piece, original, clip);
+      return;
+    }
+    let reversed = this.clips.find((c) => c.reverseOf === clip.id);
+    if (!reversed) {
+      if (clip.duration > reverseLimit) {
+        this.toast.notify('Clips up to 10 minutes can be reversed.');
+        return;
+      }
+      this.reversing = true;
+      this.reverseProgress = 0;
+      const abort = new AbortController();
+      this.#reverseAbort = abort;
+      try {
+        const file = await reverseClip(
+          clip,
+          (fraction) => (this.reverseProgress = fraction),
+          abort.signal,
+        );
+        const read = await readClip(file);
+        if (!this.#live) return URL.revokeObjectURL(read.url);
+        reversed = {
+          ...read,
+          name: `${clip.name} (reversed)`,
+          reverseOf: clip.id,
+        };
+        this.clips = [...this.clips, reversed];
+        this.#keepFile(reversed);
+        void this.#describe(reversed);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Reversing failed:', error);
+          this.toast.notify("Couldn't reverse this clip.");
+        }
+        return;
+      } finally {
+        if (this.#reverseAbort === abort) this.#reverseAbort = null;
+        if (this.#live) this.reversing = false;
+      }
+    }
+    const now = this.pieces.find((p) => p.id === piece.id);
+    if (now && now.clip === clip.id) this.#swapClip(now, reversed, clip);
+  };
+
+  cancelReverse = () => this.#reverseAbort?.abort();
+
+  /** Holds the frame at the playhead as a still, in the middle of the piece. */
+  freezeFrame = async () => {
+    const piece = this.chosenPiece;
+    const clip = this.chosenClip;
+    if (!piece || !clip || clip.kind !== 'video' || this.freezing) return;
+    const t = this.player.time;
+    const place = placeAt(this.pieces, t);
+    if (place?.piece.id !== piece.id) {
+      this.toast.notify('Put the playhead on this clip first.');
+      return;
+    }
+    this.freezing = true;
+    try {
+      const file = await clipStill(clip, place.clipTime);
+      const still = await readImageClip(file);
+      if (!this.#live) return URL.revokeObjectURL(still.url);
+      this.clips = [...this.clips, still];
+      this.#keepFile(still);
+      const parts = split(this.pieces, t);
+      // a playhead too near an edge does not cut: the still goes before or after
+      const cut = parts.length > this.pieces.length;
+      const nearEnd = piece.out - place.clipTime < place.clipTime - piece.in;
+      const at = place.index + (cut || nearEnd ? 1 : 0);
+      const frozen: Piece = {
+        ...pieceFor(still),
+        out: freezeSeconds,
+        look: { ...piece.look, motion: plainMotion() },
+      };
+      this.#change({
+        pieces: [...parts.slice(0, at), frozen, ...parts.slice(at)],
+      });
+      this.selected = { kind: 'video', id: frozen.id };
+    } catch (error) {
+      console.error('Freeze frame failed:', error);
+      this.toast.notify("Couldn't take this frame.");
+    } finally {
+      if (this.#live) this.freezing = false;
+    }
+  };
 
   // ----- background -----
 
@@ -2564,6 +2995,28 @@ export default class VideoEdit extends Component {
         disabled={{this.empty}}
         {{on "click" this.openNew}}
       ><IconSvg @name="file-plus" /></button>
+      <label
+        class="xz-btn xz-btn--ghost xz-btn--icon ve-project-open"
+        title="Open a project file"
+      >
+        <IconSvg @name="folder-open" />
+        <span class="sr-only">Open a project file</span>
+        <input
+          type="file"
+          class="sr-only"
+          accept=".zip,application/zip"
+          disabled={{this.packing}}
+          {{on "change" this.pickProjectFile}}
+        />
+      </label>
+      <button
+        type="button"
+        class="xz-btn xz-btn--ghost xz-btn--icon ve-project-save"
+        aria-label="Save a project file"
+        title="Save a project file: the edit and its media, to open on any device"
+        disabled={{this.cannotPack}}
+        {{on "click" this.saveProject}}
+      ><IconSvg @name="save" /></button>
       <button
         type="button"
         class="xz-btn xz-btn--ghost xz-btn--icon"
@@ -2583,11 +3036,12 @@ export default class VideoEdit extends Component {
       <button
         type="button"
         class="xz-btn xz-btn--primary ve-export-open"
+        aria-label="Export"
         disabled={{this.empty}}
         {{on "click" this.openExport}}
       >
         <IconSvg @name="download" />
-        Export
+        <span class="ve-export-open__text">Export</span>
       </button>
     </PageTools>
 
@@ -3073,6 +3527,14 @@ export default class VideoEdit extends Component {
             disabled={{this.notActive}}
             {{on "click" this.player.stop}}
           ><IconSvg @name="square" /></button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--icon ve-save-frame"
+            aria-label="Save this frame as a picture"
+            title="Save this frame as PNG"
+            disabled={{this.cannotSaveFrame}}
+            {{on "click" this.saveFrame}}
+          ><IconSvg @name="camera" /></button>
         </div>
       </section>
 
@@ -3200,6 +3662,33 @@ export default class VideoEdit extends Component {
                         @columns={{3}}
                         @onChange={{this.pickSpeed}}
                       />
+                      <XzHeading @text="Clip tools" />
+                      <XzGrid>
+                        <XzButton
+                          class="ve-reverse"
+                          @text="Reverse"
+                          @icon={{ReverseIcon}}
+                          @selected={{this.chosenIsReversed}}
+                          @disabled={{this.reversing}}
+                          @onClick={{this.toggleReverse}}
+                        />
+                        <XzButton
+                          class="ve-freeze"
+                          @text="Freeze frame"
+                          @icon={{FreezeIcon}}
+                          @disabled={{this.freezing}}
+                          @onClick={{this.freezeFrame}}
+                        />
+                      </XzGrid>
+                      {{#if this.reversing}}
+                        <XzRow @title={{this.reverseText}}>
+                          <XzButton
+                            class="ve-reverse-stop"
+                            @text="Stop"
+                            @onClick={{this.cancelReverse}}
+                          />
+                        </XzRow>
+                      {{/if}}
                     {{/if}}
                     <XzHeading @text="Rotate and flip" />
                     <XzGrid>
@@ -3283,6 +3772,56 @@ export default class VideoEdit extends Component {
                     @columns={{3}}
                     @onChange={{this.pickFilter}}
                   />
+                  <XzHeading @text="Effects" />
+                  <PropSlider
+                    class="ve-vignette"
+                    @label="Vignette"
+                    @value={{this.look.vignette}}
+                    @step={{0.01}}
+                    @nudge={{0.05}}
+                    @readout={{percent}}
+                    @onChange={{fn this.setEffect "vignette"}}
+                  />
+                  <PropSlider
+                    class="ve-blur"
+                    @label="Blur"
+                    @value={{this.look.blur}}
+                    @step={{0.01}}
+                    @nudge={{0.05}}
+                    @readout={{percent}}
+                    @onChange={{fn this.setEffect "blur"}}
+                  />
+                  <XzRow
+                    @title="Zoom and pan"
+                    @detail="Over the whole clip; best on photos"
+                  >
+                    <XzSwitch
+                      class="ve-motion-on"
+                      @on={{this.motionOn}}
+                      @onChange={{this.setMotionOn}}
+                      aria-label="Zoom and pan"
+                    />
+                  </XzRow>
+                  {{#if this.motionOn}}
+                    <XzSegmented
+                      class="ve-motion"
+                      @items={{MOTION_LABELS}}
+                      @selected={{this.motionIndex}}
+                      @columns={{3}}
+                      @onChange={{this.pickMotion}}
+                    />
+                    <PropSlider
+                      class="ve-motion-amount"
+                      @label="How far"
+                      @value={{this.look.motion.amount}}
+                      @min={{0.05}}
+                      @max={{0.5}}
+                      @step={{0.01}}
+                      @nudge={{0.05}}
+                      @readout={{percent}}
+                      @onChange={{this.setMotionAmount}}
+                    />
+                  {{/if}}
                   <XzGrid>
                     <XzButton
                       class="ve-reset-look"
@@ -3527,43 +4066,74 @@ export default class VideoEdit extends Component {
           @selected={{this.formatIndex}}
           @onChange={{this.pickFormat}}
         />
-        <XzSegmented
-          class="ve-codec"
-          @items={{this.codecLabels}}
-          @selected={{this.codecIndex}}
-          @onChange={{this.pickCodec}}
-        />
-        <XzHeading @text="Size" />
-        <XzSegmented
-          class="ve-size"
-          @items={{SIZE_LABELS}}
-          @selected={{this.sizeIndexShown}}
-          @onChange={{this.pickSize}}
-        />
-        <XzHeading @text="Frame rate" />
-        <XzSegmented
-          class="ve-rate"
-          @items={{RATE_LABELS}}
-          @selected={{this.rateIndex}}
-          @onChange={{this.pickRate}}
-        />
-        <XzHeading @text="Quality" />
-        <XzSegmented
-          class="ve-quality"
-          @items={{QUALITY_LABELS}}
-          @selected={{this.qualityIndex}}
-          @onChange={{this.pickQuality}}
-        />
-        <XzRow @title="Sound" @detail="The video's sound, Music and Voice">
-          <XzSwitch
-            class="ve-sound-on"
-            @on={{this.keepSound}}
-            @onChange={{this.pickSound}}
-            aria-label="Keep sound"
+        {{#if this.exportIsVideo}}
+          <XzSegmented
+            class="ve-codec"
+            @items={{this.codecLabels}}
+            @selected={{this.codecIndex}}
+            @onChange={{this.pickCodec}}
           />
-        </XzRow>
+          <XzHeading @text="Size" />
+          <XzSegmented
+            class="ve-size"
+            @items={{this.sizeLabels}}
+            @selected={{this.sizeIndexShown}}
+            @onChange={{this.pickSize}}
+          />
+          <XzHeading @text="Frame rate" />
+          <XzSegmented
+            class="ve-rate"
+            @items={{RATE_LABELS}}
+            @selected={{this.rateIndex}}
+            @onChange={{this.pickRate}}
+          />
+          <XzHeading @text="Quality" />
+          <XzSegmented
+            class="ve-quality"
+            @items={{QUALITY_LABELS}}
+            @selected={{this.qualityIndex}}
+            @onChange={{this.pickQuality}}
+          />
+          <XzRow @title="Sound" @detail="The video's sound, Music and Voice">
+            <XzSwitch
+              class="ve-sound-on"
+              @on={{this.keepSound}}
+              @onChange={{this.pickSound}}
+              aria-label="Keep sound"
+            />
+          </XzRow>
+        {{else if this.exportIsGif}}
+          <XzHeading @text="Size" />
+          <XzSegmented
+            class="ve-gif-size"
+            @items={{GIF_SIZE_LABELS}}
+            @selected={{this.gifSizeIndex}}
+            @onChange={{this.pickGifSize}}
+          />
+          <XzHeading @text="Frame rate" />
+          <XzSegmented
+            class="ve-gif-rate"
+            @items={{GIF_RATE_LABELS}}
+            @selected={{this.gifRateIndex}}
+            @onChange={{this.pickGifRate}}
+          />
+        {{else}}
+          <XzHeading @text="Sound file" />
+          <XzSegmented
+            class="ve-sound-format"
+            @items={{SOUND_FORMAT_LABELS}}
+            @selected={{this.soundFormatIndex}}
+            @onChange={{this.pickSoundFormat}}
+          />
+        {{/if}}
         <XzRow class="ve-estimate" @title="File" @detail={{this.estimate}} />
-        {{#if this.canWriteToDisk}}
+        {{#if this.exportIsGif}}
+          <p class="ve-hint">A GIF loops and has no sound. It gets large
+            quickly: keep it short.</p>
+        {{else if this.exportIsSound}}
+          <p class="ve-hint">Every sound mixed: the videos', Music and Voice.</p>
+        {{/if}}
+        {{#if this.showToDisk}}
           <XzRow
             @title="Save as it renders"
             @detail="Asks where first; best for long videos"
@@ -3619,6 +4189,29 @@ export default class VideoEdit extends Component {
           @text="Start over"
           @kind="primary"
           @onClick={{this.startOver}}
+        />
+      </XzGrid>
+    </XzDialog>
+
+    <XzDialog
+      class="ve-open-dialog"
+      @open={{this.openOpen}}
+      @title="Open the project file?"
+      @onClose={{this.closeOpen}}
+    >
+      <p class="ve-hint">It takes the place of this edit, which can't be brought
+        back. Save a project file of this one first to keep it.</p>
+      <XzGrid>
+        <XzButton
+          class="ve-open-keep"
+          @text="Keep editing"
+          @onClick={{this.closeOpen}}
+        />
+        <XzButton
+          class="ve-open-go"
+          @text="Open it"
+          @kind="primary"
+          @onClick={{this.confirmOpen}}
         />
       </XzGrid>
     </XzDialog>

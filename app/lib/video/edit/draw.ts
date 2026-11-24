@@ -7,6 +7,7 @@ import type {
   Background,
   Filter,
   Look,
+  Motion,
   TransitionKind,
 } from 'xsenze-tools/lib/video/edit/timeline';
 
@@ -61,8 +62,9 @@ export const FILTERS: Record<Filter, { label: string; css: string }> = {
 };
 
 /** The canvas filter for a look; 'none' when it changes nothing. */
-export function lookFilter(look: Look): string {
+export function lookFilter(look: Look, blurPx = 0): string {
   const parts: string[] = [];
+  if (blurPx > 0.2) parts.push(`blur(${blurPx.toFixed(1)}px)`);
   if (look.brightness !== 1) parts.push(`brightness(${look.brightness})`);
   if (look.contrast !== 1) parts.push(`contrast(${look.contrast})`);
   if (look.saturation !== 1) parts.push(`saturate(${look.saturation})`);
@@ -105,6 +107,89 @@ export function shownSize(picture: Picture, look: Look) {
 
 let blurCanvas: OffscreenCanvas | null = null;
 
+/** The zoom and pan names, as the editor lists them. */
+export const MOTIONS: Record<Motion['kind'], string> = {
+  none: 'None',
+  in: 'Zoom in',
+  out: 'Zoom out',
+  left: 'Left',
+  right: 'Right',
+  up: 'Up',
+  down: 'Down',
+};
+
+/**
+ * A box grown and moved for a zoom or pan, `p` of the way through the
+ * piece. A pan works on a picture grown by the amount, so no edge shows.
+ */
+export function movedBox(
+  box: { x: number; y: number; w: number; h: number },
+  motion: Motion | undefined,
+  p: number,
+) {
+  if (!motion || motion.kind === 'none') return box;
+  const a = Math.max(0, Math.min(0.5, motion.amount));
+  const t = Math.max(0, Math.min(1, p));
+  let scale = 1 + a;
+  let dx = 0;
+  let dy = 0;
+  switch (motion.kind) {
+    case 'in':
+      scale = 1 + a * t;
+      break;
+    case 'out':
+      scale = 1 + a * (1 - t);
+      break;
+    case 'left':
+      dx = (a / 2) * (1 - 2 * t);
+      break;
+    case 'right':
+      dx = (a / 2) * (2 * t - 1);
+      break;
+    case 'up':
+      dy = (a / 2) * (1 - 2 * t);
+      break;
+    case 'down':
+      dy = (a / 2) * (2 * t - 1);
+      break;
+  }
+  const w = box.w * scale;
+  const h = box.h * scale;
+  return {
+    x: box.x + (box.w - w) / 2 + dx * box.w,
+    y: box.y + (box.h - h) / 2 + dy * box.h,
+    w,
+    h,
+  };
+}
+
+/** Darker corners over a box. */
+function vignette(
+  ctx: Context2D,
+  box: { x: number; y: number; w: number; h: number },
+  strength: number,
+) {
+  if (strength <= 0.01) return;
+  const cx = box.x + box.w / 2;
+  const cy = box.y + box.h / 2;
+  const outer = Math.hypot(box.w, box.h) / 2;
+  const gradient = ctx.createRadialGradient(
+    cx,
+    cy,
+    outer * (0.75 - 0.45 * strength),
+    cx,
+    cy,
+    outer,
+  );
+  gradient.addColorStop(0, 'rgb(0 0 0 / 0)');
+  gradient.addColorStop(1, `rgb(0 0 0 / ${Math.min(0.95, strength * 0.9)})`);
+  ctx.save();
+  ctx.filter = 'none';
+  ctx.fillStyle = gradient;
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.restore();
+}
+
 /** Draws the picture's look into a box, turned and flipped about its middle. */
 function place(
   ctx: Context2D,
@@ -142,6 +227,7 @@ export function drawPicture(
   fit: Fit,
   background: Background,
   alpha = 1,
+  progress = 0,
 ) {
   ctx.save();
   ctx.globalAlpha = 1;
@@ -155,6 +241,7 @@ export function drawPicture(
   ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
   const shown = shownSize(picture, look);
   const box = fitBox(shown.width, shown.height, W, H, fit);
+  const blurPx = (look.blur ?? 0) * Math.min(W, H) * 0.025;
   const filter = lookFilter(look);
   const covers = box.x <= 0.5 && box.y <= 0.5;
   if (!covers && background.kind === 'colour') {
@@ -188,7 +275,33 @@ export function drawPicture(
     ctx.fillStyle = 'rgb(0 0 0 / 35%)';
     ctx.fillRect(0, 0, W, H);
   }
-  place(ctx, picture, look, box, filter);
+  const moving = look.motion && look.motion.kind !== 'none';
+  if (moving || blurPx > 0.2) {
+    // a zoom stays inside the picture's own box, so bars stay bars
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(box.x, box.y, box.w, box.h);
+    ctx.clip();
+    // a blur fades at the edges: drawn a little larger, the edge stays filled
+    const grow = blurPx * 2;
+    const moved = movedBox(box, look.motion, progress);
+    place(
+      ctx,
+      picture,
+      look,
+      {
+        x: moved.x - grow,
+        y: moved.y - grow,
+        w: moved.w + grow * 2,
+        h: moved.h + grow * 2,
+      },
+      lookFilter(look, blurPx),
+    );
+    ctx.restore();
+  } else {
+    place(ctx, picture, look, box, filter);
+  }
+  vignette(ctx, box, look.vignette ?? 0);
   ctx.restore();
 }
 
@@ -200,6 +313,8 @@ export interface Shot {
   look: Look;
   /** Its fade towards black, 1 for none. */
   fade: number;
+  /** 0 to 1 through its piece, for a zoom or pan. */
+  progress?: number;
 }
 
 /** The transitions, as the editor lists them. */
@@ -246,7 +361,17 @@ export function drawShots(
 ) {
   if (!b || kind === 'none') {
     const shot = b && p >= 0.5 ? b : a;
-    drawPicture(ctx, shot.picture, shot.look, W, H, fit, background, shot.fade);
+    drawPicture(
+      ctx,
+      shot.picture,
+      shot.look,
+      W,
+      H,
+      fit,
+      background,
+      shot.fade,
+      shot.progress,
+    );
     return;
   }
   const e = smooth(p);
@@ -261,6 +386,7 @@ export function drawShots(
     fit,
     background,
     a.fade,
+    a.progress,
   );
   drawPicture(
     B.getContext('2d')!,
@@ -271,6 +397,7 @@ export function drawShots(
     fit,
     background,
     b.fade,
+    b.progress,
   );
   ctx.save();
   ctx.globalAlpha = 1;

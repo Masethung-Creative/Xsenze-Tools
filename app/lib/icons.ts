@@ -112,10 +112,12 @@ import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
 import iReplace from 'lucide-static/icons/replace.svg?raw';
+import iRewind from 'lucide-static/icons/rewind.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRotateCcwSquare from 'lucide-static/icons/rotate-ccw-square.svg?raw';
 import iRotateCw from 'lucide-static/icons/rotate-cw.svg?raw';
 import iRoute from 'lucide-static/icons/route.svg?raw';
+import iSave from 'lucide-static/icons/save.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
 import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
 import iScroll from 'lucide-static/icons/scroll.svg?raw';
@@ -130,6 +132,7 @@ import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
 import iSkipForward from 'lucide-static/icons/skip-forward.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSmile from 'lucide-static/icons/smile.svg?raw';
+import iSnowflake from 'lucide-static/icons/snowflake.svg?raw';
 import iSpace from 'lucide-static/icons/space.svg?raw';
 import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
@@ -278,10 +281,12 @@ export const icons: Record<string, string> = {
   'redo-2': iRedo2,
   repeat: iRepeat,
   replace: iReplace,
+  rewind: iRewind,
   'rotate-ccw': iRotateCcw,
   'rotate-ccw-square': iRotateCcwSquare,
   'rotate-cw': iRotateCw,
   route: iRoute,
+  save: iSave,
   scissors: iScissors,
   'scissors-line-dashed': iScissorsLineDashed,
   scroll: iScroll,
@@ -296,6 +301,7 @@ export const icons: Record<string, string> = {
   'skip-forward': iSkipForward,
   'sliders-horizontal': iSlidersHorizontal,
   smile: iSmile,
+  snowflake: iSnowflake,
   space: iSpace,
   sparkles: iSparkles,
   speaker: iSpeaker,

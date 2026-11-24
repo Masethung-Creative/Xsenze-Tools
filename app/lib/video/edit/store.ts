@@ -4,8 +4,10 @@
  * user added as its own, in IndexedDB. Nothing leaves the device.
  */
 import {
+  fullLook,
   noTransition,
   plainDuck,
+  plainKey,
   type Clip,
   type Edit,
 } from 'xsenze-tools/lib/video/edit/timeline';
@@ -28,6 +30,7 @@ export type SavedClip = Pick<
   | 'hasAudio'
   | 'cleanOf'
   | 'cleanLevel'
+  | 'reverseOf'
 >;
 
 export interface Saved {
@@ -86,6 +89,7 @@ export const keepClip = (clip: SavedClip) => ({
   hasAudio: clip.hasAudio,
   cleanOf: clip.cleanOf,
   cleanLevel: clip.cleanLevel,
+  reverseOf: clip.reverseOf,
 });
 
 /** Keeps a file; it rejects when the browser has no room for it. */
@@ -119,30 +123,111 @@ export async function loadProject(): Promise<{
     ).catch(() => undefined);
     if (file) files.set(clip.id, file);
   }
-  const ids = new Set(files.keys());
+  return { saved: filled(saved, new Set(files.keys())), files };
+}
+
+/** A record with the clips whose file is gone left out, and newer fields filled in. */
+function filled(saved: Saved, ids: ReadonlySet<string>): Saved {
   const edit = saved.edit;
   return {
-    saved: {
-      ...saved,
-      clips: saved.clips.filter((clip) => ids.has(clip.id)),
-      edit: {
-        ...edit,
-        mix: { ...edit.mix, duck: edit.mix.duck ?? plainDuck() },
-        // older records lack the newer fields
-        pieces: edit.pieces
-          .filter((piece) => ids.has(piece.clip))
-          .map((piece) => ({
-            ...piece,
-            transition: piece.transition ?? noTransition(),
-          })),
-        audio: edit.audio.filter((item) => ids.has(item.clip)),
-        layers: (edit.layers ?? []).filter(
-          (layer) => !layer.clip || ids.has(layer.clip),
-        ),
-      },
+    ...saved,
+    clips: saved.clips.filter((clip) => ids.has(clip.id)),
+    edit: {
+      ...edit,
+      mix: { ...edit.mix, duck: edit.mix.duck ?? plainDuck() },
+      // older records lack the newer fields
+      pieces: edit.pieces
+        .filter((piece) => ids.has(piece.clip))
+        .map((piece) => ({
+          ...piece,
+          transition: piece.transition ?? noTransition(),
+          look: fullLook(piece.look),
+        })),
+      audio: edit.audio.filter((item) => ids.has(item.clip)),
+      layers: (edit.layers ?? [])
+        .filter((layer) => !layer.clip || ids.has(layer.clip))
+        .map((layer) => ({ ...layer, key: layer.key ?? plainKey() })),
     },
-    files,
   };
+}
+
+/** The name a project file's media sit under inside it. */
+const mediaPath = (clip: SavedClip) =>
+  `media/${clip.id}-${clip.name.replace(/[\\/:*?"<>|]+/g, '_')}`;
+
+/**
+ * One file holding the edit, its settings and every file it uses, to move
+ * an edit to another device or keep a copy: a zip with project.json and a
+ * media folder.
+ */
+export async function packProject(
+  saved: Saved,
+  files: ReadonlyMap<string, File>,
+): Promise<Blob> {
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
+  zip.file(
+    'project.json',
+    JSON.stringify({ app: 'xsenze-video-edit', ...saved }, null, 1),
+  );
+  for (const clip of saved.clips) {
+    const file = files.get(clip.id);
+    // media are already packed: storing them as they are is quicker
+    if (file) zip.file(mediaPath(clip), file, { compression: 'STORE' });
+  }
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/zip',
+    compression: 'DEFLATE',
+  });
+}
+
+/** Reads a project file back; it rejects when the file is not one. */
+export async function unpackProject(file: Blob): Promise<{
+  saved: Saved;
+  files: Map<string, File>;
+}> {
+  const { default: JSZip } = await import('jszip');
+  const zip = await JSZip.loadAsync(file);
+  const text = await zip.file('project.json')?.async('string');
+  if (!text) throw new Error('not-a-project');
+  const saved = JSON.parse(text) as Saved & { app?: string };
+  if (saved.app !== 'xsenze-video-edit' || !Array.isArray(saved.clips))
+    throw new Error('not-a-project');
+  const files = new Map<string, File>();
+  for (const clip of saved.clips) {
+    const entry = zip.file(mediaPath(clip));
+    if (!entry) continue;
+    const blob = await entry.async('blob');
+    files.set(clip.id, new File([blob], clip.name, { type: typeOf(clip) }));
+  }
+  return { saved: filled(saved, new Set(files.keys())), files };
+}
+
+/** A media type from a name, so the preview's elements can play the file. */
+function typeOf(clip: SavedClip): string {
+  const ext = /\.([a-z0-9]+)$/i.exec(clip.name)?.[1]?.toLowerCase() ?? '';
+  const known: Record<string, string> = {
+    mp4: 'video/mp4',
+    m4v: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+    mkv: 'video/x-matroska',
+    mp3: 'audio/mpeg',
+    m4a: 'audio/mp4',
+    wav: 'audio/wav',
+    ogg: 'audio/ogg',
+    opus: 'audio/ogg',
+    flac: 'audio/flac',
+    aac: 'audio/aac',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    avif: 'image/avif',
+  };
+  return known[ext] ?? '';
 }
 
 /** Forgets the kept edit and every kept file. */

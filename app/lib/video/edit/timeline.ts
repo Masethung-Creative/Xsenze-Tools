@@ -31,6 +31,8 @@ export interface Clip {
   /** A cleaned copy: the clip it was made from, and how hard. */
   cleanOf?: string;
   cleanLevel?: number;
+  /** A copy that plays backwards: the clip it was made from. */
+  reverseOf?: string;
 }
 
 /** A stretch of one clip on the timeline. */
@@ -88,7 +90,24 @@ export interface Look {
   flipV: boolean;
   /** Shares of the picture cut from each edge, 0 to 0.45. */
   crop: { left: number; right: number; top: number; bottom: number };
+  /** Darker corners, 0 to 1. */
+  vignette: number;
+  /** A soft blur over the whole picture, 0 to 1. */
+  blur: number;
+  /** A slow zoom or pan over the piece. */
+  motion: Motion;
 }
+
+export type MotionKind =
+  'none' | 'in' | 'out' | 'left' | 'right' | 'up' | 'down';
+
+export interface Motion {
+  kind: MotionKind;
+  /** How far it zooms or travels: 0.05 to 0.5 of the picture. */
+  amount: number;
+}
+
+export const plainMotion = (): Motion => ({ kind: 'none', amount: 0.2 });
 
 export const plainLook = (): Look => ({
   brightness: 1,
@@ -99,6 +118,15 @@ export const plainLook = (): Look => ({
   flipH: false,
   flipV: false,
   crop: { left: 0, right: 0, top: 0, bottom: 0 },
+  vignette: 0,
+  blur: 0,
+  motion: plainMotion(),
+});
+
+/** A look from an older record, with the newer fields filled in. */
+export const fullLook = (look: Partial<Look> | undefined): Look => ({
+  ...plainLook(),
+  ...look,
 });
 
 /** Seconds a new photo shows for. */
@@ -749,7 +777,26 @@ export interface Layer {
   /** A video's sound: 0 to 2. */
   volume: number;
   muted: boolean;
+  /** Green screen: a colour taken out of a picture or video. */
+  key: ChromaKey;
 }
+
+export interface ChromaKey {
+  on: boolean;
+  /** The colour taken out, #rrggbb. */
+  colour: string;
+  /** How far from that colour is also taken out, 0 to 1. */
+  range: number;
+  /** How soft the edge is, 0 to 1. */
+  soft: number;
+}
+
+export const plainKey = (): ChromaKey => ({
+  on: false,
+  colour: '#00b140',
+  range: 0.35,
+  soft: 0.3,
+});
 
 /** Seconds a new text or overlay lasts. */
 export const layerSeconds = 4;
@@ -795,6 +842,7 @@ function baseLayer(lane: LayerLane, kind: LayerKind, start: number): Layer {
     emoji: '',
     volume: 1,
     muted: false,
+    key: plainKey(),
   };
 }
 

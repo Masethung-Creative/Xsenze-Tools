@@ -9,6 +9,8 @@
 import type { StreamTargetChunk } from 'mediabunny';
 import { loadMediabunny, openInput } from 'xsenze-tools/lib/video/media-probe';
 import { stretchBuffer } from 'xsenze-tools/lib/audio/stretch';
+import { encodeWav } from 'xsenze-tools/lib/audio/audio';
+import { AnimatedGifEncoder } from 'xsenze-tools/lib/video/gif';
 import {
   drawShots,
   type Fit,
@@ -354,9 +356,15 @@ class Pictures {
   #readers = new Map<string, Promise<Reader>>();
   #photos = new Map<string, Promise<ImageBitmap | null>>();
   #used = new Set<string>();
+  /**
+   * How far before the asked-for second a reader starts: all of its stretch
+   * for an export, a moment for a single frame.
+   */
+  #after: number;
 
-  constructor(m: Mediabunny) {
+  constructor(m: Mediabunny, after = Infinity) {
     this.#m = m;
+    this.#after = after;
   }
 
   /** A video's frame at clip second `t`, from the reader under `key`. */
@@ -370,7 +378,12 @@ class Pictures {
     this.#used.add(key);
     let reader = this.#readers.get(key);
     if (!reader) {
-      reader = Reader.open(this.#m, clip, from, to);
+      reader = Reader.open(
+        this.#m,
+        clip,
+        Math.max(from, Math.min(t, to) - this.#after),
+        to,
+      );
       this.#readers.set(key, reader);
     }
     return (await reader).at(t);
@@ -438,6 +451,7 @@ async function drawFrame(
       picture,
       look: piece.look,
       fade: fadeAt(local, lengthOf(piece), piece.fadeIn, piece.fadeOut),
+      progress: local / Math.max(1e-6, lengthOf(piece)),
     };
   };
   if (show) {
@@ -639,4 +653,162 @@ export async function exportEdit(
   const buffer = (target as InstanceType<Mediabunny['BufferTarget']>).buffer;
   if (!buffer) throw new Error('export-empty');
   return { blob: new Blob([buffer], { type: format.mimeType }), ext };
+}
+
+/** One frame of the edit, as the export draws it, as a PNG. */
+export async function exportFrame(
+  clips: readonly Clip[],
+  edit: Edit,
+  t: number,
+  width: number,
+  height: number,
+  fit: Fit,
+): Promise<Blob> {
+  const m = await loadMediabunny();
+  await fontsReady(edit);
+  const canvas = new OffscreenCanvas(width, height);
+  const context = canvas.getContext('2d', { alpha: false })!;
+  const pictures = new Pictures(m, 0.05);
+  try {
+    await drawFrame(
+      context,
+      pictures,
+      new Map(clips.map((clip) => [clip.id, clip])),
+      edit,
+      Math.max(0, t),
+      width,
+      height,
+      fit,
+    );
+  } finally {
+    await pictures.close();
+  }
+  return canvas.convertToBlob({ type: 'image/png' });
+}
+
+export interface GifOptions {
+  width: number;
+  height: number;
+  fps: number;
+  fit: Fit;
+  onProgress?: (fraction: number) => void;
+  signal?: AbortSignal;
+}
+
+/** The edit as a looping GIF, without sound. */
+export async function exportGif(
+  clips: readonly Clip[],
+  edit: Edit,
+  options: GifOptions,
+): Promise<Blob> {
+  const m = await loadMediabunny();
+  const length = editLength(edit);
+  if (length <= 0) throw new Error('export-empty');
+  const { width, height, fps, signal } = options;
+  await fontsReady(edit);
+  const clipMap = new Map(clips.map((clip) => [clip.id, clip]));
+  const canvas = new OffscreenCanvas(width, height);
+  const context = canvas.getContext('2d', {
+    alpha: false,
+    willReadFrequently: true,
+  })!;
+  const encoder = new AnimatedGifEncoder(width, height);
+  const pictures = new Pictures(m);
+  const frames = Math.max(1, Math.round(length * fps));
+  try {
+    for (let frame = 0; frame < frames; frame++) {
+      if (signal?.aborted)
+        throw new DOMException('The export was stopped', 'AbortError');
+      await drawFrame(
+        context,
+        pictures,
+        clipMap,
+        edit,
+        frame / fps,
+        width,
+        height,
+        options.fit,
+      );
+      // GIF times are in hundredths: rounded as running totals, they keep time
+      const delay =
+        Math.round(((frame + 1) * 100) / fps) - Math.round((frame * 100) / fps);
+      encoder.addFrame(
+        context.getImageData(0, 0, width, height).data,
+        delay * 10,
+      );
+      options.onProgress?.(Math.min(0.99, (frame + 1) / frames));
+    }
+  } finally {
+    await pictures.close();
+  }
+  options.onProgress?.(1);
+  return new Blob([encoder.finish()], { type: 'image/gif' });
+}
+
+export type SoundFormat = 'wav' | 'mp3';
+
+export interface SoundOptions {
+  format: SoundFormat;
+  onProgress?: (fraction: number) => void;
+  signal?: AbortSignal;
+}
+
+/** The edit's mixed sound alone, 48 kHz stereo, as WAV or MP3. */
+export async function exportSound(
+  clips: readonly Clip[],
+  edit: Edit,
+  options: SoundOptions,
+): Promise<Blob> {
+  const m = await loadMediabunny();
+  const length = editLength(edit);
+  if (length <= 0) throw new Error('export-empty');
+  const sounds = stretches(new Map(clips.map((c) => [c.id, c])), edit);
+  const abort = () => {
+    if (options.signal?.aborted)
+      throw new DOMException('The export was stopped', 'AbortError');
+  };
+  if (options.format === 'wav') {
+    const frames = Math.max(1, Math.ceil(length * sampleRate));
+    const left = new Float32Array(frames);
+    const right = new Float32Array(frames);
+    for (let from = 0; from < length; from += windowSeconds) {
+      abort();
+      const to = Math.min(length, from + windowSeconds);
+      const mixed = await mixWindow(m, sounds, from, to);
+      const at = Math.round(from * sampleRate);
+      const room = frames - at;
+      left.set(mixed.getChannelData(0).subarray(0, room), at);
+      right.set(mixed.getChannelData(1).subarray(0, room), at);
+      options.onProgress?.(Math.min(0.99, to / length));
+    }
+    options.onProgress?.(1);
+    return new Blob([encodeWav([left, right], sampleRate)], {
+      type: 'audio/wav',
+    });
+  }
+  // browsers have no MP3 encoder of their own: a WASM one is added
+  if (!(await m.canEncodeAudio('mp3'))) {
+    const { registerMp3Encoder } = await import('@mediabunny/mp3-encoder');
+    registerMp3Encoder();
+  }
+  const target = new m.BufferTarget();
+  const output = new m.Output({ format: new m.Mp3OutputFormat(), target });
+  const audio = new m.AudioBufferSource({ codec: 'mp3', bitrate: 192_000 });
+  output.addAudioTrack(audio);
+  try {
+    await output.start();
+    for (let from = 0; from < length; from += windowSeconds) {
+      abort();
+      const to = Math.min(length, from + windowSeconds);
+      await audio.add(await mixWindow(m, sounds, from, to));
+      options.onProgress?.(Math.min(0.99, to / length));
+    }
+    await output.finalize();
+  } catch (error) {
+    await output.cancel().catch(() => undefined);
+    throw error;
+  }
+  options.onProgress?.(1);
+  if (!target.buffer) throw new Error('export-empty');
+  return new Blob([target.buffer], { type: 'audio/mpeg' });
 }

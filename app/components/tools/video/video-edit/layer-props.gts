@@ -13,6 +13,7 @@ import XzSwitch from 'xsenze-tools/components/xz/switch';
 import XzTextArea from 'xsenze-tools/components/xz/text-area';
 import PropSlider from 'xsenze-tools/components/tools/video/video-edit/prop-slider';
 import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
+import { edgeColour } from 'xsenze-tools/lib/video/edit/chroma';
 import {
   ANIMS,
   FONTS,
@@ -23,6 +24,7 @@ import {
   minimumPiece,
   type Align,
   type Anim,
+  type ChromaKey,
   type Clip,
   type FontId,
   type Layer,
@@ -166,6 +168,67 @@ export default class LayerProps extends Component<LayerPropsSignature> {
   #put(change: Partial<Layer>, live = false) {
     this.args.onChange(change, live);
   }
+
+  // ----- green screen -----
+
+  get keyRgb(): Rgb {
+    return parseHex(this.layer.key.colour) ?? [0, 177, 64];
+  }
+
+  get canPickOnScreen() {
+    return typeof window !== 'undefined' && 'EyeDropper' in window;
+  }
+
+  #setKey(change: Partial<ChromaKey>, live = false) {
+    this.#put({ key: { ...this.layer.key, ...change } }, live);
+  }
+
+  /** The colour around the picture's edge, from its first thumbnail. */
+  async #edge(): Promise<string | null> {
+    const url = this.args.clip?.frames[0];
+    if (!url) return null;
+    const image = new Image();
+    image.src = url;
+    try {
+      await image.decode();
+    } catch {
+      return null;
+    }
+    return edgeColour(image, image.naturalWidth, image.naturalHeight);
+  }
+
+  /** Turned on, it takes out the colour around the edge: usually the screen. */
+  setKeyOn = async (on: boolean) => {
+    const colour = on ? await this.#edge() : null;
+    this.#setKey(colour ? { on, colour } : { on });
+  };
+
+  keyFromEdge = async () => {
+    const colour = await this.#edge();
+    if (colour) this.#setKey({ colour });
+  };
+
+  pickOnScreen = async () => {
+    const Dropper = (
+      window as unknown as {
+        EyeDropper?: new () => { open(): Promise<{ sRGBHex: string }> };
+      }
+    ).EyeDropper;
+    if (!Dropper) return;
+    try {
+      const { sRGBHex } = await new Dropper().open();
+      const rgb = parseHex(sRGBHex);
+      if (rgb) this.#setKey({ colour: hex(rgb) });
+    } catch {
+      // the pick was called off
+    }
+  };
+
+  setKeyColour = (colour: Rgb) => this.#setKey({ colour: hex(colour) });
+  setKeyRange = (range: number, dragging: boolean) =>
+    this.#setKey({ range }, dragging);
+  setKeySoft = (soft: number, dragging: boolean) =>
+    this.#setKey({ soft }, dragging);
 
   #setStyle(change: Partial<TextStyle>, live = false) {
     this.#put({ style: { ...this.style, ...change } }, live);
@@ -579,6 +642,60 @@ export default class LayerProps extends Component<LayerPropsSignature> {
           @columns={{3}}
           @onChange={{this.pickPlace}}
         />
+        {{#if this.isMedia}}
+          <XzHeading @text="Green screen" />
+          <XzRow
+            @title="Take out a colour"
+            @detail="For a green or blue screen behind"
+          >
+            <XzSwitch
+              class="ve-key-on"
+              @on={{this.layer.key.on}}
+              @onChange={{this.setKeyOn}}
+              aria-label="Take out a colour"
+            />
+          </XzRow>
+          {{#if this.layer.key.on}}
+            <XzColourWell
+              class="ve-key-colour"
+              @label="Colour"
+              @colour={{this.keyRgb}}
+              @onChange={{this.setKeyColour}}
+            />
+            <XzGrid>
+              <XzButton
+                class="ve-key-edge"
+                @text="From the edge"
+                @onClick={{this.keyFromEdge}}
+              />
+              {{#if this.canPickOnScreen}}
+                <XzButton
+                  class="ve-key-pick"
+                  @text="Pick on screen"
+                  @onClick={{this.pickOnScreen}}
+                />
+              {{/if}}
+            </XzGrid>
+            <PropSlider
+              class="ve-key-range"
+              @label="How much"
+              @value={{this.layer.key.range}}
+              @step={{0.01}}
+              @nudge={{0.05}}
+              @readout={{percent}}
+              @onChange={{this.setKeyRange}}
+            />
+            <PropSlider
+              class="ve-key-soft"
+              @label="Soft edge"
+              @value={{this.layer.key.soft}}
+              @step={{0.01}}
+              @nudge={{0.05}}
+              @readout={{percent}}
+              @onChange={{this.setKeySoft}}
+            />
+          {{/if}}
+        {{/if}}
       </XzRows>
     {{else if this.tabIsAnim}}
       <XzRows @framed={{true}}>

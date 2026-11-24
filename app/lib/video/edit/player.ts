@@ -609,6 +609,7 @@ export default class EditPlayer {
       picture: this.#picture(place),
       look: place.piece.look,
       fade: fadeOf(place),
+      progress: localOf(place) / Math.max(1e-6, lengthOf(place.piece)),
     };
   }
 
