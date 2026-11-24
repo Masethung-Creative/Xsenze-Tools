@@ -2815,6 +2815,7 @@ export default class VideoEdit extends Component {
   /** The preview area's size in px, for the canvas at the frame's shape. */
   @tracked stageW = 0;
   @tracked stageH = 0;
+  @tracked stagePadX = 0;
 
   get toolButtons() {
     return TOOLS.map((t) => ({
@@ -2983,9 +2984,21 @@ export default class VideoEdit extends Component {
     );
   }
 
+  /**
+   * The preview column only as wide as the picture at its height, so the
+   * side panels get the room the black margins would have taken.
+   */
+  get fitStyle() {
+    if (!this.stageH) return htmlSafe('');
+    const width = this.stageH * this.outAspect + this.stagePadX;
+    return htmlSafe(`--ve-fit: ${Math.ceil(width)}px`);
+  }
+
   measureStage = modifier((box: HTMLElement) => {
     const observer = new ResizeObserver(() => {
       const style = getComputedStyle(box);
+      this.stagePadX =
+        parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
       this.stageW =
         box.clientWidth -
         parseFloat(style.paddingLeft) -
@@ -3061,6 +3074,7 @@ export default class VideoEdit extends Component {
 
     <div
       class="ve {{if this.panelOpen 've--panel'}}"
+      style={{this.fitStyle}}
       {{this.keys}}
       {{on "dragover" this.drop.enter}}
       {{on "dragleave" this.drop.leave}}

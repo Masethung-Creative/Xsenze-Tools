@@ -19,7 +19,7 @@
   grid-template:
     "rail stage props" minmax(0, 1fr)
     "tl tl tl" var(--ve-timeline)
-    / 4rem minmax(0, 1fr) var(--ve-props);
+    / 4rem minmax(0, var(--ve-fit, 1fr)) minmax(var(--ve-props), 1fr);
   block-size: 100%;
   min-block-size: 0;
   background: var(--xz-bg);
@@ -29,7 +29,12 @@
   grid-template-areas:
     "rail panel stage props"
     "tl tl tl tl";
-  grid-template-columns: 4rem var(--ve-panel) minmax(0, 1fr) var(--ve-props);
+
+  /* the preview only as wide as the picture (--ve-fit, measured); both
+     side panels share the rest, so no black margins beside the picture */
+  grid-template-columns:
+    4rem minmax(var(--ve-panel), 1fr) minmax(0, var(--ve-fit, 1fr))
+    minmax(var(--ve-props), 1fr);
 }
 
 /* ---------- tool rail ---------- */
