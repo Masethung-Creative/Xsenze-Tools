@@ -9,7 +9,8 @@
 }
 
 .ve {
-  --ve-gutter: var(--xz-space-3);
+  /* the same 16 px gutter as every other tool panel */
+  --ve-gutter: var(--xz-panel-pad, var(--xz-space-4));
   --ve-panel: 17.5rem;
   --ve-props: 19rem;
   --ve-timeline: 15.5rem;
@@ -297,6 +298,7 @@
 .ve-stage {
   grid-area: stage;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 2.5rem minmax(0, 1fr) 3.25rem;
   min-inline-size: 0;
   min-block-size: 0;
@@ -325,6 +327,10 @@
 }
 
 .ve-stage__size {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-inline-start: auto;
   color: var(--xz-text-muted);
   font: 0.6875rem var(--xz-font-mono);
