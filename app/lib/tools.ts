@@ -79,10 +79,10 @@ export interface ToolCategory {
 }
 
 /**
- * Video Edit is built in steps the user reviews; until export is in, it shows
- * only in dev builds. Set to true to put it live.
+ * Video Edit is live. Set to import.meta.env.DEV to keep it to dev builds
+ * again.
  */
-const VIDEO_EDIT_LIVE = import.meta.env.DEV;
+const VIDEO_EDIT_LIVE = true;
 
 export const toolCategories: ToolCategory[] = [
   {
@@ -321,7 +321,8 @@ export const toolCategories: ToolCategory[] = [
             {
               id: 'video-edit',
               name: 'Video Edit',
-              description: 'Join clips, trim, split and cut parts out',
+              description:
+                'Join clips, cut, add music, titles and effects, then export',
               icon: 'clapperboard',
               accepts: VIDEO_ACCEPT,
               produces: ['video/mp4', 'video/webm'],

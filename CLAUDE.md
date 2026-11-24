@@ -57,8 +57,8 @@ their `soon` line from `lib/tools.ts`):
   hand-off from `lib/handoff.ts`.
 - Video Edit (`video-edit`, Video category) is built in steps the user checks: (1) layers (Video,
   Music, Voice), audio, volume up to 200 %, fades; (2) an Overlay layer (pictures, a small video,
-  text) and speed 0.5–2×; (3) export with every layer and the mixed sound. `VIDEO_EDIT_LIVE` in `lib/tools.ts` keeps it to
-  dev builds until export is in. The edit is plain data in `lib/video/edit/timeline.ts` (clips,
+  text) and speed 0.5–2×; (3) export with every layer and the mixed sound. It is live (`VIDEO_EDIT_LIVE` in `lib/tools.ts`
+  is true; set it to `import.meta.env.DEV` to hide it again). The edit is plain data in `lib/video/edit/timeline.ts` (clips,
   video pieces, audio items placed in time, a level per layer; pure functions and a History for undo; unit tests in
   `tests/unit/video-edit-timeline-test.ts`). `lib/video/edit/player.ts` plays the edit on one clock: the
   video track onto one canvas with black bars, every sound through its own Web Audio gain.

@@ -28,21 +28,21 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 
 ## Video
 
-| Tool                | Status | Notes                                    |
-| ------------------- | ------ | ---------------------------------------- |
-| Auto Subtitle       | ✅     | Whisper on the device                    |
-| Frame Extractor     | ✅     |                                          |
-| Screen Recorder     | ✅     |                                          |
-| Subtitle Converter  | ✅     |                                          |
-| Subtitle Studio     | ✅     | Burn subtitles in                        |
-| Subtitle Translator | ✅     | Browser Translator API, else NLLB-200    |
-| Timecode Calculator | ✅     |                                          |
-| Video Atlas         | ✅     |                                          |
-| Video Compressor    | ✅     |                                          |
-| Video Muter         | ✅     |                                          |
-| Video to GIF        | ✅     |                                          |
-| Video Trimmer       | ✅     |                                          |
-| **Video Edit**      | 🧪     | `VIDEO_EDIT_LIVE` keeps it to dev builds |
+| Tool                | Status | Notes                                      |
+| ------------------- | ------ | ------------------------------------------ |
+| Auto Subtitle       | ✅     | Whisper on the device                      |
+| Frame Extractor     | ✅     |                                            |
+| Screen Recorder     | ✅     |                                            |
+| Subtitle Converter  | ✅     |                                            |
+| Subtitle Studio     | ✅     | Burn subtitles in                          |
+| Subtitle Translator | ✅     | Browser Translator API, else NLLB-200      |
+| Timecode Calculator | ✅     |                                            |
+| Video Atlas         | ✅     |                                            |
+| Video Compressor    | ✅     |                                            |
+| Video Muter         | ✅     |                                            |
+| Video to GIF        | ✅     |                                            |
+| Video Trimmer       | ✅     |                                            |
+| **Video Edit**      | ✅     | Live (`VIDEO_EDIT_LIVE` in `lib/tools.ts`) |
 
 ### Video Edit
 
