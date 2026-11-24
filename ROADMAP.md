@@ -75,11 +75,11 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | SRT and VTT files become captions on the Text row                                                                                                                         | ✅     |
 | Open in another tool after export                                                                                                                                         | ✅     |
 | **Phase 2: sound and speech**                                                                                                                                             |        |
-| Record a voice-over onto the Voice layer                                                                                                                                  | 📋     |
-| Auto subtitles with Whisper onto the Text layer                                                                                                                           | 📋     |
-| Ducking: music lowers under speech                                                                                                                                        | 📋     |
-| Detach a video’s sound onto its own layer                                                                                                                                 | 📋     |
-| Noise reduction on voice clips                                                                                                                                            | 📋     |
+| Record a voice-over onto the Voice layer                                                                                                                                  | ✅     |
+| Auto subtitles with Whisper onto the Text layer                                                                                                                           | ✅     |
+| Ducking: music lowers under speech                                                                                                                                        | ✅     |
+| Detach a video’s sound onto its own layer                                                                                                                                 | ✅     |
+| Noise reduction on voice clips                                                                                                                                            | ✅     |
 | **Phase 3: effects and finishing**                                                                                                                                        |        |
 | Vignette and blur effects; green screen for overlay videos                                                                                                                | 📋     |
 | Reverse a clip, freeze a frame, zoom and pan on photos                                                                                                                    | 📋     |

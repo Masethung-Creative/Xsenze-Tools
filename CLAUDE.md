@@ -101,7 +101,13 @@ their `soon` line from `lib/tools.ts`):
   sizes them on the preview. The edit, its settings and its files are kept in IndexedDB by
   `lib/video/edit/store.ts` and come back on the next visit; New edit clears them. Where
   `showSaveFilePicker` exists, an export can go straight to a file through mediabunny's
-  `StreamTarget` (MP4 without fast start), so long videos never sit whole in memory. A modifier must not read
+  `StreamTarget` (MP4 without fast start), so long videos never sit whole in memory. Sound and
+  speech: a voice-over is recorded with MediaRecorder and kept as WAV on the Voice layer; Music
+  ducks under Voice items (`duckAt`, a gain in the player and a curve in the export); "Subtitles
+  from speech" mixes the videos and Voice at 16 kHz (`mixSpeech`) for the site's Whisper worker,
+  drops bracketed sound notes and keeps captions inside the sound; noise reduction is spectral
+  gating in `lib/audio/denoise.ts`, making a hidden cleaned clip (`cleanOf`) the item switches to.
+  Tools' own messages use `toast.notify`; `toast.show` stays the "Copied" note. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.

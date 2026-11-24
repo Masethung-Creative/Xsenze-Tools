@@ -28,6 +28,9 @@ export interface Clip {
   frames: string[];
   /** The sound as waveform peaks over the whole clip; null before or without. */
   peaks: WaveformPeaks | null;
+  /** A cleaned copy: the clip it was made from, and how hard. */
+  cleanOf?: string;
+  cleanLevel?: number;
 }
 
 /** A stretch of one clip on the timeline. */
@@ -427,6 +430,57 @@ export interface Mix {
   video: Level;
   music: Level;
   voice: Level;
+  /** The music drops under the Voice layer. */
+  duck: Duck;
+}
+
+export interface Duck {
+  on: boolean;
+  /** The music's level under a voice, 0 to 1. */
+  level: number;
+}
+
+export const plainDuck = (): Duck => ({ on: true, level: 0.3 });
+
+/** Seconds the music takes to drop before a voice, and to come back after. */
+export const duckRamp = 0.4;
+
+/**
+ * How much of its level the music keeps at timeline second `t`: all of it,
+ * or `duck.level` while a voice plays, easing down just before and back up
+ * just after.
+ */
+export function duckAt(edit: Edit, t: number): number {
+  const duck = edit.mix.duck;
+  if (!duck?.on || edit.mix.voice.muted || edit.mix.voice.volume <= 0) return 1;
+  let cover = 0;
+  for (const item of edit.audio) {
+    if (item.lane !== 'voice' || item.muted || item.volume <= 0) continue;
+    const a = item.start;
+    const b = endOf(item);
+    let c = 0;
+    if (t >= a && t <= b) c = 1;
+    else if (t < a && a - t < duckRamp) c = 1 - (a - t) / duckRamp;
+    else if (t > b && t - b < duckRamp) c = 1 - (t - b) / duckRamp;
+    if (c > cover) cover = c;
+    if (cover >= 1) break;
+  }
+  return 1 - (1 - Math.max(0, Math.min(1, duck.level))) * cover;
+}
+
+/** Whether `length` seconds at `start` are free on an audio layer. */
+export function laneFree(
+  items: readonly AudioItem[],
+  lane: Lane,
+  start: number,
+  length: number,
+): boolean {
+  return !items.some(
+    (other) =>
+      other.lane === lane &&
+      start < endOf(other) - 1e-6 &&
+      start + length > other.start + 1e-6,
+  );
 }
 
 export interface Edit {
@@ -446,6 +500,7 @@ export const emptyEdit = (): Edit => ({
     video: { volume: 1, muted: false },
     music: { volume: 1, muted: false },
     voice: { volume: 1, muted: false },
+    duck: plainDuck(),
   },
   background: { kind: 'black', colour: '#000000' },
 });

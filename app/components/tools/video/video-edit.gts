@@ -87,7 +87,6 @@ import {
   type Edit,
   type Lane,
   type Level,
-  type Mix,
   type Piece,
   plainLook,
   photoLimit,
@@ -111,10 +110,20 @@ import {
   type ShapeKind,
   type TextPreset,
   type TransitionKind,
+  laneFree,
+  lengthOf,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import Job from 'xsenze-tools/components/tools/shared/media/job';
 import type { StreamTargetChunk } from 'mediabunny';
 import { downloadBlob } from 'xsenze-tools/lib/download';
+import { channelsOf, encodeWav } from 'xsenze-tools/lib/audio/audio';
+import { denoise } from 'xsenze-tools/lib/audio/denoise';
+import {
+  LANGUAGES,
+  MODELS,
+  type Mode,
+} from 'xsenze-tools/lib/ai/whisper-models';
+import type { Cue } from 'xsenze-tools/lib/subtitles/subtitles';
 import { service } from '@ember/service';
 import type XzToastService from 'xsenze-tools/services/xz-toast';
 import OpenIn from 'xsenze-tools/components/tools/shared/media/open-in';
@@ -134,6 +143,7 @@ import {
   CONTAINER_CODECS,
   exportCodecs,
   exportEdit,
+  mixSpeech,
   type ExportCodec,
   type ExportContainer,
   type ExportResult,
@@ -219,6 +229,8 @@ const EXPORT_ERROR = "Couldn't export. Try another format or a smaller size.";
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
 
 type ToolId = 'media' | 'text' | 'overlay' | 'audio' | 'canvas';
+/** The layers with a level of their own. */
+type Layered = 'video' | 'music' | 'voice';
 type TabId = 'edit' | 'adjust' | 'audio' | 'transition' | 'style' | 'anim';
 
 /** The editor's tool rail. */
@@ -263,6 +275,46 @@ const PRESETS: { label: string; shape: number }[] = [
 ];
 const PRESET_LABELS = PRESETS.map((p) => p.label);
 const CAPTION_ACCEPT = acceptAttr([...SUBTITLE_ACCEPT]);
+
+// ----- speech -----
+const HEAR_MODES: Mode[] = ['fast', 'reasonable', 'accurate'];
+const HEAR_LABELS = ['Rough', 'Decent', 'Experimental'];
+const hasGpu = () => typeof navigator !== 'undefined' && 'gpu' in navigator;
+const CLEAN_LABELS = ['Off', 'Light', 'Strong'];
+const CLEAN_LEVELS = [0, 0.5, 1];
+/** Files larger than this are not decoded whole for noise reduction. */
+const cleanLimit = 300 * 1024 * 1024;
+const MicIcon = <template><IconSvg @name="mic" /></template>;
+const StopIcon = <template><IconSvg @name="square" /></template>;
+const SubtitleIcon = <template><IconSvg @name="captions" /></template>;
+const DetachIcon = <template><IconSvg @name="unlink" /></template>;
+/**
+ * Whisper's words without its notes on sounds, such as "(crickets
+ * chirping)" or "[Music]": a word inside brackets is not speech.
+ */
+function spokenWords<T extends { text: string }>(words: T[]): T[] {
+  let depth = 0;
+  return words.filter((word) => {
+    const opens = (word.text.match(/[([]/g) ?? []).length;
+    const closes = (word.text.match(/[)\]]/g) ?? []).length;
+    const inside = depth > 0 || opens > 0;
+    depth = Math.max(0, depth + opens - closes);
+    return !inside;
+  });
+}
+
+/** Captions kept inside the speech heard, so a stray time cannot lengthen the edit. */
+function spokenCues(cues: Cue[], seconds: number): Cue[] {
+  const limit = seconds * 1000;
+  return cues
+    .filter((cue) => cue.start < limit - 50)
+    .map((cue) => ({ ...cue, end: Math.min(cue.end, limit) }));
+}
+
+const recordClock = (seconds: number) => {
+  const s = Math.floor(seconds);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 const CaptionsIcon = <template><IconSvg @name="captions" /></template>;
 /** Above this, an export is written to a file as it renders, where the browser can. */
 const diskBytes = 500e6;
@@ -426,7 +478,7 @@ export default class VideoEdit extends Component {
     this.#restored = true;
     this.#commit(saved.edit, false);
     for (const clip of clips) void this.#describe(clip);
-    this.toast.show('Your last edit is back');
+    this.toast.notify('Your last edit is back');
   }
 
   /** Keeps the edit and settings soon after a change. */
@@ -456,7 +508,7 @@ export default class VideoEdit extends Component {
   #noRoom() {
     if (this.#full) return;
     this.#full = true;
-    this.toast.show(
+    this.toast.notify(
       'This browser has no room to keep the edit. Export it before you close the tab.',
     );
   }
@@ -483,6 +535,13 @@ export default class VideoEdit extends Component {
 
   willDestroy() {
     super.willDestroy();
+    if (this.#rec) {
+      cancelAnimationFrame(this.#rec.frame);
+      this.#rec.recorder.stop();
+      this.#rec.stream.getTracks().forEach((track) => track.stop());
+      void this.#rec.context.close();
+      this.#rec = null;
+    }
     // what changed in the last moment is kept now
     if (this.#restored && this.clips.length) {
       window.clearTimeout(this.#keepTimer);
@@ -1032,24 +1091,27 @@ export default class VideoEdit extends Component {
   }
 
   get clipRows() {
-    return this.clips.map((clip) => ({
-      clip,
-      isVideo: clip.kind !== 'audio',
-      thumb: clip.frames[0] ?? null,
-      detail: (clip.kind === 'video'
-        ? [
-            `${clip.width} × ${clip.height}`,
-            formatFps(clip.fps),
-            tc(clip.duration),
-            clip.hasAudio ? null : 'no sound',
-          ]
-        : clip.kind === 'image'
-          ? ['Photo', `${clip.width} × ${clip.height}`]
-          : ['Sound', tc(clip.duration)]
-      )
-        .filter(Boolean)
-        .join(' · '),
-    }));
+    // cleaned copies stay out of sight: they follow their original
+    return this.clips
+      .filter((clip) => !clip.cleanOf)
+      .map((clip) => ({
+        clip,
+        isVideo: clip.kind !== 'audio',
+        thumb: clip.frames[0] ?? null,
+        detail: (clip.kind === 'video'
+          ? [
+              `${clip.width} × ${clip.height}`,
+              formatFps(clip.fps),
+              tc(clip.duration),
+              clip.hasAudio ? null : 'no sound',
+            ]
+          : clip.kind === 'image'
+            ? ['Photo', `${clip.width} × ${clip.height}`]
+            : ['Sound', tc(clip.duration)]
+        )
+          .filter(Boolean)
+          .join(' · '),
+      }));
   }
 
   get mixRows() {
@@ -1350,7 +1412,7 @@ export default class VideoEdit extends Component {
   saveExport = () => {
     const file = this.resultFile;
     if (!file) return;
-    if (this.savedToDisk) this.toast.show(`Already saved as ${file.name}`);
+    if (this.savedToDisk) this.toast.notify(`Already saved as ${file.name}`);
     else downloadBlob(file, file.name);
   };
 
@@ -1439,19 +1501,26 @@ export default class VideoEdit extends Component {
   removeClip = (id: string) => {
     const clip = this.clipMap.get(id);
     if (!clip) return;
-    void dropFile(id);
-    this.clips = this.clips.filter((c) => c.id !== id);
+    const gone = this.clips.filter((c) => c.id === id || c.cleanOf === id);
+    const ids = new Set(gone.map((c) => c.id));
+    for (const c of gone) void dropFile(c.id);
+    this.clips = this.clips.filter((c) => !ids.has(c.id));
     // items of a gone file cannot come back
     this.history.clear();
     this.#change(
       {
-        pieces: this.pieces.filter((piece) => piece.clip !== id),
-        audio: this.edit.audio.filter((item) => item.clip !== id),
+        pieces: this.pieces.filter((piece) => !ids.has(piece.clip)),
+        audio: this.edit.audio.filter((item) => !ids.has(item.clip)),
+        layers: this.edit.layers.filter(
+          (layer) => !layer.clip || !ids.has(layer.clip),
+        ),
       },
       false,
     );
-    URL.revokeObjectURL(clip.url);
-    release(clip.frames);
+    for (const c of gone) {
+      URL.revokeObjectURL(c.url);
+      release(c.frames);
+    }
   };
 
   addVideoAgain = (id: string) => {
@@ -1496,22 +1565,28 @@ export default class VideoEdit extends Component {
     );
     if (!this.#live) return;
     if (!cues.length) {
-      this.toast.show(`No captions found in ${file.name}`);
+      this.toast.notify(`No captions found in ${file.name}`);
       return;
     }
+    this.#addCaptionLayers(cues);
+  };
+
+  /** Lines with their times become captions on the Text layer. */
+  #addCaptionLayers(cues: Cue[]) {
     const layers = cues.map((cue) => ({
       ...textLayer('caption', cue.start / 1000),
       text: cue.text.trim(),
       length: Math.max(minimumPiece, (cue.end - cue.start) / 1000),
     }));
+    if (!layers.length) return;
     this.#change({ layers: [...this.edit.layers, ...layers] });
     this.selected = { kind: 'layer', id: layers[0]!.id };
     this.tab = 'style';
     this.player.scrub(layers[0]!.start);
-    this.toast.show(
+    this.toast.notify(
       `${layers.length} caption${layers.length === 1 ? '' : 's'} added`,
     );
-  };
+  }
 
   /** A sound goes onto a layer at the playhead. */
   addSound = (id: string, lane: Lane) => {
@@ -1852,7 +1927,7 @@ export default class VideoEdit extends Component {
       background: { ...this.edit.background, colour: hex(colour) },
     });
 
-  setLevel = (key: keyof Mix, change: Partial<Level>, dragging = false) => {
+  setLevel = (key: Layered, change: Partial<Level>, dragging = false) => {
     const record = !this.#dragging;
     this.#dragging = dragging;
     const mix = {
@@ -1862,11 +1937,362 @@ export default class VideoEdit extends Component {
     this.#change({ mix }, record);
   };
 
-  levelVolume = (key: keyof Mix, volume: number, dragging: boolean) =>
+  levelVolume = (key: Layered, volume: number, dragging: boolean) =>
     this.setLevel(key, { volume }, dragging);
 
   /** The switch reads "on": a layer that plays. */
-  levelOn = (key: keyof Mix, on: boolean) => this.setLevel(key, { muted: !on });
+  levelOn = (key: Layered, on: boolean) => this.setLevel(key, { muted: !on });
+
+  // ----- ducking -----
+
+  get duck() {
+    return this.edit.mix.duck;
+  }
+
+  setDuckLevel = (level: number, dragging: boolean) => {
+    const record = !this.#dragging;
+    this.#dragging = dragging;
+    this.#change(
+      { mix: { ...this.edit.mix, duck: { ...this.duck, level } } },
+      record,
+    );
+  };
+
+  setDuckOn = (on: boolean) =>
+    this.#change({ mix: { ...this.edit.mix, duck: { ...this.duck, on } } });
+
+  // ----- recording a voice-over -----
+
+  @tracked recording = false;
+  @tracked recordLevel = 0;
+  @tracked recordSeconds = 0;
+  @tracked playWhileRecording = true;
+  #rec: {
+    recorder: MediaRecorder;
+    stream: MediaStream;
+    chunks: Blob[];
+    start: number;
+    context: AudioContext;
+    frame: number;
+  } | null = null;
+
+  get recordText() {
+    return recordClock(this.recordSeconds);
+  }
+
+  get recordMeterStyle() {
+    return htmlSafe(`inline-size: ${Math.round(this.recordLevel * 100)}%`);
+  }
+
+  pickPlayWhileRecording = (on: boolean) => (this.playWhileRecording = on);
+
+  startRecording = async () => {
+    if (this.recording || this.#rec) return;
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === 'undefined'
+    ) {
+      this.toast.notify('This browser cannot record sound.');
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+    } catch {
+      this.toast.notify(
+        'The microphone is blocked. Allow it in the address bar, then try again.',
+      );
+      return;
+    }
+    if (!this.#live) return stream.getTracks().forEach((t) => t.stop());
+    const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(
+      (type) => MediaRecorder.isTypeSupported(type),
+    );
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      this.toast.notify('This browser cannot record sound.');
+      return;
+    }
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
+    // a level meter, so the user sees the microphone hears them
+    const context = new AudioContext();
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 1024;
+    context.createMediaStreamSource(stream).connect(analyser);
+    const samples = new Float32Array(analyser.fftSize);
+    const start = this.player.time;
+    const began = performance.now();
+    const rec = { recorder, stream, chunks, start, context, frame: 0 };
+    const tick = () => {
+      analyser.getFloatTimeDomainData(samples);
+      let sum = 0;
+      for (const v of samples) sum += v * v;
+      this.recordLevel = Math.min(1, Math.sqrt(sum / samples.length) * 5);
+      this.recordSeconds = (performance.now() - began) / 1000;
+      rec.frame = requestAnimationFrame(tick);
+    };
+    this.#rec = rec;
+    this.recording = true;
+    recorder.start(250);
+    tick();
+    if (this.playWhileRecording && this.hasItems && start < this.length) {
+      this.player.scrub(start);
+      this.player.play();
+    }
+  };
+
+  stopRecording = async () => {
+    const rec = this.#rec;
+    if (!rec) return;
+    this.#rec = null;
+    cancelAnimationFrame(rec.frame);
+    const stopped = new Promise((resolve) => (rec.recorder.onstop = resolve));
+    rec.recorder.stop();
+    await stopped;
+    rec.stream.getTracks().forEach((track) => track.stop());
+    void rec.context.close();
+    this.player.pause();
+    this.recording = false;
+    this.recordLevel = 0;
+    if (!this.#live) return;
+    const blob = new Blob(rec.chunks, {
+      type: rec.recorder.mimeType || 'audio/webm',
+    });
+    try {
+      // kept as WAV, which every part of the editor reads exactly
+      const decoder = new AudioContext();
+      const buffer = await decoder
+        .decodeAudioData(await blob.arrayBuffer())
+        .finally(() => void decoder.close());
+      const take =
+        this.clips.filter((clip) => /^Voice \d+$/.test(clip.name)).length + 1;
+      const file = new File(
+        [encodeWav(channelsOf(buffer), buffer.sampleRate)],
+        `Voice ${take}.wav`,
+        { type: 'audio/wav' },
+      );
+      const clip = await readAudioClip(file);
+      if (!this.#live) return URL.revokeObjectURL(clip.url);
+      this.clips = [...this.clips, clip];
+      this.#keepFile(clip);
+      const item = audioFor(clip, 'voice', rec.start, this.edit.audio);
+      this.#change({ audio: [...this.edit.audio, item] });
+      this.selected = { kind: 'audio', id: item.id };
+      void this.#describe(clip);
+    } catch (error) {
+      console.error('Recording failed:', error);
+      this.toast.notify("Couldn't keep that recording. Try again.");
+    }
+  };
+
+  // ----- subtitles from speech -----
+
+  @tracked hearing = false;
+  @tracked hearText = '';
+  @tracked hearModeIndex = 0;
+  @tracked hearLanguage = '';
+
+  get hearModel() {
+    const spec = MODELS[HEAR_MODES[this.hearModeIndex] ?? 'fast'];
+    const mb = spec.sizeMb[hasGpu() ? 'webgpu' : 'wasm'];
+    return `${spec.name} · downloads once, ${mb} MB`;
+  }
+
+  get hearLanguages() {
+    return LANGUAGES.map((l) => ({
+      ...l,
+      on: l.code === this.hearLanguage,
+    }));
+  }
+
+  get cannotHear() {
+    return this.hearing || !this.hasItems;
+  }
+
+  pickHearMode = (index: number) => (this.hearModeIndex = index);
+
+  pickHearLanguage = (event: Event) =>
+    (this.hearLanguage = (event.target as HTMLSelectElement).value);
+
+  /** Whisper hears the edit's speech; each line becomes a caption. */
+  writeSubtitles = async () => {
+    if (this.cannotHear) return;
+    this.hearing = true;
+    this.hearText = 'Gathering the speech…';
+    try {
+      const pcm = await mixSpeech(this.clips, this.edit, (fraction) => {
+        this.hearText = `Gathering the speech… ${Math.round(fraction * 100)}%`;
+      });
+      if (!this.#live) return;
+      this.hearText = 'Loading Whisper…';
+      const { transcribeWords, wordsToCues } =
+        await import('xsenze-tools/lib/ai/transcribe');
+      const words = await transcribeWords(pcm, {
+        mode: HEAR_MODES[this.hearModeIndex] ?? 'fast',
+        language: this.hearLanguage || undefined,
+        onProgress: (percent) => {
+          if (this.#live) this.hearText = `Listening… ${Math.round(percent)}%`;
+        },
+      });
+      if (!this.#live) return;
+      const cues = spokenCues(
+        wordsToCues(spokenWords(words)),
+        pcm.length / 16000,
+      );
+      if (!cues.length) this.toast.notify('No speech found in the edit');
+      else this.#addCaptionLayers(cues);
+    } catch (error) {
+      console.error('Subtitles failed:', error);
+      if (this.#live)
+        this.toast.notify(
+          "Couldn't write subtitles. Try Rough, or Chrome or Edge.",
+        );
+    } finally {
+      if (this.#live) {
+        this.hearing = false;
+        this.hearText = '';
+      }
+    }
+  };
+
+  // ----- detaching a video's sound -----
+
+  get canDetach() {
+    const piece = this.chosenPiece;
+    const clip = piece && this.clipMap.get(piece.clip);
+    return !!clip && clip.kind === 'video' && clip.hasAudio;
+  }
+
+  get cannotDetach() {
+    return !this.canDetach;
+  }
+
+  /** The selected clip's sound moves onto Voice (or Music) as its own item. */
+  detachSound = () => {
+    const piece = this.chosenPiece;
+    if (!piece || !this.canDetach) return;
+    if (Math.abs((piece.speed || 1) - 1) > 0.001) {
+      this.toast.notify('Set the speed to 1× first, then detach the sound.');
+      return;
+    }
+    const index = this.pieces.indexOf(piece);
+    const start = starts(this.pieces)[index] ?? 0;
+    const length = lengthOf(piece);
+    const audio = this.edit.audio;
+    const lane: Lane | null = laneFree(audio, 'voice', start, length)
+      ? 'voice'
+      : laneFree(audio, 'music', start, length)
+        ? 'music'
+        : null;
+    if (!lane) {
+      this.toast.notify('Make room on Voice or Music under this clip first.');
+      return;
+    }
+    const item: AudioItem = {
+      id: newId('a'),
+      clip: piece.clip,
+      lane,
+      start,
+      in: piece.in,
+      out: piece.out,
+      volume: piece.muted ? 1 : piece.volume,
+      muted: false,
+      fadeIn: piece.fadeIn,
+      fadeOut: piece.fadeOut,
+    };
+    this.#change({
+      pieces: update(this.pieces, piece.id, { muted: true }),
+      audio: [...audio, item],
+    });
+    this.selected = { kind: 'audio', id: item.id };
+    this.tab = 'audio';
+    this.toast.notify(
+      `The sound is now on ${lane === 'voice' ? 'Voice' : 'Music'}`,
+    );
+  };
+
+  // ----- noise reduction -----
+
+  @tracked cleaning = false;
+
+  get chosenItem(): AudioItem | null {
+    const s = this.selected;
+    return s?.kind === 'audio'
+      ? (this.edit.audio.find((a) => a.id === s.id) ?? null)
+      : null;
+  }
+
+  get cleanIndex() {
+    const clip = this.clipMap.get(this.chosenItem?.clip ?? '');
+    if (!clip?.cleanOf) return 0;
+    return (clip.cleanLevel ?? 1) >= 1 ? 2 : 1;
+  }
+
+  pickClean = async (index: number) => {
+    const item = this.chosenItem;
+    const current = item && this.clipMap.get(item.clip);
+    if (!item || !current || this.cleaning) return;
+    const original = current.cleanOf
+      ? this.clipMap.get(current.cleanOf)
+      : current;
+    if (!original) return;
+    const level = CLEAN_LEVELS[index] ?? 0;
+    const use = (clipId: string) =>
+      this.#change({
+        audio: this.edit.audio.map((a) =>
+          a.id === item.id ? { ...a, clip: clipId } : a,
+        ),
+      });
+    if (!level) return use(original.id);
+    let cleaned = this.clips.find(
+      (c) => c.cleanOf === original.id && c.cleanLevel === level,
+    );
+    if (!cleaned) {
+      if (original.file.size > cleanLimit) {
+        this.toast.notify('This file is too large to clean here.');
+        return;
+      }
+      this.cleaning = true;
+      try {
+        const decoder = new AudioContext();
+        const buffer = await decoder
+          .decodeAudioData(await original.file.arrayBuffer())
+          .finally(() => void decoder.close());
+        const out = await denoise(buffer, level);
+        const name = `${original.name} (clean)`;
+        const file = new File(
+          [encodeWav(channelsOf(out), out.sampleRate)],
+          `${name}.wav`,
+          { type: 'audio/wav' },
+        );
+        const clip = await readAudioClip(file);
+        if (!this.#live) return URL.revokeObjectURL(clip.url);
+        cleaned = { ...clip, name, cleanOf: original.id, cleanLevel: level };
+        this.clips = [...this.clips, cleaned];
+        this.#keepFile(cleaned);
+        void this.#describe(cleaned);
+      } catch (error) {
+        console.error('Noise reduction failed:', error);
+        this.toast.notify("Couldn't clean this sound.");
+        return;
+      } finally {
+        if (this.#live) this.cleaning = false;
+      }
+    }
+    if (this.edit.audio.some((a) => a.id === item.id)) use(cleaned.id);
+  };
 
   markInHere = () => (this.markIn = this.player.time);
   markOutHere = () => (this.markOut = this.player.time);
@@ -2291,6 +2717,46 @@ export default class VideoEdit extends Component {
             {{else if this.toolIsText}}
               <p class="ve-hint">A title goes in at the playhead. Change its
                 words, look and animation under Selected.</p>
+              <XzRows @framed={{true}} class="ve-hear">
+                <XzHeading @text="Subtitles from speech" />
+                <XzSegmented
+                  class="ve-hear-mode"
+                  @items={{HEAR_LABELS}}
+                  @selected={{this.hearModeIndex}}
+                  @onChange={{this.pickHearMode}}
+                />
+                <XzRow @title="Language" @form="flush" as |titleId|>
+                  <select
+                    class="xz-select ve-hear-language"
+                    aria-labelledby={{titleId}}
+                    {{on "change" this.pickHearLanguage}}
+                  >
+                    <option
+                      value=""
+                      selected={{if this.hearLanguage false true}}
+                    >Find it</option>
+                    {{#each this.hearLanguages as |language|}}
+                      <option
+                        value={{language.code}}
+                        selected={{language.on}}
+                      >{{language.name}}</option>
+                    {{/each}}
+                  </select>
+                </XzRow>
+                <XzRow @title="Model" @detail={{this.hearModel}} />
+                <XzGrid>
+                  <XzButton
+                    class="ve-hear-run"
+                    @text={{if this.hearing this.hearText "Write subtitles"}}
+                    @icon={{SubtitleIcon}}
+                    @kind="primary"
+                    @disabled={{this.cannotHear}}
+                    @onClick={{this.writeSubtitles}}
+                  />
+                </XzGrid>
+              </XzRows>
+              <p class="ve-hint">Whisper listens to the videos and the Voice
+                layer, on this device. Each line becomes a caption.</p>
               <XzDropZone
                 class="ve-drop-zone ve-captions-drop"
                 @prompt="Drop an SRT or VTT file: each line becomes a caption"
@@ -2401,6 +2867,65 @@ export default class VideoEdit extends Component {
                 </ul>
               {{/if}}
             {{else if this.toolIsAudio}}
+              <XzRows @framed={{true}} class="ve-record">
+                <XzHeading @text="Record a voice-over" />
+                {{#if this.recording}}
+                  <div class="ve-record__live" role="status">
+                    <span class="ve-record__dot" aria-hidden="true"></span>
+                    <b>{{this.recordText}}</b>
+                    <span class="ve-record__meter" aria-hidden="true"><span
+                        style={{this.recordMeterStyle}}
+                      ></span></span>
+                  </div>
+                  <XzGrid>
+                    <XzButton
+                      class="ve-record-stop"
+                      @text="Stop and keep"
+                      @icon={{StopIcon}}
+                      @kind="primary"
+                      @onClick={{this.stopRecording}}
+                    />
+                  </XzGrid>
+                {{else}}
+                  <XzRow
+                    @title="Play the edit while recording"
+                    @detail="Use headphones, so the mic hears only you"
+                  >
+                    <XzSwitch
+                      class="ve-record-play"
+                      @on={{this.playWhileRecording}}
+                      @onChange={{this.pickPlayWhileRecording}}
+                      aria-label="Play the edit while recording"
+                    />
+                  </XzRow>
+                  <XzGrid>
+                    <XzButton
+                      class="ve-record-start"
+                      @text="Record at the playhead"
+                      @icon={{MicIcon}}
+                      @kind="primary"
+                      @onClick={{this.startRecording}}
+                    />
+                  </XzGrid>
+                {{/if}}
+              </XzRows>
+              <p class="ve-hint">It goes on the Voice layer where the playhead
+                was. Music drops under it when Ducking is on.</p>
+              <XzRows @framed={{true}}>
+                <XzHeading @text="Ducking" />
+                <PropSlider
+                  class="ve-duck"
+                  @label="Music under the voice"
+                  @value={{this.duck.level}}
+                  @step={{0.01}}
+                  @nudge={{0.05}}
+                  @readout={{percent}}
+                  @onChange={{this.setDuckLevel}}
+                  @on={{this.duck.on}}
+                  @onToggle={{this.setDuckOn}}
+                  @toggleLabel="Lower the music under the voice"
+                />
+              </XzRows>
               <p class="ve-hint">How loud each layer plays. Each clip has its
                 own volume too, under Selected › Audio.</p>
               <XzRows @framed={{true}}>
@@ -2770,6 +3295,30 @@ export default class VideoEdit extends Component {
                 </XzRows>
               {{else}}
                 <XzRows @framed={{true}}>
+                  {{#if this.chosenIsAudio}}
+                    <XzHeading @text="Noise reduction" />
+                    <XzSegmented
+                      class="ve-clean"
+                      @items={{CLEAN_LABELS}}
+                      @selected={{this.cleanIndex}}
+                      @disabled={{this.cleaning}}
+                      @onChange={{this.pickClean}}
+                    />
+                    {{#if this.cleaning}}
+                      <XzStatus @text="Cleaning the sound…" @tone="muted" />
+                    {{/if}}
+                  {{/if}}
+                  {{#if this.canDetach}}
+                    <XzGrid>
+                      <XzButton
+                        class="ve-detach"
+                        @text="Detach sound"
+                        @icon={{DetachIcon}}
+                        @disabled={{this.cannotDetach}}
+                        @onClick={{this.detachSound}}
+                      />
+                    </XzGrid>
+                  {{/if}}
                   <PropSlider
                     class="ve-volume"
                     @label="Volume"

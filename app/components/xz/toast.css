@@ -18,6 +18,20 @@
   white-space: nowrap;
   translate: -50% 0;
   animation: none;
+
+  /* it only tells; a click goes through, also while it fades */
+  pointer-events: none;
+}
+
+/* a tool's message may take two lines */
+.xz-toast-anchor > .xz-toast--note {
+  inline-size: max-content;
+  max-inline-size: min(26rem, calc(100vw - 2rem));
+  white-space: normal;
+}
+
+.xz-toast-anchor > .xz-toast--note .xz-toast__title {
+  flex: 1 1 auto;
 }
 
 .xz-toast-anchor .xz-toast__title {

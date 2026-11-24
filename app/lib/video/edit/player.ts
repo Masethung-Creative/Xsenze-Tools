@@ -3,6 +3,7 @@ import { modifier } from 'ember-modifier';
 import type { XzTransport } from 'xsenze-tools/components/xz/readout-band';
 import { seekTo } from 'xsenze-tools/lib/video/video';
 import {
+  duckAt,
   editLength,
   emptyEdit,
   endOf,
@@ -542,7 +543,8 @@ export default class EditPlayer {
         voice,
         (item.muted ? 0 : item.volume) *
           levelGain(level) *
-          fadeAt(local, item.out - item.in, item.fadeIn, item.fadeOut),
+          fadeAt(local, item.out - item.in, item.fadeIn, item.fadeOut) *
+          (item.lane === 'music' ? duckAt(this.#edit, time) : 1),
       );
     }
   }

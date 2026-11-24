@@ -5,6 +5,7 @@
  */
 import {
   noTransition,
+  plainDuck,
   type Clip,
   type Edit,
 } from 'xsenze-tools/lib/video/edit/timeline';
@@ -17,7 +18,16 @@ const KEY = 'project';
 /** A clip as kept: its facts, not its object URL or thumbnails. */
 export type SavedClip = Pick<
   Clip,
-  'id' | 'kind' | 'name' | 'duration' | 'width' | 'height' | 'fps' | 'hasAudio'
+  | 'id'
+  | 'kind'
+  | 'name'
+  | 'duration'
+  | 'width'
+  | 'height'
+  | 'fps'
+  | 'hasAudio'
+  | 'cleanOf'
+  | 'cleanLevel'
 >;
 
 export interface Saved {
@@ -74,6 +84,8 @@ export const keepClip = (clip: SavedClip) => ({
   height: clip.height,
   fps: clip.fps,
   hasAudio: clip.hasAudio,
+  cleanOf: clip.cleanOf,
+  cleanLevel: clip.cleanLevel,
 });
 
 /** Keeps a file; it rejects when the browser has no room for it. */
@@ -115,6 +127,7 @@ export async function loadProject(): Promise<{
       clips: saved.clips.filter((clip) => ids.has(clip.id)),
       edit: {
         ...edit,
+        mix: { ...edit.mix, duck: edit.mix.duck ?? plainDuck() },
         // older records lack the newer fields
         pieces: edit.pieces
           .filter((piece) => ids.has(piece.clip))

@@ -17,6 +17,10 @@ import {
 } from 'xsenze-tools/lib/video/edit/draw';
 import { drawLayer, fontsOf } from 'xsenze-tools/lib/video/edit/layers';
 import {
+  duckAt,
+  endOf,
+  layerEnd,
+  total,
   editLength,
   fadeAt,
   layersAt,
@@ -102,6 +106,8 @@ interface Stretch {
   gain: number;
   fadeIn: number;
   fadeOut: number;
+  /** A further level over timeline seconds: the music's ducking. */
+  shape?: (t: number) => number;
   /** Decoded audio of in..out, filled on first use. */
   buffers?: { buffer: AudioBuffer; at: number }[];
 }
@@ -189,6 +195,7 @@ function stretches(clips: ReadonlyMap<string, Clip>, edit: Edit): Stretch[] {
       gain,
       fadeIn: item.fadeIn,
       fadeOut: item.fadeOut,
+      shape: item.lane === 'music' ? (t) => duckAt(edit, t) : undefined,
     });
   }
   return out;
@@ -230,9 +237,11 @@ async function mixWindow(
   all: Stretch[],
   from: number,
   to: number,
+  rate = sampleRate,
+  channelCount = channels,
 ): Promise<AudioBuffer> {
-  const frames = Math.max(1, Math.round((to - from) * sampleRate));
-  const context = new OfflineAudioContext(channels, frames, sampleRate);
+  const frames = Math.max(1, Math.round((to - from) * rate));
+  const context = new OfflineAudioContext(channelCount, frames, rate);
   for (const stretch of all) {
     const timelineLength = (stretch.out - stretch.in) / (stretch.speed ?? 1);
     if (stretch.start + timelineLength <= from || stretch.start >= to) continue;
@@ -249,9 +258,10 @@ async function mixWindow(
         g *= Math.max(0, local / stretch.fadeIn);
       if (stretch.fadeOut > 0 && local > length - stretch.fadeOut)
         g *= Math.max(0, (length - local) / stretch.fadeOut);
-      return g;
+      return stretch.shape ? g * stretch.shape(t) : g;
     };
-    const steps = 64;
+    // fine enough for a duck's easing
+    const steps = 256;
     const curve = new Float32Array(steps);
     for (let i = 0; i < steps; i++)
       curve[i] = at(from + ((to - from) * i) / (steps - 1));
@@ -504,6 +514,45 @@ async function fontsReady(edit: Edit) {
       document.fonts.load(font).catch(() => []),
     ),
   );
+}
+
+/**
+ * The edit's speech as 16 kHz mono, for Whisper: the videos' sound and the
+ * Voice layer, without the music.
+ */
+export async function mixSpeech(
+  clips: readonly Clip[],
+  edit: Edit,
+  onProgress?: (fraction: number) => void,
+): Promise<Float32Array> {
+  const m = await loadMediabunny();
+  const clipMap = new Map(clips.map((clip) => [clip.id, clip]));
+  const music = new Set(
+    edit.audio.filter((item) => item.lane === 'music').map((item) => item.id),
+  );
+  const speech = stretches(clipMap, {
+    ...edit,
+    audio: edit.audio.filter((item) => !music.has(item.id)),
+  });
+  // to the last sound, not the last caption
+  const length = Math.max(
+    total(edit.pieces),
+    ...edit.audio.map(endOf),
+    ...edit.layers.filter((l) => l.kind === 'video').map(layerEnd),
+    0,
+  );
+  const rate = 16000;
+  const out = new Float32Array(Math.max(1, Math.ceil(length * rate)));
+  for (let from = 0; from < length; from += windowSeconds) {
+    const to = Math.min(length, from + windowSeconds);
+    const mixed = await mixWindow(m, speech, from, to, rate, 1);
+    out.set(
+      mixed.getChannelData(0).subarray(0, out.length - Math.round(from * rate)),
+      Math.round(from * rate),
+    );
+    onProgress?.(to / length);
+  }
+  return out;
 }
 
 /** Renders and encodes the edit. Aborting the signal stops it with an AbortError. */

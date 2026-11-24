@@ -13,6 +13,9 @@ export interface Box {
 /** Seconds a XzToast stays after the last show. */
 export const toastHold = 1.4;
 
+/** Seconds a message stays: it is read, not glanced at. */
+export const noteHold = 3.5;
+
 /** The copied value, when it is one short line. */
 export function toastDetail(detail?: string): string | undefined {
   if (detail === undefined || detail.includes('\n') || detail.length > 48)

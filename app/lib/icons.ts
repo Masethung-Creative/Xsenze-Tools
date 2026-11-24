@@ -151,6 +151,7 @@ import iTriangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
 import iType from 'lucide-static/icons/type.svg?raw';
 import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
 import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
+import iUnlink from 'lucide-static/icons/unlink.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
 import iUsers from 'lucide-static/icons/users.svg?raw';
 import iVan from 'lucide-static/icons/van.svg?raw';
@@ -316,6 +317,7 @@ export const icons: Record<string, string> = {
   type: iType,
   'type-outline': iTypeOutline,
   'undo-2': iUndo2,
+  unlink: iUnlink,
   upload: iUpload,
   users: iUsers,
   van: iVan,

@@ -52,6 +52,8 @@ export default class XzToast extends Component<XzToastSignature> {
   /** Changes on every show, so a screen reader reads each one. */
   get announcement() {
     if (!this.toast.visible) return '';
+    if (this.toast.note)
+      return this.toast.shown % 2 ? this.toast.note : `${this.toast.note} `;
     return this.toast.shown % 2 ? 'Copied' : 'Copied ';
   }
 
@@ -112,13 +114,20 @@ export default class XzToast extends Component<XzToastSignature> {
       {{this.present this.toast.shown this.toast.visible}}
       ...attributes
     >
-      <div class="xz-toast xz-toast--success">
-        <span class="xz-toast-check"><Icon @name="check" /></span>
-        <span class="xz-toast__title">Copied</span>
-        {{#if this.toast.detail}}
-          <span class="xz-toast__text">{{this.toast.detail}}</span>
-        {{/if}}
-      </div>
+      {{#if this.toast.note}}
+        <div class="xz-toast xz-toast--info xz-toast--note">
+          <span class="xz-toast-check"><Icon @name="info" /></span>
+          <span class="xz-toast__title">{{this.toast.note}}</span>
+        </div>
+      {{else}}
+        <div class="xz-toast xz-toast--success">
+          <span class="xz-toast-check"><Icon @name="check" /></span>
+          <span class="xz-toast__title">Copied</span>
+          {{#if this.toast.detail}}
+            <span class="xz-toast__text">{{this.toast.detail}}</span>
+          {{/if}}
+        </div>
+      {{/if}}
     </div>
   </template>
 }

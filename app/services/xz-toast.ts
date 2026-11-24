@@ -5,15 +5,18 @@
  */
 import Service from '@ember/service';
 import { tracked } from '@glimmer/tracking';
-import { toastDetail, toastHold } from 'xsenze-tools/lib/xz/toast';
+import { noteHold, toastDetail, toastHold } from 'xsenze-tools/lib/xz/toast';
 
 /**
  * Drives the one XzToast outlet: a short "Copied" note with the copied
  * value, near the bottom of the column the last pointer went down in.
- * `copy` confirms every tapped value copy with the toast and nothing else.
+ * `copy` confirms every tapped value copy with the toast; `notify` shows
+ * a short message of a tool's own instead.
  */
 export default class XzToastService extends Service {
   @tracked detail?: string;
+  /** A message of its own, not a copy: `notify`. */
+  @tracked note?: string;
   @tracked visible = false;
   /** Counts shows, so the outlet can tell a repeat from a first show. */
   @tracked shown = 0;
@@ -38,13 +41,25 @@ export default class XzToastService extends Service {
 
   /** Shows the toast; the detail appears when it is one short line. */
   show(detail?: string) {
+    this.note = undefined;
     this.detail = toastDetail(detail);
+    this.#open(toastHold);
+  }
+
+  /** Shows a message of a tool's own, a little longer than a copy. */
+  notify(message: string) {
+    this.note = message;
+    this.detail = undefined;
+    this.#open(noteHold);
+  }
+
+  #open(seconds: number) {
     this.visible = true;
     this.shown += 1;
     window.clearTimeout(this.#timer);
     this.#timer = window.setTimeout(() => {
       this.visible = false;
-    }, toastHold * 1000);
+    }, seconds * 1000);
   }
 
   /** Copies `text` and confirms with the toast. Nothing shows if the write fails. */
