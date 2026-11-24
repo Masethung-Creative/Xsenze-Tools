@@ -90,7 +90,7 @@ their `soon` line from `lib/tools.ts`):
   `lib/video/edit/export.ts` renders the same edit in 5-second windows: frames from
   `VideoSampleSink` drawn with `drawWithFit` onto one canvas into a `CanvasSource`, and every sound
   mixed in an `OfflineAudioContext` (gain curves for volume and fades) into an `AudioBufferSource`.
-  MP4 is H.264/H.265/AV1 + AAC, WebM is VP9/AV1 + Opus. A modifier must not read
+  MP4 is H.264/H.265/AV1 + AAC, WebM is VP9/AV1 + Opus. The preview and the export draw every picture through `lib/video/edit/draw.ts` (crop, turn, flip, look filters, fit, background colour or blur, fade), so they match. Photos are clips of kind image (`photoLimit` long, a piece shows `photoSeconds`); speed divides a piece's clip seconds, and the export stretches its sound with `lib/audio/stretch.ts` (pitch kept). A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.

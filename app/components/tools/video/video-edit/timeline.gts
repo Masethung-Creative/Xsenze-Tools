@@ -175,9 +175,15 @@ export default class Timeline extends Component<TimelineSignature> {
     const pps = this.pps;
     return pieces.map((piece, index) => {
       const clip = this.args.clips.get(piece.clip);
-      const duration = clip?.duration ?? lengthOf(piece);
+      // a photo's strip covers only what shows; a video's the whole clip
+      const duration =
+        clip?.kind === 'image'
+          ? piece.out
+          : (clip?.duration ?? lengthOf(piece));
       const frames = clip?.frames ?? [];
-      const filmWidth = duration * pps;
+      // a faster piece squeezes its clip onto the timeline
+      const speed = piece.speed || 1;
+      const filmWidth = (duration * pps) / speed;
       // thumbnails keep their shape: one per slot, the nearest in time
       const aspect = clip?.width ? clip.width / clip.height : 16 / 9;
       const slot = Math.max(24, videoLaneHeight * aspect);
@@ -201,7 +207,7 @@ export default class Timeline extends Component<TimelineSignature> {
         quiet: piece.muted || piece.volume === 0,
         style: htmlSafe(`left: ${begins[index]! * pps}px; width: ${width}px`),
         filmStyle: htmlSafe(
-          `width: ${filmWidth}px; transform: translateX(${-piece.in * pps}px)`,
+          `width: ${filmWidth}px; transform: translateX(${(-piece.in * pps) / speed}px)`,
         ),
         frameStyle: htmlSafe(`width: ${slot}px`),
         frames: slots,
@@ -411,8 +417,13 @@ export default class Timeline extends Component<TimelineSignature> {
           lane: under ?? this.ghost?.lane ?? drag.lane ?? 'music',
         };
       } else if (drag.from && drag.id) {
-        const seconds = dx / this.pps;
         const [a, b] = drag.from;
+        // a handle moves in clip seconds: a faster piece moves further
+        const speed =
+          drag.item === 'video'
+            ? this.args.edit.pieces.find((p) => p.id === drag.id)?.speed || 1
+            : 1;
+        const seconds = (dx / this.pps) * speed;
         const trim =
           drag.item === 'audio' ? this.args.onAudioTrim : this.args.onTrim;
         if (drag.kind === 'in') trim(drag.id, a + seconds, b);

@@ -1,6 +1,10 @@
 import { probeVideo } from 'xsenze-tools/lib/video/media-probe';
 import { resolveDuration } from 'xsenze-tools/lib/video/video';
-import { newId, type Clip } from 'xsenze-tools/lib/video/edit/timeline';
+import {
+  newId,
+  photoLimit,
+  type Clip,
+} from 'xsenze-tools/lib/video/edit/timeline';
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || name;
 
@@ -53,11 +57,14 @@ export async function readClip(file: File): Promise<Clip> {
 
 const AUDIO_NAME = /\.(mp3|m4a|wav|aac|flac|ogg|oga|opus|aiff|caf)$/i;
 const VIDEO_NAME = /\.(mp4|m4v|mov|webm|mkv|avi)$/i;
+const IMAGE_NAME = /\.(jpe?g|png|webp|gif|avif|bmp)$/i;
 
 /** What a dropped file is to Video Edit, by its type, else its name. */
-export function mediaKind(file: File): 'video' | 'audio' | null {
+export function mediaKind(file: File): 'video' | 'audio' | 'image' | null {
   if (file.type.startsWith('video/')) return 'video';
   if (file.type.startsWith('audio/')) return 'audio';
+  if (file.type.startsWith('image/')) return 'image';
+  if (IMAGE_NAME.test(file.name)) return 'image';
   if (VIDEO_NAME.test(file.name)) return 'video';
   if (AUDIO_NAME.test(file.name)) return 'audio';
   return null;
@@ -113,5 +120,34 @@ export async function readAudioClip(file: File): Promise<Clip> {
   } finally {
     audio.removeAttribute('src');
     audio.load();
+  }
+}
+
+/** Reads a photo into a clip: its piece shows for a few seconds, trimmable. */
+export async function readImageClip(file: File): Promise<Clip> {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    if (!image.naturalWidth) throw new Error('empty');
+    return {
+      id: newId('c'),
+      kind: 'image',
+      file,
+      name: baseName(file.name),
+      duration: photoLimit,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      fps: 30,
+      hasAudio: false,
+      url,
+      // the photo is its own filmstrip
+      frames: [url],
+      peaks: null,
+    };
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
   }
 }

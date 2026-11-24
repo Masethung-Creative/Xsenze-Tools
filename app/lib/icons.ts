@@ -27,9 +27,11 @@ import iClock from 'lucide-static/icons/clock.svg?raw';
 import iCodeXml from 'lucide-static/icons/code-xml.svg?raw';
 import iCombine from 'lucide-static/icons/combine.svg?raw';
 import iComponent from 'lucide-static/icons/component.svg?raw';
+import iContrast from 'lucide-static/icons/contrast.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
 import iCpu from 'lucide-static/icons/cpu.svg?raw';
+import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
@@ -44,6 +46,8 @@ import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
 import iFileText from 'lucide-static/icons/file-text.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFlame from 'lucide-static/icons/flame.svg?raw';
+import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
+import iFlipVertical2 from 'lucide-static/icons/flip-vertical-2.svg?raw';
 import iFolder from 'lucide-static/icons/folder.svg?raw';
 import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
@@ -65,6 +69,7 @@ import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iLink from 'lucide-static/icons/link.svg?raw';
+import iListPlus from 'lucide-static/icons/list-plus.svg?raw';
 import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
@@ -87,6 +92,8 @@ import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
 import iReplace from 'lucide-static/icons/replace.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
+import iRotateCcwSquare from 'lucide-static/icons/rotate-ccw-square.svg?raw';
+import iRotateCw from 'lucide-static/icons/rotate-cw.svg?raw';
 import iRoute from 'lucide-static/icons/route.svg?raw';
 import iScissors from 'lucide-static/icons/scissors.svg?raw';
 import iScissorsLineDashed from 'lucide-static/icons/scissors-line-dashed.svg?raw';
@@ -156,9 +163,11 @@ export const icons: Record<string, string> = {
   'code-xml': iCodeXml,
   combine: iCombine,
   component: iComponent,
+  contrast: iContrast,
   copy: iCopy,
   'copy-plus': iCopyPlus,
   cpu: iCpu,
+  crop: iCrop,
   delete: iDelete,
   dices: iDices,
   'disc-3': iDisc3,
@@ -173,6 +182,8 @@ export const icons: Record<string, string> = {
   'file-text': iFileText,
   film: iFilm,
   flame: iFlame,
+  'flip-horizontal-2': iFlipHorizontal2,
+  'flip-vertical-2': iFlipVertical2,
   folder: iFolder,
   'folder-open': iFolderOpen,
   frame: iFrame,
@@ -194,6 +205,7 @@ export const icons: Record<string, string> = {
   key: iKey,
   languages: iLanguages,
   link: iLink,
+  'list-plus': iListPlus,
   lock: iLock,
   map: iMap,
   maximize: iMaximize,
@@ -216,6 +228,8 @@ export const icons: Record<string, string> = {
   repeat: iRepeat,
   replace: iReplace,
   'rotate-ccw': iRotateCcw,
+  'rotate-ccw-square': iRotateCcwSquare,
+  'rotate-cw': iRotateCw,
   route: iRoute,
   scissors: iScissors,
   'scissors-line-dashed': iScissorsLineDashed,

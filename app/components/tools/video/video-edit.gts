@@ -32,11 +32,20 @@ import Timeline, {
 } from 'xsenze-tools/components/tools/video/video-edit/timeline';
 import { formatFps } from 'xsenze-tools/lib/video/media-probe';
 import { formatTimestamp } from 'xsenze-tools/lib/subtitles/subtitles';
-import { AUDIO_ACCEPT, VIDEO_ACCEPT, acceptAttr } from 'xsenze-tools/lib/tools';
+import {
+  AUDIO_ACCEPT,
+  IMAGE_ACCEPT,
+  VIDEO_ACCEPT,
+  acceptAttr,
+} from 'xsenze-tools/lib/tools';
+import XzColourWell from 'xsenze-tools/components/xz/colour-well';
+import { FILTERS } from 'xsenze-tools/lib/video/edit/draw';
+import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import {
   mediaKind,
   readAudioClip,
   readClip,
+  readImageClip,
 } from 'xsenze-tools/lib/video/edit/clips';
 import EditPlayer from 'xsenze-tools/lib/video/edit/player';
 import {
@@ -73,6 +82,11 @@ import {
   type Level,
   type Mix,
   type Piece,
+  plainLook,
+  photoLimit,
+  type Background,
+  type Filter,
+  type Look,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import Job from 'xsenze-tools/components/tools/shared/media/job';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -85,11 +99,18 @@ import {
   type ExportContainer,
   type ExportResult,
 } from 'xsenze-tools/lib/video/edit/export';
-import type { Fit } from 'xsenze-tools/lib/video/edit/player';
+import type { Fit } from 'xsenze-tools/lib/video/edit/draw';
 import '../shared/media/media.css';
 import './video-edit/video-edit.css';
 
-const ACCEPT = acceptAttr([...VIDEO_ACCEPT, ...AUDIO_ACCEPT]);
+const ACCEPT = acceptAttr([...VIDEO_ACCEPT, ...AUDIO_ACCEPT, ...IMAGE_ACCEPT]);
+const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+const SPEED_LABELS = SPEEDS.map((s) => `${s}×`);
+const FILTER_IDS = Object.keys(FILTERS) as Filter[];
+const FILTER_LABELS = FILTER_IDS.map((id) => FILTERS[id].label);
+const BACKGROUNDS: Background['kind'][] = ['black', 'colour', 'blur'];
+const BACKGROUND_LABELS = ['Black', 'Colour', 'Blur'];
+const cropReadout = (value: number) => `${Math.round(value * 100)}%`;
 const DASH = '—';
 const tc = (seconds: number) => formatTimestamp(seconds * 1000, '.');
 const percent = (value: number) => `${Math.round(value * 100)}%`;
@@ -124,6 +145,11 @@ const AddIcon = icon('list-plus');
 const MusicIcon = icon('music');
 const VoiceIcon = icon('mic');
 const ExportIcon = icon('download');
+const RotateLeftIcon = icon('rotate-ccw');
+const RotateRightIcon = icon('rotate-cw');
+const FlipHIcon = icon('flip-horizontal-2');
+const FlipVIcon = icon('flip-vertical-2');
+const ResetIcon = icon('rotate-ccw-square');
 
 // ----- export settings -----
 
@@ -277,7 +303,7 @@ export default class VideoEdit extends Component {
   }
 
   get aspect() {
-    const video = this.clips.filter((clip) => clip.kind === 'video');
+    const video = this.clips.filter((clip) => clip.kind !== 'audio');
     const first = this.clipMap.get(this.pieces[0]?.clip ?? '') ?? video[0];
     return first?.width ? first.width / first.height : 16 / 9;
   }
@@ -469,7 +495,7 @@ export default class VideoEdit extends Component {
   get clipRows() {
     return this.clips.map((clip) => ({
       clip,
-      isVideo: clip.kind === 'video',
+      isVideo: clip.kind !== 'audio',
       detail: (clip.kind === 'video'
         ? [
             `${clip.width} × ${clip.height}`,
@@ -477,7 +503,9 @@ export default class VideoEdit extends Component {
             tc(clip.duration),
             clip.hasAudio ? null : 'no sound',
           ]
-        : ['Sound', tc(clip.duration)]
+        : clip.kind === 'image'
+          ? ['Photo', `${clip.width} × ${clip.height}`]
+          : ['Sound', tc(clip.duration)]
       )
         .filter(Boolean)
         .join(' · '),
@@ -552,7 +580,7 @@ export default class VideoEdit extends Component {
   get firstVideo(): Clip | undefined {
     return (
       this.clipMap.get(this.pieces[0]?.clip ?? '') ??
-      this.clips.find((clip) => clip.kind === 'video')
+      this.clips.find((clip) => clip.kind !== 'audio')
     );
   }
 
@@ -750,7 +778,9 @@ export default class VideoEdit extends Component {
         const clip =
           mediaKind(file) === 'audio'
             ? await readAudioClip(file)
-            : await readClip(file);
+            : mediaKind(file) === 'image'
+              ? await readImageClip(file)
+              : await readClip(file);
         if (!this.#live) return URL.revokeObjectURL(clip.url);
         added.push(clip);
       } catch {
@@ -775,7 +805,7 @@ export default class VideoEdit extends Component {
     this.#change({
       pieces: [
         ...this.pieces,
-        ...added.filter((c) => c.kind === 'video').map(pieceFor),
+        ...added.filter((c) => c.kind !== 'audio').map(pieceFor),
       ],
       audio,
     });
@@ -1012,6 +1042,133 @@ export default class VideoEdit extends Component {
   setFadeIn = (fadeIn: number) => this.#patch({ fadeIn });
   setFadeOut = (fadeOut: number) => this.#patch({ fadeOut });
 
+  // ----- the selected clip's picture -----
+
+  get chosenPiece(): Piece | null {
+    const s = this.selected;
+    return s?.kind === 'video'
+      ? (this.pieces.find((p) => p.id === s.id) ?? null)
+      : null;
+  }
+
+  get chosenIsPhoto() {
+    const piece = this.chosenPiece;
+    return !!piece && this.clipMap.get(piece.clip)?.kind === 'image';
+  }
+
+  get chosenHasTimes() {
+    return !this.chosenIsPhoto;
+  }
+
+  get look(): Look {
+    return this.chosenPiece?.look ?? plainLook();
+  }
+
+  get photoSeconds() {
+    const piece = this.chosenPiece;
+    return piece ? piece.out - piece.in : 0;
+  }
+
+  get speedIndex() {
+    const speed = this.chosenPiece?.speed ?? 1;
+    return SPEEDS.findIndex((s) => Math.abs(s - speed) < 0.001);
+  }
+
+  get filterIndex() {
+    return FILTER_IDS.indexOf(this.look.filter);
+  }
+
+  get lookChanged() {
+    return JSON.stringify(this.look) !== JSON.stringify(plainLook());
+  }
+
+  get lookPlain() {
+    return !this.lookChanged;
+  }
+
+  /** One history step a slider drag; a tap or key is a step of its own. */
+  #liveRecord(dragging: boolean) {
+    const record = !this.#dragging;
+    this.#dragging = dragging;
+    return record;
+  }
+
+  #setPiece(change: Partial<Omit<Piece, 'id' | 'clip'>>, record = true) {
+    const piece = this.chosenPiece;
+    if (piece)
+      this.#change({ pieces: update(this.pieces, piece.id, change) }, record);
+  }
+
+  #setLook(change: Partial<Look>, record = true) {
+    this.#setPiece({ look: { ...this.look, ...change } }, record);
+  }
+
+  setPhotoSeconds = (seconds: number) => {
+    const piece = this.chosenPiece;
+    if (!piece) return;
+    const length = Math.min(photoLimit, Math.max(minimumPiece, seconds));
+    this.#setPiece({ out: piece.in + length });
+  };
+
+  pickSpeed = (index: number) => {
+    const speed = SPEEDS[index];
+    if (speed) this.#setPiece({ speed });
+  };
+
+  rotateLeft = () =>
+    this.#setLook({
+      rotate: ((this.look.rotate + 270) % 360) as Look['rotate'],
+    });
+  rotateRight = () =>
+    this.#setLook({
+      rotate: ((this.look.rotate + 90) % 360) as Look['rotate'],
+    });
+  flipH = () => this.#setLook({ flipH: !this.look.flipH });
+  flipV = () => this.#setLook({ flipV: !this.look.flipV });
+
+  setCrop = (side: keyof Look['crop'], value: number, dragging: boolean) =>
+    this.#setLook(
+      { crop: { ...this.look.crop, [side]: value } },
+      this.#liveRecord(dragging),
+    );
+
+  setAdjust = (
+    key: 'brightness' | 'contrast' | 'saturation',
+    value: number,
+    dragging: boolean,
+  ) => this.#setLook({ [key]: value }, this.#liveRecord(dragging));
+
+  pickFilter = (index: number) => {
+    const filter = FILTER_IDS[index];
+    if (filter) this.#setLook({ filter });
+  };
+
+  resetLook = () => this.#setPiece({ look: plainLook() });
+
+  // ----- background -----
+
+  get backgroundIndex() {
+    return BACKGROUNDS.indexOf(this.edit.background.kind);
+  }
+
+  get backgroundIsColour() {
+    return this.edit.background.kind === 'colour';
+  }
+
+  pickBackground = (index: number) => {
+    const kind = BACKGROUNDS[index];
+    if (kind) this.#change({ background: { ...this.edit.background, kind } });
+  };
+
+  get backgroundRgb(): Rgb {
+    return parseHex(this.edit.background.colour) ?? [0, 0, 0];
+  }
+
+  setBackgroundColour = (colour: Rgb) =>
+    this.#change({
+      background: { ...this.edit.background, colour: hex(colour) },
+    });
+
   setLevel = (key: keyof Mix, change: Partial<Level>, dragging = false) => {
     const record = !this.#dragging;
     this.#dragging = dragging;
@@ -1239,55 +1396,75 @@ export default class VideoEdit extends Component {
                 />
               </XzRow>
             {{/if}}
-            <XzRow
-              @title="From"
-              @detail="Seconds into the file"
-              @form="flush"
-              as |titleId|
-            >
-              <XzDecimalField
-                class="ve-in"
-                @value={{this.chosen.in}}
-                @max={{this.inMax}}
-                @labelledBy={{titleId}}
-                @onChange={{this.setIn}}
-              />
-            </XzRow>
-            <XzRow
-              @title="To"
-              @detail="Seconds into the file"
-              @form="flush"
-              as |titleId|
-            >
-              <XzDecimalField
-                class="ve-out"
-                @value={{this.chosen.out}}
-                @min={{this.outMin}}
-                @max={{this.outMax}}
-                @labelledBy={{titleId}}
-                @onChange={{this.setOut}}
-              />
-            </XzRow>
+            {{#if this.chosenIsPhoto}}
+              <XzRow
+                @title="Shows for"
+                @detail="Seconds"
+                @form="flush"
+                as |titleId|
+              >
+                <XzDecimalField
+                  class="ve-photo-seconds"
+                  @value={{this.photoSeconds}}
+                  @min={{0.1}}
+                  @max={{photoLimit}}
+                  @labelledBy={{titleId}}
+                  @onChange={{this.setPhotoSeconds}}
+                />
+              </XzRow>
+            {{else}}
+              <XzRow
+                @title="From"
+                @detail="Seconds into the file"
+                @form="flush"
+                as |titleId|
+              >
+                <XzDecimalField
+                  class="ve-in"
+                  @value={{this.chosen.in}}
+                  @max={{this.inMax}}
+                  @labelledBy={{titleId}}
+                  @onChange={{this.setIn}}
+                />
+              </XzRow>
+              <XzRow
+                @title="To"
+                @detail="Seconds into the file"
+                @form="flush"
+                as |titleId|
+              >
+                <XzDecimalField
+                  class="ve-out"
+                  @value={{this.chosen.out}}
+                  @min={{this.outMin}}
+                  @max={{this.outMax}}
+                  @labelledBy={{titleId}}
+                  @onChange={{this.setOut}}
+                />
+              </XzRow>
+            {{/if}}
             <XzRow @title="Length" @detail={{this.chosenLength}} />
-            <XzRow @title="Volume" @form="flush" as |titleId|>
-              <XzSlider
-                class="ve-volume"
-                @value={{this.chosen.volume}}
-                @max={{2}}
-                @step={{0.01}}
-                @readout={{percent}}
-                @labelledBy={{titleId}}
-                @onChange={{this.setVolume}}
-              />
-            </XzRow>
-            <XzRow @title="Mute">
-              <XzSwitch
-                class="ve-mute"
-                @on={{this.chosen.muted}}
-                @onChange={{this.setMuted}}
-                aria-label="Mute"
-              />
-            </XzRow>
+            {{#if this.chosenHasTimes}}
+              <XzRow @title="Volume" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-volume"
+                  @value={{this.chosen.volume}}
+                  @max={{2}}
+                  @step={{0.01}}
+                  @readout={{percent}}
+                  @labelledBy={{titleId}}
+                  @onChange={{this.setVolume}}
+                />
+              </XzRow>
+              <XzRow @title="Mute">
+                <XzSwitch
+                  class="ve-mute"
+                  @on={{this.chosen.muted}}
+                  @onChange={{this.setMuted}}
+                  aria-label="Mute"
+                />
+              </XzRow>
+            {{/if}}
             <XzRow
               @title="Fade in"
               @detail={{if
@@ -1325,6 +1502,141 @@ export default class VideoEdit extends Component {
               />
             </XzRow>
             {{#if this.chosenIsVideo}}
+              {{#if this.chosenHasTimes}}
+                <XzHeading @text="Speed" />
+                <XzSegmented
+                  class="ve-speed"
+                  @items={{SPEED_LABELS}}
+                  @selected={{this.speedIndex}}
+                  @columns={{5}}
+                  @onChange={{this.pickSpeed}}
+                />
+              {{/if}}
+              <XzHeading @text="Rotate and flip" />
+              <XzGrid>
+                <XzButton
+                  class="ve-rotate-left"
+                  @label="Rotate left"
+                  @icon={{RotateLeftIcon}}
+                  @onClick={{this.rotateLeft}}
+                />
+                <XzButton
+                  class="ve-rotate-right"
+                  @label="Rotate right"
+                  @icon={{RotateRightIcon}}
+                  @onClick={{this.rotateRight}}
+                />
+                <XzButton
+                  class="ve-flip-h"
+                  @label="Flip left to right"
+                  @icon={{FlipHIcon}}
+                  @selected={{this.look.flipH}}
+                  @onClick={{this.flipH}}
+                />
+                <XzButton
+                  class="ve-flip-v"
+                  @label="Flip upside down"
+                  @icon={{FlipVIcon}}
+                  @selected={{this.look.flipV}}
+                  @onClick={{this.flipV}}
+                />
+              </XzGrid>
+              <XzHeading @text="Crop" />
+              <XzRow @title="Left" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-crop-left"
+                  @value={{this.look.crop.left}}
+                  @max={{0.45}}
+                  @step={{0.01}}
+                  @readout={{cropReadout}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setCrop "left"}}
+                />
+              </XzRow>
+              <XzRow @title="Right" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-crop-right"
+                  @value={{this.look.crop.right}}
+                  @max={{0.45}}
+                  @step={{0.01}}
+                  @readout={{cropReadout}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setCrop "right"}}
+                />
+              </XzRow>
+              <XzRow @title="Top" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-crop-top"
+                  @value={{this.look.crop.top}}
+                  @max={{0.45}}
+                  @step={{0.01}}
+                  @readout={{cropReadout}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setCrop "top"}}
+                />
+              </XzRow>
+              <XzRow @title="Bottom" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-crop-bottom"
+                  @value={{this.look.crop.bottom}}
+                  @max={{0.45}}
+                  @step={{0.01}}
+                  @readout={{cropReadout}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setCrop "bottom"}}
+                />
+              </XzRow>
+              <XzHeading @text="Adjust" />
+              <XzRow @title="Brightness" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-brightness"
+                  @value={{this.look.brightness}}
+                  @max={{2}}
+                  @step={{0.01}}
+                  @readout={{percent}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setAdjust "brightness"}}
+                />
+              </XzRow>
+              <XzRow @title="Contrast" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-contrast"
+                  @value={{this.look.contrast}}
+                  @max={{2}}
+                  @step={{0.01}}
+                  @readout={{percent}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setAdjust "contrast"}}
+                />
+              </XzRow>
+              <XzRow @title="Saturation" @form="flush" as |titleId|>
+                <XzSlider
+                  class="ve-saturation"
+                  @value={{this.look.saturation}}
+                  @max={{2}}
+                  @step={{0.01}}
+                  @readout={{percent}}
+                  @labelledBy={{titleId}}
+                  @onChange={{fn this.setAdjust "saturation"}}
+                />
+              </XzRow>
+              <XzHeading @text="Filter" />
+              <XzSegmented
+                class="ve-filter"
+                @items={{FILTER_LABELS}}
+                @selected={{this.filterIndex}}
+                @columns={{3}}
+                @onChange={{this.pickFilter}}
+              />
+              <XzGrid>
+                <XzButton
+                  class="ve-reset-look"
+                  @text="Reset picture"
+                  @icon={{ResetIcon}}
+                  @disabled={{this.lookPlain}}
+                  @onClick={{this.resetLook}}
+                />
+              </XzGrid>
               <XzGrid>
                 <XzButton
                   class="ve-move-left"
@@ -1354,7 +1666,7 @@ export default class VideoEdit extends Component {
           <XzHeading @text="Files" />
           <XzDropZone
             class="ve-drop-zone"
-            @prompt="Drop videos and sounds here, or press Files"
+            @prompt="Drop videos, photos and sounds here, or press Files"
             @icon={{FilmIcon}}
             @accept={{ACCEPT}}
             @multiple={{true}}
@@ -1406,6 +1718,22 @@ export default class VideoEdit extends Component {
               @text="Nothing yet. Videos join in the order you add them; sounds go on the Music layer."
             />
           {{/each}}
+
+          <XzHeading @text="Background" />
+          <XzSegmented
+            class="ve-background"
+            @items={{BACKGROUND_LABELS}}
+            @selected={{this.backgroundIndex}}
+            @onChange={{this.pickBackground}}
+          />
+          {{#if this.backgroundIsColour}}
+            <XzColourWell
+              class="ve-background-colour"
+              @label="Colour"
+              @colour={{this.backgroundRgb}}
+              @onChange={{this.setBackgroundColour}}
+            />
+          {{/if}}
 
           <XzHeading @text="Layers" />
           {{#each this.mixRows as |row|}}

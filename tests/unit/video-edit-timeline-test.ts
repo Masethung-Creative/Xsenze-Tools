@@ -15,6 +15,7 @@ import {
   minimumPiece,
   move,
   placeAt,
+  plainLook,
   split,
   starts,
   total,
@@ -31,6 +32,8 @@ const piece = (id: string, clip: string, a: number, b: number): Piece => ({
   muted: false,
   fadeIn: 0,
   fadeOut: 0,
+  speed: 1,
+  look: plainLook(),
 });
 
 // clip A 0–10 s, clip B 2–6 s: 14 s in all
@@ -193,5 +196,26 @@ module('Unit | video edit | timeline', function () {
     assert.strictEqual(fadeAt(0.5, 10, 1, 2), 0.5);
     assert.strictEqual(fadeAt(5, 10, 1, 2), 1);
     assert.strictEqual(fadeAt(9, 10, 1, 2), 0.5);
+  });
+
+  test('speed changes how long a piece lasts and where it is cut', function (assert) {
+    // A plays twice as fast: 10 s of clip in 5 s
+    const pieces = [
+      { ...piece('a', 'A', 0, 10), speed: 2 },
+      piece('b', 'B', 2, 6),
+    ];
+    assert.strictEqual(total(pieces), 9);
+    assert.strictEqual(
+      placeAt(pieces, 2)?.clipTime,
+      4,
+      '2 s in is 4 s of clip',
+    );
+    assert.deepEqual(spans(split(pieces, 2)), ['A:0-4', 'A:4-10', 'B:2-6']);
+    // cutting timeline 1–3 s removes clip 2–6 s of A
+    assert.deepEqual(spans(cutRange(pieces, 1, 3)), [
+      'A:0-2',
+      'A:6-10',
+      'B:2-6',
+    ]);
   });
 });

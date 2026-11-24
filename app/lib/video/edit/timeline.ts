@@ -7,7 +7,7 @@
 
 import type { WaveformPeaks } from 'xsenze-tools/lib/audio/audio';
 
-export type MediaKind = 'video' | 'audio';
+export type MediaKind = 'video' | 'audio' | 'image';
 
 /** A file the user added: a video or a sound. */
 export interface Clip {
@@ -43,6 +43,58 @@ export interface Piece {
   /** Seconds the start fades in from black and silence, and the end out. */
   fadeIn: number;
   fadeOut: number;
+  /** Plays this many times faster: 0.25 to 4. */
+  speed: number;
+  look: Look;
+}
+
+export type Filter =
+  | 'none'
+  | 'bw'
+  | 'sepia'
+  | 'warm'
+  | 'cool'
+  | 'vintage'
+  | 'vivid'
+  | 'fade'
+  | 'dramatic';
+
+/** How a piece's picture is drawn. */
+export interface Look {
+  /** 1 is as recorded; 0 to 2. */
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  filter: Filter;
+  /** Clockwise quarter turns. */
+  rotate: 0 | 90 | 180 | 270;
+  flipH: boolean;
+  flipV: boolean;
+  /** Shares of the picture cut from each edge, 0 to 0.45. */
+  crop: { left: number; right: number; top: number; bottom: number };
+}
+
+export const plainLook = (): Look => ({
+  brightness: 1,
+  contrast: 1,
+  saturation: 1,
+  filter: 'none',
+  rotate: 0,
+  flipH: false,
+  flipV: false,
+  crop: { left: 0, right: 0, top: 0, bottom: 0 },
+});
+
+/** Seconds a new photo shows for. */
+export const photoSeconds = 5;
+/** A photo's clip length: its piece can be trimmed out to this. */
+export const photoLimit = 3600;
+
+/** What fills the frame around a picture of another shape. */
+export interface Background {
+  kind: 'black' | 'colour' | 'blur';
+  /** #rrggbb, for 'colour'. */
+  colour: string;
 }
 
 /** The shortest piece a cut or trim leaves, seconds. */
@@ -52,7 +104,9 @@ let counter = 0;
 export const newId = (prefix: string) =>
   `${prefix}${Date.now().toString(36)}${(counter++).toString(36)}`;
 
-export const lengthOf = (piece: Piece) => piece.out - piece.in;
+/** Timeline seconds a piece lasts: its stretch of clip at its speed. */
+export const lengthOf = (piece: Piece) =>
+  (piece.out - piece.in) / (piece.speed || 1);
 
 export function total(pieces: readonly Piece[]): number {
   return pieces.reduce((sum, piece) => sum + lengthOf(piece), 0);
@@ -95,7 +149,7 @@ export function placeAt(pieces: readonly Piece[], t: number): Place | null {
   const start = begins[index]!;
   const clipTime = Math.min(
     piece.out,
-    Math.max(piece.in, piece.in + (t - start)),
+    Math.max(piece.in, piece.in + (t - start) * (piece.speed || 1)),
   );
   return { index, piece, start, clipTime };
 }
@@ -105,11 +159,13 @@ export function pieceFor(clip: Clip): Piece {
     id: newId('p'),
     clip: clip.id,
     in: 0,
-    out: clip.duration,
+    out: clip.kind === 'image' ? photoSeconds : clip.duration,
     volume: 1,
     muted: false,
     fadeIn: 0,
     fadeOut: 0,
+    speed: 1,
+    look: plainLook(),
   };
 }
 
@@ -142,13 +198,16 @@ export function cutRange(
       kept.push(piece);
       return;
     }
-    // what is left before the range, and after it
-    if (start < a) kept.push({ ...piece, out: piece.in + (a - start) });
+    // what is left before the range, and after it, in clip seconds
+    const speed = piece.speed || 1;
+    if (start < a)
+      kept.push({ ...piece, out: piece.in + (a - start) * speed, fadeOut: 0 });
     if (end > b)
       kept.push({
         ...piece,
         id: start < a ? newId('p') : piece.id,
-        in: piece.in + (b - start),
+        in: piece.in + (b - start) * speed,
+        fadeIn: 0,
       });
   });
   return kept.filter((piece) => lengthOf(piece) >= minimumPiece / 2);
@@ -291,6 +350,7 @@ export interface Edit {
   pieces: Piece[];
   audio: AudioItem[];
   mix: Mix;
+  background: Background;
 }
 
 export const emptyEdit = (): Edit => ({
@@ -301,6 +361,7 @@ export const emptyEdit = (): Edit => ({
     music: { volume: 1, muted: false },
     voice: { volume: 1, muted: false },
   },
+  background: { kind: 'black', colour: '#000000' },
 });
 
 export const endOf = (item: AudioItem) => item.start + (item.out - item.in);

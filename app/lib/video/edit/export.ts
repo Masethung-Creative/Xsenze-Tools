@@ -7,9 +7,15 @@
  * are written side by side.
  */
 import { loadMediabunny, openInput } from 'xsenze-tools/lib/video/media-probe';
-import type { Fit } from 'xsenze-tools/lib/video/edit/player';
+import { stretchBuffer } from 'xsenze-tools/lib/audio/stretch';
+import {
+  drawPicture,
+  type Fit,
+  type Picture,
+} from 'xsenze-tools/lib/video/edit/draw';
 import {
   editLength,
+  fadeAt,
   lengthOf,
   starts,
   total,
@@ -79,11 +85,48 @@ interface Stretch {
   start: number;
   in: number;
   out: number;
+  /** Plays this many times faster; its sound is stretched with the pitch kept. */
+  speed?: number;
   gain: number;
   fadeIn: number;
   fadeOut: number;
   /** Decoded audio of in..out, filled on first use. */
   buffers?: { buffer: AudioBuffer; at: number }[];
+}
+
+/** One buffer of `in`..`out` from decoded pieces that may run past either end. */
+function joined(
+  buffers: { buffer: AudioBuffer; at: number }[],
+  from: number,
+  to: number,
+): AudioBuffer | null {
+  const first = buffers[0]?.buffer;
+  if (!first) return null;
+  const rate = first.sampleRate;
+  const channels = first.numberOfChannels;
+  const length = Math.max(1, Math.round((to - from) * rate));
+  const out = new AudioBuffer({
+    numberOfChannels: channels,
+    length,
+    sampleRate: rate,
+  });
+  for (const { buffer, at } of buffers) {
+    const offset = Math.round((at - from) * rate);
+    for (let c = 0; c < channels; c++) {
+      const data = buffer.getChannelData(
+        Math.min(c, buffer.numberOfChannels - 1),
+      );
+      const skip = Math.max(0, -offset);
+      const room = length - Math.max(0, offset);
+      if (room <= 0 || skip >= data.length) continue;
+      out.copyToChannel(
+        data.subarray(skip, skip + Math.min(room, data.length - skip)),
+        c,
+        Math.max(0, offset),
+      );
+    }
+  }
+  return out;
 }
 
 /** Every sound in the edit as stretches; silent ones are left out. */
@@ -94,12 +137,13 @@ function stretches(clips: ReadonlyMap<string, Clip>, edit: Edit): Stretch[] {
   edit.pieces.forEach((piece, i) => {
     const clip = clips.get(piece.clip);
     const gain = (piece.muted ? 0 : piece.volume) * videoLevel;
-    if (!clip?.hasAudio || gain <= 0) return;
+    if (!clip?.hasAudio || clip.kind !== 'video' || gain <= 0) return;
     out.push({
       clip,
       start: begins[i]!,
       in: piece.in,
       out: piece.out,
+      speed: piece.speed || 1,
       gain,
       fadeIn: piece.fadeIn,
       fadeOut: piece.fadeOut,
@@ -135,6 +179,20 @@ async function decode(m: Mediabunny, stretch: Stretch) {
     for await (const wrapped of sink.buffers(stretch.in, stretch.out))
       buffers.push({ buffer: wrapped.buffer, at: wrapped.timestamp });
   }
+  const speed = stretch.speed ?? 1;
+  if (Math.abs(speed - 1) >= 0.01 && buffers.length) {
+    // a sped-up piece: its sound is stretched with the pitch kept, and the
+    // stretch is then measured in timeline seconds from 0
+    const whole = joined(buffers, stretch.in, stretch.out);
+    if (whole) {
+      const faster = await stretchBuffer(whole, speed);
+      stretch.in = 0;
+      stretch.out = faster.duration;
+      stretch.speed = 1;
+      stretch.buffers = [{ buffer: faster, at: 0 }];
+      return stretch.buffers;
+    }
+  }
   stretch.buffers = buffers;
   return buffers;
 }
@@ -149,9 +207,11 @@ async function mixWindow(
   const frames = Math.max(1, Math.round((to - from) * sampleRate));
   const context = new OfflineAudioContext(channels, frames, sampleRate);
   for (const stretch of all) {
+    const timelineLength = (stretch.out - stretch.in) / (stretch.speed ?? 1);
+    if (stretch.start + timelineLength <= from || stretch.start >= to) continue;
+    // decoding first turns a sped-up stretch into timeline seconds
+    await decode(m, stretch);
     const length = stretch.out - stretch.in;
-    const end = stretch.start + length;
-    if (end <= from || stretch.start >= to) continue;
     const gain = context.createGain();
     gain.connect(context.destination);
     // the stretch's loudness over this window, fades included
@@ -203,6 +263,7 @@ class Frames {
   #samples: AsyncGenerator<import('mediabunny').VideoSample> | null = null;
   #current: import('mediabunny').VideoSample | null = null;
   #next: import('mediabunny').VideoSample | null = null;
+  #photos = new Map<string, ImageBitmap | null>();
 
   constructor(m: Mediabunny, clips: ReadonlyMap<string, Clip>, edit: Edit) {
     this.#m = m;
@@ -229,7 +290,7 @@ class Frames {
       await this.close();
       this.#index = index;
       const clip = this.#clips.get(piece.clip);
-      if (clip) {
+      if (clip && clip.kind === 'video') {
         const track = await openInput(
           this.#m,
           clip.file,
@@ -241,7 +302,11 @@ class Frames {
           );
       }
     }
-    const clipTime = piece.in + (t - this.#begins[index]!);
+    const local = t - this.#begins[index]!;
+    const clipTime = piece.in + local * (piece.speed || 1);
+    const clip = this.#clips.get(piece.clip);
+    if (clip?.kind === 'image')
+      return { piece, picture: await this.#photo(clip), local };
     // step forward to the last frame that starts at or before clipTime
     while (this.#samples) {
       if (!this.#next) {
@@ -254,7 +319,28 @@ class Frames {
       this.#current = this.#next;
       this.#next = null;
     }
-    return { piece, sample: this.#current, local: t - this.#begins[index]! };
+    const sample = this.#current;
+    const picture: Picture | null = sample
+      ? {
+          source: sample.toCanvasImageSource(),
+          width: sample.codedWidth,
+          height: sample.codedHeight,
+          rotation: sample.rotation,
+        }
+      : null;
+    return { piece, picture, local };
+  }
+
+  /** A photo, decoded once for the whole export. */
+  async #photo(clip: Clip): Promise<Picture | null> {
+    let bitmap = this.#photos.get(clip.id);
+    if (bitmap === undefined) {
+      bitmap = await createImageBitmap(clip.file).catch(() => null);
+      this.#photos.set(clip.id, bitmap);
+    }
+    return bitmap
+      ? { source: bitmap, width: bitmap.width, height: bitmap.height }
+      : null;
   }
 
   async close() {
@@ -319,20 +405,23 @@ export async function exportEdit(
         abort();
         const t = frame / fps;
         const shown = await frames.at(t);
-        context.globalAlpha = 1;
-        context.fillStyle = '#000';
-        context.fillRect(0, 0, width, height);
-        if (shown?.sample) {
-          const { piece, sample, local } = shown;
-          const len = lengthOf(piece);
-          let alpha = 1;
-          if (piece.fadeIn > 0 && local < piece.fadeIn)
-            alpha = Math.min(alpha, local / piece.fadeIn);
-          if (piece.fadeOut > 0 && local > len - piece.fadeOut)
-            alpha = Math.min(alpha, (len - local) / piece.fadeOut);
-          context.globalAlpha = Math.max(0, Math.min(1, alpha));
-          sample.drawWithFit(context, { fit: options.fit });
+        if (shown) {
+          const { piece, picture, local } = shown;
+          drawPicture(
+            context,
+            picture,
+            piece.look,
+            width,
+            height,
+            options.fit,
+            edit.background,
+            fadeAt(local, lengthOf(piece), piece.fadeIn, piece.fadeOut),
+          );
+        } else {
           context.globalAlpha = 1;
+          context.filter = 'none';
+          context.fillStyle = '#000';
+          context.fillRect(0, 0, width, height);
         }
         await video.add(t, 1 / fps);
         options.onProgress?.(Math.min(0.99, (frame + 1) / totalFrames));

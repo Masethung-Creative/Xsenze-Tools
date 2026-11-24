@@ -15,25 +15,19 @@ import {
   type Clip,
   type Edit,
   type Level,
+  type Piece,
 } from 'xsenze-tools/lib/video/edit/timeline';
+import {
+  drawPicture,
+  type Fit,
+  type Picture,
+} from 'xsenze-tools/lib/video/edit/draw';
 
-/** How the picture sits in a frame of another shape. */
-export type Fit = 'contain' | 'cover';
+export type { Fit };
 
-/** Where a picture of `w`×`h` is drawn in a `W`×`H` frame. */
-export function fitBox(
-  w: number,
-  h: number,
-  W: number,
-  H: number,
-  fit: Fit = 'contain',
-) {
-  const scale =
-    fit === 'contain' ? Math.min(W / w, H / h) : Math.max(W / w, H / h);
-  const dw = w * scale;
-  const dh = h * scale;
-  return { x: (W - dw) / 2, y: (H - dh) / 2, w: dw, h: dh };
-}
+/** Timeline seconds into a piece, from the clip second it is at. */
+const localOf = (piece: Piece, clipTime: number) =>
+  (clipTime - piece.in) / (piece.speed || 1);
 
 // seconds before a piece ends that the next clip is sought, so the switch is quick
 const preseek = 0.5;
@@ -73,6 +67,7 @@ export default class EditPlayer {
   #clips = new Map<string, Clip>();
   #edit: Edit = emptyEdit();
   #videos = new Map<string, Voice>();
+  #images = new Map<string, HTMLImageElement>();
   #sounds = new Map<string, Voice>();
   #context?: AudioContext;
   #canvas?: HTMLCanvasElement;
@@ -113,13 +108,17 @@ export default class EditPlayer {
     this.#edit = edit;
     for (const [id, voice] of this.#videos)
       if (!this.#clips.has(id)) this.#drop(this.#videos, id, voice);
+    for (const id of this.#images.keys())
+      if (!this.#clips.has(id)) this.#images.delete(id);
     const items = new Set(edit.audio.map((item) => item.id));
     for (const [id, voice] of this.#sounds)
       if (!items.has(id) || !this.#clips.has(this.#itemClip(id)))
         this.#drop(this.#sounds, id, voice);
     // every sound loads now, so it starts on time when the playhead reaches it
     for (const item of edit.audio) this.#sound(item);
-    for (const piece of edit.pieces) this.#video(piece.clip);
+    for (const piece of edit.pieces)
+      if (this.#isPhoto(piece.clip)) this.#image(piece.clip);
+      else this.#video(piece.clip);
     this.time = Math.min(this.time, this.duration);
     if (this.playing) {
       // the edit changed under the playhead: carry on from the same time
@@ -247,7 +246,7 @@ export default class EditPlayer {
       video.playsInline = true;
       video.src = clip.url;
       video.addEventListener('seeked', () => {
-        if (!this.playing && this.#shown() === video) this.#paint(video);
+        if (!this.playing && this.#shown() === video) this.#paintAt(this.time);
       });
       voice = this.#voice(video);
       this.#videos.set(clipId, voice);
@@ -267,6 +266,27 @@ export default class EditPlayer {
       this.#sounds.set(item.id, voice);
     }
     return voice;
+  }
+
+  /** A photo, loaded once; it draws itself when it arrives. */
+  #image(clipId: string): HTMLImageElement | undefined {
+    let image = this.#images.get(clipId);
+    const clip = this.#clips.get(clipId);
+    if (!clip) return undefined;
+    if (!image) {
+      image = new Image();
+      image.decoding = 'async';
+      image.src = clip.url;
+      image.addEventListener('load', () => {
+        if (!this.playing) this.#paintAt(this.time);
+      });
+      this.#images.set(clipId, image);
+    }
+    return image;
+  }
+
+  #isPhoto(clipId: string) {
+    return this.#clips.get(clipId)?.kind === 'image';
   }
 
   #shown(): HTMLVideoElement | undefined {
@@ -304,15 +324,19 @@ export default class EditPlayer {
       this.#index = -1;
       return this.#blank();
     }
+    this.#index = place.index;
+    if (this.#isPhoto(place.piece.clip)) {
+      this.#image(place.piece.clip);
+      this.#paintAt(t);
+      return;
+    }
     const voice = this.#video(place.piece.clip);
     if (!voice) return;
-    this.#index = place.index;
     const seek = ++this.#seek;
     await this.#ready(voice.media);
     if (seek !== this.#seek) return;
     await seekTo(voice.media as HTMLVideoElement, place.clipTime);
-    if (seek === this.#seek && !this.playing)
-      this.#paint(voice.media as HTMLVideoElement);
+    if (seek === this.#seek && !this.playing) this.#paintAt(t);
   }
 
   // ----- playing -----
@@ -365,32 +389,43 @@ export default class EditPlayer {
       this.#blank();
       return;
     }
-    const voice = this.#video(place.piece.clip);
-    if (!voice) return;
-    const video = voice.media as HTMLVideoElement;
-    if (this.#index !== place.index) {
-      for (const other of this.#videos.values())
-        if (other !== voice) other.media.pause();
-      this.#index = place.index;
-    }
-    this.#follow(voice, place.clipTime, now);
-    const local = place.clipTime - place.piece.in;
+    const local = localOf(place.piece, place.clipTime);
     const fade = fadeAt(
       local,
       lengthOf(place.piece),
       place.piece.fadeIn,
       place.piece.fadeOut,
     );
-    this.#level(
-      voice,
-      (place.piece.muted ? 0 : place.piece.volume) *
-        levelGain(this.#edit.mix.video) *
-        fade,
-    );
-    this.#paint(video, fade);
+    if (this.#isPhoto(place.piece.clip)) {
+      for (const other of this.#videos.values()) other.media.pause();
+      this.#index = place.index;
+      this.#paint(place.piece, fade);
+    } else {
+      const voice = this.#video(place.piece.clip);
+      if (!voice) return;
+      if (this.#index !== place.index) {
+        for (const other of this.#videos.values())
+          if (other !== voice) other.media.pause();
+        this.#index = place.index;
+      }
+      // a faster or slower piece plays at its speed; the browser keeps the pitch
+      const speed = place.piece.speed || 1;
+      if (voice.media.playbackRate !== speed) {
+        voice.media.playbackRate = speed;
+        voice.media.preservesPitch = true;
+      }
+      this.#follow(voice, place.clipTime, now);
+      this.#level(
+        voice,
+        (place.piece.muted ? 0 : place.piece.volume) *
+          levelGain(this.#edit.mix.video) *
+          fade,
+      );
+      this.#paint(place.piece, fade);
+    }
     // the next clip seeks ahead of time
     const next = pieces[place.index + 1];
-    if (next && next.clip !== place.piece.clip) {
+    if (next && next.clip !== place.piece.clip && !this.#isPhoto(next.clip)) {
       const begin = starts(pieces)[place.index] ?? 0;
       if (begin + lengthOf(place.piece) - time < preseek) {
         const upcoming = this.#video(next.clip);
@@ -464,34 +499,55 @@ export default class EditPlayer {
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  /** Draws a frame, with a fade towards black below 1. */
-  #paint(video: HTMLVideoElement, fade?: number) {
+  /** Draws the piece at timeline second `t`, still. */
+  #paintAt(t: number) {
+    const pieces = this.#edit.pieces;
+    const place = t < total(pieces) ? placeAt(pieces, t) : null;
+    if (!place) return this.#blank();
+    this.#paint(
+      place.piece,
+      fadeAt(
+        localOf(place.piece, place.clipTime),
+        lengthOf(place.piece),
+        place.piece.fadeIn,
+        place.piece.fadeOut,
+      ),
+    );
+  }
+
+  /** The current picture of a piece: its photo, or its video's frame. */
+  #picture(piece: Piece): Picture | null {
+    if (this.#isPhoto(piece.clip)) {
+      const image = this.#image(piece.clip);
+      return image?.naturalWidth
+        ? {
+            source: image,
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          }
+        : null;
+    }
+    const video = this.#videos.get(piece.clip)?.media as
+      HTMLVideoElement | undefined;
+    return video?.videoWidth
+      ? { source: video, width: video.videoWidth, height: video.videoHeight }
+      : null;
+  }
+
+  /** Draws a piece with its look, with a fade towards black below 1. */
+  #paint(piece: Piece, fade: number) {
     const canvas = this.#canvas;
     const context = canvas?.getContext('2d');
-    if (!canvas || !context || !video.videoWidth) return;
-    let alpha = fade;
-    if (alpha === undefined) {
-      const place = placeAt(this.#edit.pieces, this.time);
-      alpha = place
-        ? fadeAt(
-            place.clipTime - place.piece.in,
-            lengthOf(place.piece),
-            place.piece.fadeIn,
-            place.piece.fadeOut,
-          )
-        : 1;
-    }
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    const box = fitBox(
-      video.videoWidth,
-      video.videoHeight,
+    if (!canvas || !context) return;
+    drawPicture(
+      context,
+      this.#picture(piece),
+      piece.look,
       canvas.width,
       canvas.height,
       this.fit,
+      this.#edit.background,
+      fade,
     );
-    context.globalAlpha = alpha;
-    context.drawImage(video, box.x, box.y, box.w, box.h);
-    context.globalAlpha = 1;
   }
 }

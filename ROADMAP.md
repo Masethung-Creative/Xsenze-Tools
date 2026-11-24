@@ -54,14 +54,14 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Preview of the whole edit, with waveforms                                                                    | ✅     |
 | Export to MP4 (H.264/H.265/AV1 + AAC) or WebM (VP9/AV1 + Opus): shape, fit, size, frame rate, quality, sound | ✅     |
 | **Batch 1**                                                                                                  |        |
-| Photos as clips, with a duration                                                                             | 📋     |
+| Photos as clips, with a duration                                                                             | ✅     |
 | Text titles: font, size, colour, background, position, time                                                  | 📋     |
 | Overlay: logo, watermark or small video, dragged and resized on the preview, opacity                         | 📋     |
-| Speed 0.25–4× with the pitch kept                                                                            | 📋     |
-| Crop, rotate 90°, flip                                                                                       | 📋     |
-| Adjust (brightness, contrast, saturation) and filter presets                                                 | 📋     |
+| Speed 0.25–4× with the pitch kept                                                                            | ✅     |
+| Crop, rotate 90°, flip                                                                                       | ✅     |
+| Adjust (brightness, contrast, saturation) and filter presets                                                 | ✅     |
 | Transitions: fade, dissolve, wipe                                                                            | 📋     |
-| Background colour or blur behind clips of another shape                                                      | 📋     |
+| Background colour or blur behind clips of another shape                                                      | ✅     |
 | **Batch 2**                                                                                                  |        |
 | Shapes and emoji, text animations                                                                            | 📋     |
 | Save and open a project file                                                                                 | 📋     |
