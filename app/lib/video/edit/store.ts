@@ -142,6 +142,9 @@ function filled(saved: Saved, ids: ReadonlySet<string>): Saved {
           ...piece,
           transition: piece.transition ?? noTransition(),
           look: fullLook(piece.look),
+          animIn: piece.animIn ?? 'none',
+          animOut: piece.animOut ?? 'none',
+          animSeconds: piece.animSeconds ?? 0.6,
         })),
       audio: edit.audio.filter((item) => ids.has(item.clip)),
       layers: (edit.layers ?? [])

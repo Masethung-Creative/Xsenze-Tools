@@ -85,6 +85,8 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Reverse a clip, freeze a frame, zoom and pan on photos                                                                                                                    | ✅     |
 | Export 4K, GIF, or sound only (MP3/WAV)                                                                                                                                   | ✅     |
 | Save and open a project file; save the current frame as PNG                                                                                                               | ✅     |
+| **Animations**                                                                                                                                                            |        |
+| In and out picker with moving tiles for titles, overlays and clips: fade, blur, zoom, slide, soft reveal, circle, pop, typewriter                                         | ✅     |
 
 ## Image
 

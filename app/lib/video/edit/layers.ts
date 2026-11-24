@@ -6,8 +6,12 @@
  */
 import type { Context2D } from 'xsenze-tools/lib/video/edit/draw';
 import { keyed } from 'xsenze-tools/lib/video/edit/chroma';
+import {
+  drawRevealed,
+  motionOf,
+  type Motion,
+} from 'xsenze-tools/lib/video/edit/anim';
 import type {
-  Anim,
   FontId,
   Layer,
   ShapeKind,
@@ -38,14 +42,7 @@ export const FONTS: Record<FontId, { label: string; css: string }> = {
   },
 };
 
-export const ANIMS: Record<Anim, string> = {
-  none: 'None',
-  fade: 'Fade',
-  'slide-up': 'Slide up',
-  'slide-left': 'Slide in',
-  pop: 'Pop',
-  typewriter: 'Typewriter',
-};
+export { ANIMS } from 'xsenze-tools/lib/video/edit/anim';
 
 export const SHAPES: Record<ShapeKind, string> = {
   rect: 'Box',
@@ -101,68 +98,23 @@ export function fontsOf(layers: readonly Layer[]): string[] {
 
 // ----- motion -----
 
-interface Motion {
-  alpha: number;
-  dx: number;
-  dy: number;
-  scale: number;
-  /** Share of the letters typed so far. */
-  typed: number;
-}
-
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-const easeOut = (x: number) => 1 - (1 - x) ** 3;
-/** Past 1 a little, then back: a pop. */
-const backOut = (x: number) => {
-  const c = 1.70158;
-  return 1 + (c + 1) * (x - 1) ** 3 + c * (x - 1) ** 2;
-};
 
 /** Seconds one animation takes on a layer: at most half of it. */
 export const animLength = (layer: Layer) =>
   Math.max(0, Math.min(layer.animSeconds, layer.length / 2));
 
 /** Where a layer's animations have it at timeline second `t`. */
-export function motionAt(
-  layer: Layer,
-  t: number,
-  W: number,
-  H: number,
-): Motion {
-  const m: Motion = { alpha: 1, dx: 0, dy: 0, scale: 1, typed: 1 };
-  const d = animLength(layer);
-  if (d <= 0) return m;
-  const apply = (anim: Anim, k: number, coming: boolean) => {
-    if (anim === 'none' || k >= 1) return;
-    const e = easeOut(k);
-    const away = coming ? 1 : -1;
-    switch (anim) {
-      case 'fade':
-        m.alpha *= e;
-        break;
-      case 'slide-up':
-        // comes up from below, goes on up
-        m.dy += away * (1 - e) * 0.06 * H;
-        m.alpha *= e;
-        break;
-      case 'slide-left':
-        // comes in from the right, goes on to the left
-        m.dx += away * (1 - e) * 0.08 * W;
-        m.alpha *= e;
-        break;
-      case 'pop':
-        m.scale *= coming ? 0.4 + 0.6 * backOut(k) : 0.5 + 0.5 * e;
-        m.alpha *= coming ? Math.min(1, k * 3) : e;
-        break;
-      case 'typewriter':
-        if (coming) m.typed = k;
-        else m.alpha *= e;
-        break;
-    }
-  };
-  apply(layer.animIn, clamp01((t - layer.start) / d), true);
-  apply(layer.animOut, clamp01((layer.start + layer.length - t) / d), false);
-  return m;
+export function motionAt(layer: Layer, t: number, W: number, H: number) {
+  return motionOf(
+    layer.animIn,
+    layer.animOut,
+    layer.animSeconds,
+    t - layer.start,
+    layer.length,
+    W,
+    H,
+  );
 }
 
 // ----- sizes -----
@@ -371,22 +323,19 @@ function shapePath(ctx: Context2D, layer: Layer, w: number, h: number) {
  * Draws one layer at timeline second `t`. `source` is a picture's or
  * video's current image, with its width over height as `aspect`.
  */
-export function drawLayer(
+function paintLayer(
   ctx: Context2D,
   layer: Layer,
   source: CanvasImageSource | null,
   aspect: number,
   W: number,
   H: number,
-  t: number,
+  m: Motion,
+  alpha: number,
 ) {
-  const m = motionAt(layer, t, W, H);
-  const alpha = clamp01(layer.opacity) * m.alpha;
-  if (alpha <= 0.002) return;
-  if ((layer.kind === 'picture' || layer.kind === 'video') && !source) return;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.filter = 'none';
+  ctx.filter = m.blur > 0.2 ? `blur(${m.blur.toFixed(1)}px)` : 'none';
   ctx.translate(layer.x * W + m.dx, layer.y * H + m.dy);
   if (layer.angle) ctx.rotate((layer.angle * Math.PI) / 180);
   if (m.scale !== 1) ctx.scale(m.scale, m.scale);
@@ -422,5 +371,41 @@ export function drawLayer(
       ctx.drawImage(image, -w / 2, -h / 2, w, h);
     }
   }
+  ctx.restore();
+}
+
+let sheet: OffscreenCanvas | null = null;
+
+/** Draws a layer as it is at timeline second `t`, animations and all. */
+export function drawLayer(
+  ctx: Context2D,
+  layer: Layer,
+  source: CanvasImageSource | null,
+  aspect: number,
+  W: number,
+  H: number,
+  t: number,
+) {
+  const m = motionAt(layer, t, W, H);
+  const alpha = clamp01(layer.opacity) * m.alpha;
+  if (alpha <= 0.002) return;
+  if ((layer.kind === 'picture' || layer.kind === 'video') && !source) return;
+  if (!m.reveal) {
+    paintLayer(ctx, layer, source, aspect, W, H, m, alpha);
+    return;
+  }
+  // a wipe: drawn whole on a frame-sized sheet, then only the revealed part
+  const w = Math.max(1, Math.round(W));
+  const h = Math.max(1, Math.round(H));
+  sheet ??= new OffscreenCanvas(w, h);
+  if (sheet.width !== w) sheet.width = w;
+  if (sheet.height !== h) sheet.height = h;
+  const sctx = sheet.getContext('2d')!;
+  sctx.clearRect(0, 0, w, h);
+  paintLayer(sctx, layer, source, aspect, W, H, m, 1);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.filter = 'none';
+  drawRevealed(ctx, sheet, m.reveal, layerBox(layer, W, H, aspect));
   ctx.restore();
 }

@@ -12,14 +12,12 @@ import XzSegmented from 'xsenze-tools/components/xz/segmented';
 import XzSwitch from 'xsenze-tools/components/xz/switch';
 import XzTextArea from 'xsenze-tools/components/xz/text-area';
 import PropSlider from 'xsenze-tools/components/tools/video/video-edit/prop-slider';
+import AnimPicker, {
+  type AnimSide,
+} from 'xsenze-tools/components/tools/video/video-edit/anim-picker';
 import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import { edgeColour } from 'xsenze-tools/lib/video/edit/chroma';
-import {
-  ANIMS,
-  FONTS,
-  SHAPES,
-  layerSize,
-} from 'xsenze-tools/lib/video/edit/layers';
+import { FONTS, SHAPES, layerSize } from 'xsenze-tools/lib/video/edit/layers';
 import {
   minimumPiece,
   type Align,
@@ -51,10 +49,6 @@ const ALIGN_ICONS = [
   'text-align-center',
   'text-align-end',
 ].map(icon);
-const ANIMS_IN = Object.keys(ANIMS) as Anim[];
-const ANIMS_PLAIN: Anim[] = ANIMS_IN.filter((a) => a !== 'typewriter');
-const ANIM_IN_LABELS = ANIMS_IN.map((a) => ANIMS[a]);
-const ANIM_PLAIN_LABELS = ANIMS_PLAIN.map((a) => ANIMS[a]);
 
 /** The nine places on the frame, as shares of its width and height for the middle. */
 const PLACES = [
@@ -75,7 +69,6 @@ const margin = 0.05;
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 const degrees = (value: number) => `${Math.round(value)}°`;
-const seconds = (value: number) => `${value.toFixed(1)} s`;
 
 interface LayerPropsSignature {
   Args: {
@@ -354,31 +347,14 @@ export default class LayerProps extends Component<LayerPropsSignature> {
     this.#put({ x: this.#placeX(place[2], w), y: this.#placeY(place[3], h) });
   };
 
-  get animInIndex() {
-    return this.isText
-      ? ANIMS_IN.indexOf(this.layer.animIn)
-      : ANIMS_PLAIN.indexOf(this.layer.animIn);
-  }
-
-  get animOutIndex() {
-    return ANIMS_PLAIN.indexOf(this.layer.animOut);
-  }
-
-  get animInLabels() {
-    return this.isText ? ANIM_IN_LABELS : ANIM_PLAIN_LABELS;
-  }
-
-  pickAnimIn = (i: number) => {
-    const anim = (this.isText ? ANIMS_IN : ANIMS_PLAIN)[i];
-    if (!anim) return;
+  pickAnim = (side: AnimSide, anim: Anim) => {
+    if (side === 'out') {
+      this.#put({ animOut: anim });
+      return;
+    }
     // typing needs longer than a fade to read
     const slow = anim === 'typewriter' && this.layer.animSeconds < 1;
     this.#put({ animIn: anim, ...(slow ? { animSeconds: 1.5 } : {}) });
-  };
-
-  pickAnimOut = (i: number) => {
-    const anim = ANIMS_PLAIN[i];
-    if (anim) this.#put({ animOut: anim });
   };
 
   setAnimSeconds = (animSeconds: number, dragging: boolean) =>
@@ -698,35 +674,14 @@ export default class LayerProps extends Component<LayerPropsSignature> {
         {{/if}}
       </XzRows>
     {{else if this.tabIsAnim}}
-      <XzRows @framed={{true}}>
-        <XzHeading @text="Comes in" />
-        <XzSegmented
-          class="ve-anim-in"
-          @items={{this.animInLabels}}
-          @selected={{this.animInIndex}}
-          @columns={{3}}
-          @onChange={{this.pickAnimIn}}
-        />
-        <XzHeading @text="Goes out" />
-        <XzSegmented
-          class="ve-anim-out"
-          @items={{ANIM_PLAIN_LABELS}}
-          @selected={{this.animOutIndex}}
-          @columns={{3}}
-          @onChange={{this.pickAnimOut}}
-        />
-        <PropSlider
-          class="ve-anim-seconds"
-          @label="Takes"
-          @value={{this.layer.animSeconds}}
-          @min={{0.1}}
-          @max={{3}}
-          @step={{0.1}}
-          @nudge={{0.1}}
-          @readout={{seconds}}
-          @onChange={{this.setAnimSeconds}}
-        />
-      </XzRows>
+      <AnimPicker
+        @animIn={{this.layer.animIn}}
+        @animOut={{this.layer.animOut}}
+        @seconds={{this.layer.animSeconds}}
+        @typing={{this.isText}}
+        @onPick={{this.pickAnim}}
+        @onSeconds={{this.setAnimSeconds}}
+      />
       <p class="ve-hint">Each lasts at most half of the item's time.</p>
     {{else}}
       <XzRows @framed={{true}}>

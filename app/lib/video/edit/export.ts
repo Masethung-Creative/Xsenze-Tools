@@ -18,6 +18,7 @@ import {
   type Shot,
 } from 'xsenze-tools/lib/video/edit/draw';
 import { drawLayer, fontsOf } from 'xsenze-tools/lib/video/edit/layers';
+import { motionOf } from 'xsenze-tools/lib/video/edit/anim';
 import {
   duckAt,
   endOf,
@@ -452,6 +453,15 @@ async function drawFrame(
       look: piece.look,
       fade: fadeAt(local, lengthOf(piece), piece.fadeIn, piece.fadeOut),
       progress: local / Math.max(1e-6, lengthOf(piece)),
+      anim: motionOf(
+        piece.animIn,
+        piece.animOut,
+        piece.animSeconds,
+        local,
+        lengthOf(piece),
+        W,
+        H,
+      ),
     };
   };
   if (show) {

@@ -117,6 +117,10 @@ their `soon` line from `lib/tools.ts`):
   offered where `exportCodecs(3840, 2160)` finds an encoder. A project file is a zip of
   project.json and a media folder (`packProject` / `unpackProject` in `store.ts`); older records
   are filled in by `fullLook` and `plainKey`.
+  In and out animations (titles, overlays and clips) are worked out in `lib/video/edit/anim.ts`
+  (`motionOf`: opacity, move, size, blur, and a soft or circle wipe drawn through a frame-sized
+  sheet by `drawRevealed`); a piece has `animIn`, `animOut`, `animSeconds` and comes in over
+  black. `video-edit/anim-picker.gts` is the In / Out tile grid (CSS previews on hover).
   Tools' own messages use `toast.notify`; `toast.show` stays the "Copied" note. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.

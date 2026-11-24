@@ -10,6 +10,11 @@ import type {
   Motion,
   TransitionKind,
 } from 'xsenze-tools/lib/video/edit/timeline';
+import {
+  drawRevealed,
+  isStill,
+  type Motion as AnimMotion,
+} from 'xsenze-tools/lib/video/edit/anim';
 
 export type Fit = 'contain' | 'cover';
 export type Context2D =
@@ -228,7 +233,12 @@ export function drawPicture(
   background: Background,
   alpha = 1,
   progress = 0,
+  anim: AnimMotion | null = null,
 ) {
+  if (anim && !isStill(anim)) {
+    animated(ctx, picture, look, W, H, fit, background, alpha, progress, anim);
+    return;
+  }
   ctx.save();
   ctx.globalAlpha = 1;
   ctx.filter = 'none';
@@ -305,6 +315,57 @@ export function drawPicture(
   ctx.restore();
 }
 
+let animSheet: OffscreenCanvas | null = null;
+
+/**
+ * A piece coming in or going out: its frame is drawn as usual on a sheet,
+ * then put over black moved, sized, blurred, faded or part-revealed.
+ */
+function animated(
+  ctx: Context2D,
+  picture: Picture | null,
+  look: Look,
+  W: number,
+  H: number,
+  fit: Fit,
+  background: Background,
+  alpha: number,
+  progress: number,
+  anim: AnimMotion,
+) {
+  const w = Math.max(1, Math.round(W));
+  const h = Math.max(1, Math.round(H));
+  animSheet ??= new OffscreenCanvas(w, h);
+  if (animSheet.width !== w) animSheet.width = w;
+  if (animSheet.height !== h) animSheet.height = h;
+  drawPicture(
+    animSheet.getContext('2d')!,
+    picture,
+    look,
+    W,
+    H,
+    fit,
+    background,
+    alpha,
+    progress,
+  );
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.filter = 'none';
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = Math.max(0, Math.min(1, anim.alpha));
+  if (anim.reveal) {
+    drawRevealed(ctx, animSheet, anim.reveal, { x: 0, y: 0, w: W, h: H });
+  } else {
+    ctx.translate(W / 2 + anim.dx, H / 2 + anim.dy);
+    ctx.scale(anim.scale, anim.scale);
+    if (anim.blur > 0.2) ctx.filter = `blur(${anim.blur.toFixed(1)}px)`;
+    ctx.drawImage(animSheet, -W / 2, -H / 2, W, H);
+  }
+  ctx.restore();
+}
+
 // ----- transitions -----
 
 /** One piece's picture as it should look now. */
@@ -315,6 +376,8 @@ export interface Shot {
   fade: number;
   /** 0 to 1 through its piece, for a zoom or pan. */
   progress?: number;
+  /** Its in or out animation now, if any. */
+  anim?: AnimMotion | null;
 }
 
 /** The transitions, as the editor lists them. */
@@ -371,6 +434,7 @@ export function drawShots(
       background,
       shot.fade,
       shot.progress,
+      shot.anim,
     );
     return;
   }
@@ -387,6 +451,7 @@ export function drawShots(
     background,
     a.fade,
     a.progress,
+    a.anim,
   );
   drawPicture(
     B.getContext('2d')!,
@@ -398,6 +463,7 @@ export function drawShots(
     background,
     b.fade,
     b.progress,
+    b.anim,
   );
   ctx.save();
   ctx.globalAlpha = 1;

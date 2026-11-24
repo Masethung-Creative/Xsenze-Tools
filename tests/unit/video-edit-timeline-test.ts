@@ -46,6 +46,9 @@ const piece = (id: string, clip: string, a: number, b: number): Piece => ({
   speed: 1,
   look: plainLook(),
   transition: noTransition(),
+  animIn: 'none',
+  animOut: 'none',
+  animSeconds: 0.6,
 });
 
 // clip A 0–10 s, clip B 2–6 s: 14 s in all

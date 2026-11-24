@@ -25,6 +25,9 @@ import {
   thumbnails,
 } from 'xsenze-tools/components/tools/shared/media/frames';
 import PropSlider from 'xsenze-tools/components/tools/video/video-edit/prop-slider';
+import AnimPicker, {
+  type AnimSide,
+} from 'xsenze-tools/components/tools/video/video-edit/anim-picker';
 import FrameBox from 'xsenze-tools/components/tools/video/video-edit/frame-box';
 import LayerProps, {
   type LayerTab,
@@ -120,6 +123,7 @@ import {
   type TextPreset,
   type TransitionKind,
   type MotionKind,
+  type Anim,
   laneFree,
   lengthOf,
   plainMotion,
@@ -2183,6 +2187,12 @@ export default class VideoEdit extends Component {
 
   resetLook = () => this.#setPiece({ look: plainLook() });
 
+  pickPieceAnim = (side: AnimSide, anim: Anim) =>
+    this.#setPiece(side === 'in' ? { animIn: anim } : { animOut: anim });
+
+  setPieceAnimSeconds = (animSeconds: number, dragging: boolean) =>
+    this.#setPiece({ animSeconds }, this.#liveRecord(dragging));
+
   setEffect = (key: 'vignette' | 'blur', value: number, dragging: boolean) =>
     this.#setLook({ [key]: value }, this.#liveRecord(dragging));
 
@@ -2867,8 +2877,8 @@ export default class VideoEdit extends Component {
     if (!c) return [];
     if (c.kind === 'audio') return ['edit', 'audio'];
     const tabs: TabId[] = this.chosenIsPhoto
-      ? ['edit', 'adjust']
-      : ['edit', 'adjust', 'audio'];
+      ? ['edit', 'adjust', 'anim']
+      : ['edit', 'adjust', 'anim', 'audio'];
     return this.transitionIndex > 0 ? [...tabs, 'transition'] : tabs;
   }
 
@@ -2895,6 +2905,10 @@ export default class VideoEdit extends Component {
 
   get tabIsAdjust() {
     return this.tabShown === 'adjust';
+  }
+
+  get tabIsAnim() {
+    return this.tabShown === 'anim';
   }
 
   pickTab = (id: TabId) => (this.tab = id);
@@ -3832,6 +3846,19 @@ export default class VideoEdit extends Component {
                     />
                   </XzGrid>
                 </XzRows>
+              {{else if this.tabIsAnim}}
+                {{#if this.chosenPiece}}
+                  <AnimPicker
+                    @animIn={{this.chosenPiece.animIn}}
+                    @animOut={{this.chosenPiece.animOut}}
+                    @seconds={{this.chosenPiece.animSeconds}}
+                    @onPick={{this.pickPieceAnim}}
+                    @onSeconds={{this.setPieceAnimSeconds}}
+                  />
+                  <p class="ve-hint">The clip comes in over black and goes out
+                    to black. Each lasts at most half the clip; a transition
+                    from the clip before plays as well.</p>
+                {{/if}}
               {{else}}
                 <XzRows @framed={{true}}>
                   {{#if this.chosenIsAudio}}

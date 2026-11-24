@@ -53,6 +53,11 @@ export interface Piece {
   look: Look;
   /** How it comes in from the piece before; it overlaps that piece's end. */
   transition: Transition;
+  /** How the picture itself comes in and goes out, over black. */
+  animIn: Anim;
+  animOut: Anim;
+  /** Seconds each takes; at most half the piece. */
+  animSeconds: number;
 }
 
 export type TransitionKind =
@@ -273,6 +278,9 @@ export function pieceFor(clip: Clip): Piece {
     speed: 1,
     look: plainLook(),
     transition: noTransition(),
+    animIn: 'none',
+    animOut: 'none',
+    animSeconds: 0.6,
   };
 }
 
@@ -283,12 +291,19 @@ export function split(pieces: readonly Piece[], t: number): Piece[] {
   const { index, piece, clipTime } = place;
   if (clipTime - piece.in < minimumPiece || piece.out - clipTime < minimumPiece)
     return [...pieces];
-  const first = { ...piece, out: clipTime, fadeOut: 0 };
+  // a cut keeps the coming in on the first part and the going out on the second
+  const first = {
+    ...piece,
+    out: clipTime,
+    fadeOut: 0,
+    animOut: 'none' as const,
+  };
   const second = {
     ...piece,
     id: newId('p'),
     in: clipTime,
     fadeIn: 0,
+    animIn: 'none' as const,
     transition: noTransition(),
   };
   return [...pieces.slice(0, index), first, second, ...pieces.slice(index + 1)];
@@ -713,7 +728,18 @@ export const LAYER_LANES: readonly LayerLane[] = ['text', 'overlay'];
 
 export type LayerKind = 'text' | 'picture' | 'video' | 'shape' | 'emoji';
 export type Anim =
-  'none' | 'fade' | 'slide-up' | 'slide-left' | 'pop' | 'typewriter';
+  | 'none'
+  | 'fade'
+  | 'blur'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'slide-fade'
+  | 'soft-reveal'
+  | 'circle'
+  | 'slide-up'
+  | 'slide-left'
+  | 'pop'
+  | 'typewriter';
 export type FontId = 'sans' | 'display' | 'serif' | 'mono' | 'impact' | 'hand';
 export type ShapeKind = 'rect' | 'circle' | 'arrow' | 'star';
 export type Align = 'left' | 'center' | 'right';

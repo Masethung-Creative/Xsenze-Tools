@@ -28,6 +28,7 @@ import {
   type Shot,
 } from 'xsenze-tools/lib/video/edit/draw';
 import { drawLayer } from 'xsenze-tools/lib/video/edit/layers';
+import { motionOf } from 'xsenze-tools/lib/video/edit/anim';
 
 export type { Fit };
 
@@ -42,6 +43,18 @@ const fadeOf = (place: Place) =>
     lengthOf(place.piece),
     place.piece.fadeIn,
     place.piece.fadeOut,
+  );
+
+/** A piece's in or out animation at its place, for a frame of `W`×`H`. */
+const pieceMotion = (place: Place, W: number, H: number) =>
+  motionOf(
+    place.piece.animIn,
+    place.piece.animOut,
+    place.piece.animSeconds,
+    localOf(place),
+    lengthOf(place.piece),
+    W,
+    H,
   );
 
 // seconds before a piece or layer starts that its video is sought, so the switch is quick
@@ -610,6 +623,11 @@ export default class EditPlayer {
       look: place.piece.look,
       fade: fadeOf(place),
       progress: localOf(place) / Math.max(1e-6, lengthOf(place.piece)),
+      anim: pieceMotion(
+        place,
+        this.#canvas?.width ?? 1,
+        this.#canvas?.height ?? 1,
+      ),
     };
   }
 
