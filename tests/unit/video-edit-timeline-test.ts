@@ -20,7 +20,7 @@ import {
   total,
   trim,
   type Piece,
-} from 'xsenze-tools/lib/video-edit/timeline';
+} from 'xsenze-tools/lib/video/edit/timeline';
 
 const piece = (id: string, clip: string, a: number, b: number): Piece => ({
   id,

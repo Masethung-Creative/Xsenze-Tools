@@ -11,39 +11,48 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
-  'story-studio': () => import('xsenze-tools/components/tools/story-studio'),
-  'audio-dub': () => import('xsenze-tools/components/tools/audio-dub'),
+  'story-studio': () =>
+    import('xsenze-tools/components/tools/ai-studio/story-studio'),
+  'audio-dub': () => import('xsenze-tools/components/tools/audio/audio-dub'),
   'subtitle-translator': () =>
-    import('xsenze-tools/components/tools/subtitle-translator'),
-  'timecode-calc': () => import('xsenze-tools/components/tools/timecode-calc'),
-  'auto-subtitle': () => import('xsenze-tools/components/tools/auto-subtitle'),
+    import('xsenze-tools/components/tools/video/subtitle-translator'),
+  'timecode-calc': () =>
+    import('xsenze-tools/components/tools/video/timecode-calc'),
+  'auto-subtitle': () =>
+    import('xsenze-tools/components/tools/video/auto-subtitle'),
   'subtitle-studio': () =>
-    import('xsenze-tools/components/tools/subtitle-studio'),
+    import('xsenze-tools/components/tools/video/subtitle-studio'),
   'subtitle-converter': () =>
-    import('xsenze-tools/components/tools/subtitle-converter'),
+    import('xsenze-tools/components/tools/video/subtitle-converter'),
   'screen-recorder': () =>
-    import('xsenze-tools/components/tools/screen-recorder'),
+    import('xsenze-tools/components/tools/video/screen-recorder'),
   'frame-extractor': () =>
-    import('xsenze-tools/components/tools/frame-extractor'),
-  'video-to-gif': () => import('xsenze-tools/components/tools/video-to-gif'),
-  'video-atlas': () => import('xsenze-tools/components/tools/video-atlas'),
-  'video-trimmer': () => import('xsenze-tools/components/tools/video-trimmer'),
-  'video-edit': () => import('xsenze-tools/components/tools/video-edit'),
-  'video-muter': () => import('xsenze-tools/components/tools/video-muter'),
+    import('xsenze-tools/components/tools/video/frame-extractor'),
+  'video-to-gif': () =>
+    import('xsenze-tools/components/tools/video/video-to-gif'),
+  'video-atlas': () =>
+    import('xsenze-tools/components/tools/video/video-atlas'),
+  'video-trimmer': () =>
+    import('xsenze-tools/components/tools/video/video-trimmer'),
+  'video-edit': () => import('xsenze-tools/components/tools/video/video-edit'),
+  'video-muter': () =>
+    import('xsenze-tools/components/tools/video/video-muter'),
   'video-compressor': () =>
-    import('xsenze-tools/components/tools/video-compressor'),
+    import('xsenze-tools/components/tools/video/video-compressor'),
   'image-compressor': () =>
-    import('xsenze-tools/components/tools/image-compressor'),
+    import('xsenze-tools/components/tools/image/image-compressor'),
   'audio-extractor': () =>
-    import('xsenze-tools/components/tools/audio-extractor'),
-  'audio-atlas': () => import('xsenze-tools/components/tools/audio-atlas'),
+    import('xsenze-tools/components/tools/audio/audio-extractor'),
+  'audio-atlas': () =>
+    import('xsenze-tools/components/tools/audio/audio-atlas'),
   'waveform-genny': () =>
-    import('xsenze-tools/components/tools/waveform-genny'),
+    import('xsenze-tools/components/tools/audio/waveform-genny'),
   'voice-recorder': () =>
-    import('xsenze-tools/components/tools/voice-recorder'),
+    import('xsenze-tools/components/tools/audio/voice-recorder'),
   'audio-normaliser': () =>
-    import('xsenze-tools/components/tools/audio-normaliser'),
-  'audio-trimmer': () => import('xsenze-tools/components/tools/audio-trimmer'),
+    import('xsenze-tools/components/tools/audio/audio-normaliser'),
+  'audio-trimmer': () =>
+    import('xsenze-tools/components/tools/audio/audio-trimmer'),
 };
 
 export async function loadToolComponent(
