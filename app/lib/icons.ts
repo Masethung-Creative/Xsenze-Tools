@@ -17,12 +17,10 @@ import iArrowUpToLine from 'lucide-static/icons/arrow-up-to-line.svg?raw';
 import iAudioLines from 'lucide-static/icons/audio-lines.svg?raw';
 import iAudioWaveform from 'lucide-static/icons/audio-waveform.svg?raw';
 import iBold from 'lucide-static/icons/bold.svg?raw';
-import iBookOpen from 'lucide-static/icons/book-open.svg?raw';
 import iBox from 'lucide-static/icons/box.svg?raw';
 import iBringToFront from 'lucide-static/icons/bring-to-front.svg?raw';
 import iCamera from 'lucide-static/icons/camera.svg?raw';
 import iCaptions from 'lucide-static/icons/captions.svg?raw';
-import iCast from 'lucide-static/icons/cast.svg?raw';
 import iCheck from 'lucide-static/icons/check.svg?raw';
 import iChevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import iChevronRight from 'lucide-static/icons/chevron-right.svg?raw';
@@ -39,14 +37,12 @@ import iComponent from 'lucide-static/icons/component.svg?raw';
 import iContrast from 'lucide-static/icons/contrast.svg?raw';
 import iCopy from 'lucide-static/icons/copy.svg?raw';
 import iCopyPlus from 'lucide-static/icons/copy-plus.svg?raw';
-import iCpu from 'lucide-static/icons/cpu.svg?raw';
 import iCrop from 'lucide-static/icons/crop.svg?raw';
 import iDelete from 'lucide-static/icons/delete.svg?raw';
 import iDices from 'lucide-static/icons/dices.svg?raw';
 import iDisc3 from 'lucide-static/icons/disc-3.svg?raw';
 import iDot from 'lucide-static/icons/dot.svg?raw';
 import iDownload from 'lucide-static/icons/download.svg?raw';
-import iDrama from 'lucide-static/icons/drama.svg?raw';
 import iEdit from 'lucide-static/icons/edit.svg?raw';
 import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFile from 'lucide-static/icons/file.svg?raw';
@@ -64,11 +60,8 @@ import iFolderOpen from 'lucide-static/icons/folder-open.svg?raw';
 import iFrame from 'lucide-static/icons/frame.svg?raw';
 import iGauge from 'lucide-static/icons/gauge.svg?raw';
 import iGlobe from 'lucide-static/icons/globe.svg?raw';
-import iGoal from 'lucide-static/icons/goal.svg?raw';
 import iGpu from 'lucide-static/icons/gpu.svg?raw';
-import iGraduationCap from 'lucide-static/icons/graduation-cap.svg?raw';
 import iGrid3x3 from 'lucide-static/icons/grid-3x3.svg?raw';
-import iGroup from 'lucide-static/icons/group.svg?raw';
 import iHand from 'lucide-static/icons/hand.svg?raw';
 import iHeading from 'lucide-static/icons/heading.svg?raw';
 import iHeadphones from 'lucide-static/icons/headphones.svg?raw';
@@ -80,30 +73,24 @@ import iImagePlay from 'lucide-static/icons/image-play.svg?raw';
 import iInfo from 'lucide-static/icons/info.svg?raw';
 import iInspect from 'lucide-static/icons/inspect.svg?raw';
 import iItalic from 'lucide-static/icons/italic.svg?raw';
-import iKey from 'lucide-static/icons/key.svg?raw';
 import iLanguages from 'lucide-static/icons/languages.svg?raw';
 import iLayers from 'lucide-static/icons/layers.svg?raw';
-import iLink from 'lucide-static/icons/link.svg?raw';
 import iListPlus from 'lucide-static/icons/list-plus.svg?raw';
-import iLock from 'lucide-static/icons/lock.svg?raw';
 import iMap from 'lucide-static/icons/map.svg?raw';
 import iMaximize from 'lucide-static/icons/maximize.svg?raw';
 import iMaximize2 from 'lucide-static/icons/maximize-2.svg?raw';
 import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMerge from 'lucide-static/icons/merge.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
-import iMicVocal from 'lucide-static/icons/mic-vocal.svg?raw';
 import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMousePointerClick from 'lucide-static/icons/mouse-pointer-click.svg?raw';
 import iMove from 'lucide-static/icons/move.svg?raw';
 import iMusic from 'lucide-static/icons/music.svg?raw';
-import iOrigami from 'lucide-static/icons/origami.svg?raw';
 import iPanelLeftClose from 'lucide-static/icons/panel-left-close.svg?raw';
 import iPanelLeftOpen from 'lucide-static/icons/panel-left-open.svg?raw';
 import iPause from 'lucide-static/icons/pause.svg?raw';
-import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
 import iPlay from 'lucide-static/icons/play.svg?raw';
 import iPlus from 'lucide-static/icons/plus.svg?raw';
@@ -111,7 +98,6 @@ import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
 import iRepeat from 'lucide-static/icons/repeat.svg?raw';
-import iReplace from 'lucide-static/icons/replace.svg?raw';
 import iRewind from 'lucide-static/icons/rewind.svg?raw';
 import iRotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import iRotateCcwSquare from 'lucide-static/icons/rotate-ccw-square.svg?raw';
@@ -125,7 +111,6 @@ import iSearch from 'lucide-static/icons/search.svg?raw';
 import iSendToBack from 'lucide-static/icons/send-to-back.svg?raw';
 import iSettings from 'lucide-static/icons/settings.svg?raw';
 import iShapes from 'lucide-static/icons/shapes.svg?raw';
-import iSheet from 'lucide-static/icons/sheet.svg?raw';
 import iShieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import iShrink from 'lucide-static/icons/shrink.svg?raw';
 import iSkipBack from 'lucide-static/icons/skip-back.svg?raw';
@@ -133,15 +118,12 @@ import iSkipForward from 'lucide-static/icons/skip-forward.svg?raw';
 import iSlidersHorizontal from 'lucide-static/icons/sliders-horizontal.svg?raw';
 import iSmile from 'lucide-static/icons/smile.svg?raw';
 import iSnowflake from 'lucide-static/icons/snowflake.svg?raw';
-import iSpace from 'lucide-static/icons/space.svg?raw';
-import iSparkles from 'lucide-static/icons/sparkles.svg?raw';
 import iSpeaker from 'lucide-static/icons/speaker.svg?raw';
 import iSpeech from 'lucide-static/icons/speech.svg?raw';
 import iSplit from 'lucide-static/icons/split.svg?raw';
 import iSquare from 'lucide-static/icons/square.svg?raw';
 import iStar from 'lucide-static/icons/star.svg?raw';
 import iSubtitles from 'lucide-static/icons/subtitles.svg?raw';
-import iSummary from 'lucide-static/icons/summary.svg?raw';
 import iSun from 'lucide-static/icons/sun.svg?raw';
 import iTags from 'lucide-static/icons/tags.svg?raw';
 import iText from 'lucide-static/icons/text.svg?raw';
@@ -156,13 +138,10 @@ import iTypeOutline from 'lucide-static/icons/type-outline.svg?raw';
 import iUndo2 from 'lucide-static/icons/undo-2.svg?raw';
 import iUnlink from 'lucide-static/icons/unlink.svg?raw';
 import iUpload from 'lucide-static/icons/upload.svg?raw';
-import iUsers from 'lucide-static/icons/users.svg?raw';
-import iVan from 'lucide-static/icons/van.svg?raw';
 import iVideo from 'lucide-static/icons/video.svg?raw';
 import iVolume from 'lucide-static/icons/volume.svg?raw';
 import iVolume2 from 'lucide-static/icons/volume-2.svg?raw';
 import iVolumeX from 'lucide-static/icons/volume-x.svg?raw';
-import iWandSparkles from 'lucide-static/icons/wand-sparkles.svg?raw';
 import iX from 'lucide-static/icons/x.svg?raw';
 import iZoomIn from 'lucide-static/icons/zoom-in.svg?raw';
 import iZoomOut from 'lucide-static/icons/zoom-out.svg?raw';
@@ -186,12 +165,10 @@ export const icons: Record<string, string> = {
   'audio-lines': iAudioLines,
   'audio-waveform': iAudioWaveform,
   bold: iBold,
-  'book-open': iBookOpen,
   box: iBox,
   'bring-to-front': iBringToFront,
   camera: iCamera,
   captions: iCaptions,
-  cast: iCast,
   check: iCheck,
   'chevron-left': iChevronLeft,
   'chevron-right': iChevronRight,
@@ -208,14 +185,12 @@ export const icons: Record<string, string> = {
   contrast: iContrast,
   copy: iCopy,
   'copy-plus': iCopyPlus,
-  cpu: iCpu,
   crop: iCrop,
   delete: iDelete,
   dices: iDices,
   'disc-3': iDisc3,
   dot: iDot,
   download: iDownload,
-  drama: iDrama,
   edit: iEdit,
   eye: iEye,
   file: iFile,
@@ -233,11 +208,8 @@ export const icons: Record<string, string> = {
   frame: iFrame,
   gauge: iGauge,
   globe: iGlobe,
-  goal: iGoal,
   gpu: iGpu,
-  'graduation-cap': iGraduationCap,
   'grid-3x3': iGrid3x3,
-  group: iGroup,
   hand: iHand,
   heading: iHeading,
   headphones: iHeadphones,
@@ -249,30 +221,24 @@ export const icons: Record<string, string> = {
   info: iInfo,
   inspect: iInspect,
   italic: iItalic,
-  key: iKey,
   languages: iLanguages,
   layers: iLayers,
-  link: iLink,
   'list-plus': iListPlus,
-  lock: iLock,
   map: iMap,
   maximize: iMaximize,
   'maximize-2': iMaximize2,
   menu: iMenu,
   merge: iMerge,
   mic: iMic,
-  'mic-vocal': iMicVocal,
   minus: iMinus,
   'monitor-up': iMonitorUp,
   moon: iMoon,
   'mouse-pointer-click': iMousePointerClick,
   move: iMove,
   music: iMusic,
-  origami: iOrigami,
   'panel-left-close': iPanelLeftClose,
   'panel-left-open': iPanelLeftOpen,
   pause: iPause,
-  pencil: iPencil,
   'picture-in-picture-2': iPictureInPicture2,
   play: iPlay,
   plus: iPlus,
@@ -280,7 +246,6 @@ export const icons: Record<string, string> = {
   radio: iRadio,
   'redo-2': iRedo2,
   repeat: iRepeat,
-  replace: iReplace,
   rewind: iRewind,
   'rotate-ccw': iRotateCcw,
   'rotate-ccw-square': iRotateCcwSquare,
@@ -294,7 +259,6 @@ export const icons: Record<string, string> = {
   'send-to-back': iSendToBack,
   settings: iSettings,
   shapes: iShapes,
-  sheet: iSheet,
   'shield-check': iShieldCheck,
   shrink: iShrink,
   'skip-back': iSkipBack,
@@ -302,15 +266,12 @@ export const icons: Record<string, string> = {
   'sliders-horizontal': iSlidersHorizontal,
   smile: iSmile,
   snowflake: iSnowflake,
-  space: iSpace,
-  sparkles: iSparkles,
   speaker: iSpeaker,
   speech: iSpeech,
   split: iSplit,
   square: iSquare,
   star: iStar,
   subtitles: iSubtitles,
-  summary: iSummary,
   sun: iSun,
   tags: iTags,
   text: iText,
@@ -325,13 +286,10 @@ export const icons: Record<string, string> = {
   'undo-2': iUndo2,
   unlink: iUnlink,
   upload: iUpload,
-  users: iUsers,
-  van: iVan,
   video: iVideo,
   volume: iVolume,
   'volume-2': iVolume2,
   'volume-x': iVolumeX,
-  'wand-sparkles': iWandSparkles,
   x: iX,
   'zoom-in': iZoomIn,
   'zoom-out': iZoomOut,

@@ -11,9 +11,6 @@ type Loader = () => Promise<{ default: ToolComponent }>;
  * tool is opened.
  */
 const loaders: Record<string, Loader> = {
-  'story-studio': () =>
-    import('xsenze-tools/components/tools/ai-studio/story-studio'),
-  'audio-dub': () => import('xsenze-tools/components/tools/audio/audio-dub'),
   'subtitle-translator': () =>
     import('xsenze-tools/components/tools/video/subtitle-translator'),
   'timecode-calc': () =>

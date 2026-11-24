@@ -79,13 +79,6 @@ export interface ToolCategory {
 }
 
 /**
- * Story Studio is built in phases, each checked before the next. Until it is
- * finished it shows in development builds only, and AI Studio reads Coming
- * soon on the site. Set to true to put it live.
- */
-const STORY_STUDIO_LIVE = import.meta.env.DEV;
-
-/**
  * Video Edit is built in steps the user reviews; until export is in, it shows
  * only in dev builds. Set to true to put it live.
  */
@@ -111,26 +104,6 @@ export const toolCategories: ToolCategory[] = [
           'loudness',
           'tags',
           'inspect',
-        ],
-      },
-      {
-        id: 'audio-dub',
-        name: 'Audio Dub',
-        description:
-          'Dub audio or video into many languages at once, on your device',
-        icon: 'mic-vocal',
-        beta: true,
-        accepts: [...AUDIO_ACCEPT, ...VIDEO_ACCEPT, ...SUBTITLE_ACCEPT],
-        produces: ['audio/wav', 'video/mp4', '.srt'],
-        keywords: [
-          'dub',
-          'dubbing',
-          'voice over',
-          'translate',
-          'tts',
-          'text to speech',
-          'multilingual',
-          'ai',
         ],
       },
       {
@@ -421,44 +394,6 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
     ],
-  },
-  {
-    id: 'ai-studio',
-    name: 'AI Studio',
-    icon: 'sparkles',
-    description: 'Plan AI videos and get every prompt for them.',
-    soon: STORY_STUDIO_LIVE
-      ? undefined
-      : 'Story Studio is on its way: plan a course, story or movie, then get every prompt.',
-    tools: STORY_STUDIO_LIVE
-      ? [
-          {
-            id: 'story-studio',
-            name: 'Story Studio',
-            description:
-              'Plan a course, story or movie, then get every image and video prompt',
-            icon: 'wand-sparkles',
-            beta: true,
-            keywords: [
-              'course',
-              'story',
-              'movie',
-              'film',
-              'storyboard',
-              'prompt',
-              'character sheet',
-              'midjourney',
-              'gemini',
-              'gpt',
-              'kling',
-              'veo',
-              'flow',
-              'kids',
-              'ai',
-            ],
-          },
-        ]
-      : [],
   },
   {
     id: 'pdf',

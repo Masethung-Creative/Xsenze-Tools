@@ -7,9 +7,9 @@ Rules:
 
 - Everything runs client-side. Never add a server call, upload, analytics or login.
 - `app/lib/tools.ts` is the single source of truth for categories and tools.
-- Folders go by category: tool UIs in `app/components/tools/<audio|video|image|ai-studio>/<id>.gts`
+- Folders go by category: tool UIs in `app/components/tools/<audio|video|image>/<id>.gts`
   (parts in `<id>/`; parts several tools share in `tools/shared/`); helpers in
-  `app/lib/<audio|video|image|subtitles|ai|ai-studio>/` (site-wide ones stay at `app/lib/`).
+  `app/lib/<audio|video|image|subtitles|ai>/` (site-wide ones stay at `app/lib/`).
 - `ROADMAP.md` lists every tool and feature with its status: update it when work starts or ends.
 - Tool UIs are lazy-loaded via `app/lib/tool-components.ts`; import heavy libs (mediabunny, etc.)
   inside the tool component so they stay out of the main bundle.
@@ -17,10 +17,6 @@ Rules:
   styles as co-located plain `.css` using the kit's `--xz-*` variables.
 - Transformers.js: always set `env.backends.onnx.wasm.wasmPaths` to the bundled `ort-wasm` URL (the
   library defaults to a CDN). Run long model work in a Web Worker (see `lib/ai/nllb.worker.ts`).
-- Raw ONNX code (no Transformers.js) loads the runtime via `loadOrt()` in `lib/ai/dub/ort.ts`: a
-  stable `onnxruntime-web` plus its asyncify WASM. Transformers.js keeps its own nested pre-release
-  runtime, whose WebGPU kernels turned Chatterbox into noise. Create WebGPU sessions one at a time.
-- Check new voice output by transcribing it with Whisper, not by its loudness: noise has loudness too.
 - When a model is wrong on WebGPU, find the wrong graph before switching files: run each graph on
   WASM in turn, and teacher-force decoders with a CPU run's tokens to compare step by step.
 - Audio inputs: use `AUDIO_ACCEPT` from `lib/tools.ts` (iOS needs explicit extensions).
@@ -59,29 +55,6 @@ their `soon` line from `lib/tools.ts`):
 
 - `lib/flow-hooks.ts` is a reduced stand-in (no workflows); `deliverPending` feeds the omnibox
   hand-off from `lib/handoff.ts`.
-- Story Studio (`story-studio`, AI Studio category) is built in phases the user checks one by
-  one. `STORY_STUDIO_LIVE` in `lib/tools.ts` keeps it to dev builds until it is finished; the
-  site shows AI Studio as Coming soon. Its data is in `lib/ai-studio/story/`:
-  - `project-types.ts`: every New project question, option and default, plus the plan maths;
-  - `targets.ts`: image models and video tools (Sora is gone: it shut down in 2026);
-  - `keywords.ts`: looks, to be swapped for the user's keywords skill;
-  - `analysis.ts`: the chatbot prompts and the reader for the JSON answers. Up to 16 parts are
-    read in one step; longer plans are read as an outline first, then the details one group at a
-    time;
-  - `prompts.ts`: picture prompts for each model, built fresh from the project. Midjourney rules
-    come from the user's skills: parameters last, `--v 8.2` (`--niji 7` for anime), `--raw`
-    with `--s 50`, never `--q`, and `--oref` switches to V7;
-  - `export.ts`: Markdown and CSV;
-  - `read-document.ts`: any story file to plain text for the story box (docx, odt, epub, rtf,
-    html, fdx, srt/vtt/ass, text in any encoding; PDF through `read-pdf.ts`, pdf.js loaded only
-    then; audio and video through Whisper). .doc and .pages can't be read: it asks for docx or PDF.
-
-  The project tabs are `components/tools/ai-studio/story-studio/*-tab.gts`. Projects autosave to
-  localStorage (`xsenze.story-studio`) and move between devices as `.story.json` files (Open file,
-  or drop several in Saved projects; a project already here asks Replace or Keep both). Only the
-  project type is locked after Create. No server: the chatbot steps are the user's own copy and
-  paste.
-
 - Video Edit (`video-edit`, Video category) is built in steps the user checks: (1) layers (Video,
   Music, Voice), audio, volume up to 200 %, fades; (2) an Overlay layer (pictures, a small video,
   text) and speed 0.5–2×; (3) export with every layer and the mixed sound. `VIDEO_EDIT_LIVE` in `lib/tools.ts` keeps it to
@@ -130,4 +103,4 @@ their `soon` line from `lib/tools.ts`):
   at a bitrate it works out from a Quality preset or a target size; `compressVideo` in
   `lib/video/media-convert.ts`), image-compressor (jSquash WASM codecs: MozJPEG, WebP, AVIF, OxiPNG, plus
   image-q palettes for PNG, in `lib/image/image-compress.worker.ts`; shrinks with Lanczos3 from `@jsquash/resize`; Target size searches quality; both
-  compressors take many files and share `shared/media/work-banner.gts` for progress and time left), subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js) and audio-dub (Whisper -> NLLB -> voice engines in `lib/ai/dub/`, switched off on the site for now: `VOICES_READY` in `lib/ai/dub/engines.ts` is false, so no language gets an engine, the Voice engine section says Coming soon and Dub stays disabled; with them on: Supertonic 3 first, Auto picks per language; MMS was removed (Supertonic covers all its languages); speakers found per line in `lib/ai/dub/speakers.ts` (CAM++ voiceprints from `lib/ai/dub/fbank.ts` features + pitch; WavLM q8 scrambled them), a preset voice each; Chatterbox Multilingual clones each speaker from a clip of their lines (`lib/ai/dub/chatterbox.ts`; its speech encoder runs on WASM, WebGPU lacks its AveragePool); Indic Parler-TTS (`lib/ai/dub/parler*.ts`) voices the Indian languages Supertonic lacks; its 4-bit text encoder runs on WASM and DAC at fp32, as WebGPU gets both wrong (its fp16 decoders are fine); NLLB translates a line one sentence at a time, as it drops short sentences otherwise; "Keep music", the default background, splits the original with HTDemucs on WebGPU (`lib/ai/dub/separate*.ts`, 21 ONNX pieces, piece 0's input normalisation pinned to the CPU or it gives NaN) and mixes the dub over the music without the voices; lines are sped up or slowed with their pitch kept by Signalsmith Stretch (`stretched` in `lib/ai/dub/mix.ts`), never `playbackRate`).
+  compressors take many files and share `shared/media/work-banner.gts` for progress and time left), subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js).

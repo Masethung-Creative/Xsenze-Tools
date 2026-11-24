@@ -17,15 +17,14 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 
 ## Audio
 
-| Tool               | Status | Notes                                                                       |
-| ------------------ | ------ | --------------------------------------------------------------------------- |
-| Audio Atlas        | ✅     | Everything about one audio file                                             |
-| Audio Dub          | 💤     | Whisper → NLLB → voices; voices off (`VOICES_READY`), Dub shows Coming soon |
-| Audio Extractor    | ✅     |                                                                             |
-| Audio Normaliser   | ✅     |                                                                             |
-| Audio Trimmer      | ✅     |                                                                             |
-| Voice Recorder     | ✅     |                                                                             |
-| Waveform Generator | ✅     |                                                                             |
+| Tool               | Status | Notes                           |
+| ------------------ | ------ | ------------------------------- |
+| Audio Atlas        | ✅     | Everything about one audio file |
+| Audio Extractor    | ✅     |                                 |
+| Audio Normaliser   | ✅     |                                 |
+| Audio Trimmer      | ✅     |                                 |
+| Voice Recorder     | ✅     |                                 |
+| Waveform Generator | ✅     |                                 |
 
 ## Video
 
@@ -93,23 +92,6 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Tool             | Status | Notes                                   |
 | ---------------- | ------ | --------------------------------------- |
 | Image Compressor | ✅     | MozJPEG, WebP, AVIF, OxiPNG in a worker |
-
-## AI Studio
-
-| Tool         | Status | Notes                                      |
-| ------------ | ------ | ------------------------------------------ |
-| Story Studio | 🧪     | `STORY_STUDIO_LIVE` keeps it to dev builds |
-
-### Story Studio
-
-| Phase                                                                | Status |
-| -------------------------------------------------------------------- | ------ |
-| 1. Setup screens and Plan tab                                        | ✅     |
-| 2. Story, pass 1, bible, asset prompts, export                       | ✅     |
-| Open project files; read the story from any file (docx, PDF, audio…) | ✅     |
-| 3. Your own pictures: name reading, matching, project .zip           | 📋     |
-| 4. Shots, frame and video prompts                                    | 📋     |
-| 5. Keywords skill swap                                               | 📋     |
 
 ## Coming soon (empty categories)
 

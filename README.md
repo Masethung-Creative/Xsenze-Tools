@@ -48,12 +48,11 @@ app/
   components/             shell (app-shell, app-sidebar), tool-frame, tool-grid, icon
   components/xz/          the Xsenze UI Kit parts tools are built from
   components/tools/       tool UIs, one folder per category:
-    audio/ video/ image/ ai-studio/   <id>.gts plus a <id>/ folder for its parts
+    audio/ video/ image/  <id>.gts plus a <id>/ folder for its parts
     shared/               parts several tools use (media player, trim, strips, text tool)
   lib/                    site-wide helpers at the top (tools, icons, download, format)
     audio/ video/ image/ subtitles/   helpers per kind of media (video/edit: Video Edit)
-    ai/                   Whisper, translation, Audio Dub's voices (ai/dub)
-    ai-studio/story/      Story Studio
+    ai/                   Whisper and translation
     xz/                   helpers of the kit parts
   routes/tools/tool.ts    /tools/:tool_id
   templates/              route templates (.gts)
