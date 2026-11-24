@@ -7,29 +7,43 @@ import {
   emptyEdit,
   endOf,
   fadeAt,
+  layersAt,
   lengthOf,
   placeAt,
+  showingAt,
   starts,
-  total,
   type AudioItem,
   type Clip,
   type Edit,
+  type Layer,
   type Level,
-  type Piece,
+  type Place,
+  type Showing,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import {
-  drawPicture,
+  drawShots,
   type Fit,
   type Picture,
+  type Shot,
 } from 'xsenze-tools/lib/video/edit/draw';
+import { drawLayer } from 'xsenze-tools/lib/video/edit/layers';
 
 export type { Fit };
 
 /** Timeline seconds into a piece, from the clip second it is at. */
-const localOf = (piece: Piece, clipTime: number) =>
-  (clipTime - piece.in) / (piece.speed || 1);
+const localOf = (place: Place) =>
+  (place.clipTime - place.piece.in) / (place.piece.speed || 1);
 
-// seconds before a piece ends that the next clip is sought, so the switch is quick
+/** A piece's fade at its place, towards black and silence. */
+const fadeOf = (place: Place) =>
+  fadeAt(
+    localOf(place),
+    lengthOf(place.piece),
+    place.piece.fadeIn,
+    place.piece.fadeOut,
+  );
+
+// seconds before a piece or layer starts that its video is sought, so the switch is quick
 const preseek = 0.5;
 // drift between the clock and a media element that brings a re-seek, seconds
 const driftLimit = 0.3;
@@ -47,10 +61,17 @@ interface Voice {
 }
 
 /**
+ * The main track's video element for a piece. Neighbouring pieces use
+ * different ones, so a transition between two parts of one clip can show
+ * both at once.
+ */
+const slotOf = (clip: string, index: number) => `${clip}|${index % 2}`;
+
+/**
  * Plays an edit on one clock: the video track onto one canvas (black bars,
- * fades to black), and every sound through its own gain, so volume can go
- * to 200 % and fade. One hidden video per clip, one audio element per sound
- * on the layers. The transport fields match the single-file Playback.
+ * fades, transitions), the text and overlays over it, and every sound
+ * through its own gain, so volume can go to 200 % and fade. The transport
+ * fields match the single-file Playback.
  */
 export default class EditPlayer {
   @tracked playing = false;
@@ -66,7 +87,10 @@ export default class EditPlayer {
 
   #clips = new Map<string, Clip>();
   #edit: Edit = emptyEdit();
+  /** Main track videos, by slot. */
   #videos = new Map<string, Voice>();
+  /** Overlay videos, by layer. */
+  #overlays = new Map<string, Voice>();
   #images = new Map<string, HTMLImageElement>();
   #sounds = new Map<string, Voice>();
   #context?: AudioContext;
@@ -76,7 +100,6 @@ export default class EditPlayer {
   /** Clock: timeline seconds at `#startedAt`. */
   #base = 0;
   #startedAt = 0;
-  #index = -1;
 
   get transport(): XzTransport {
     return {
@@ -102,23 +125,44 @@ export default class EditPlayer {
     return (place && this.#clips.get(place.piece.clip)?.fps) || 30;
   }
 
+  /** The canvas's size in its own pixels. */
+  get frameSize() {
+    return {
+      width: this.#canvas?.width ?? 1280,
+      height: this.#canvas?.height ?? 720,
+    };
+  }
+
   /** The media and the edit to play; the frame on show is redrawn. */
   load(clips: readonly Clip[], edit: Edit) {
     this.#clips = new Map(clips.map((clip) => [clip.id, clip]));
     this.#edit = edit;
-    for (const [id, voice] of this.#videos)
-      if (!this.#clips.has(id)) this.#drop(this.#videos, id, voice);
+    const slots = new Set(
+      edit.pieces.map((piece, index) => slotOf(piece.clip, index)),
+    );
+    for (const [key, voice] of this.#videos)
+      if (!slots.has(key)) this.#drop(this.#videos, key, voice);
+    const overlays = new Set(
+      edit.layers.filter((l) => l.kind === 'video').map((l) => l.id),
+    );
+    for (const [id, voice] of this.#overlays)
+      if (!overlays.has(id) || !this.#clips.has(this.#layerClip(id)))
+        this.#drop(this.#overlays, id, voice);
     for (const id of this.#images.keys())
       if (!this.#clips.has(id)) this.#images.delete(id);
     const items = new Set(edit.audio.map((item) => item.id));
     for (const [id, voice] of this.#sounds)
       if (!items.has(id) || !this.#clips.has(this.#itemClip(id)))
         this.#drop(this.#sounds, id, voice);
-    // every sound loads now, so it starts on time when the playhead reaches it
+    // everything loads now, so it starts on time when the playhead reaches it
     for (const item of edit.audio) this.#sound(item);
-    for (const piece of edit.pieces)
+    edit.pieces.forEach((piece, index) => {
       if (this.#isPhoto(piece.clip)) this.#image(piece.clip);
-      else this.#video(piece.clip);
+      else this.#video(piece.clip, index);
+    });
+    for (const layer of edit.layers)
+      if (layer.kind === 'video') this.#overlay(layer);
+      else if (layer.kind === 'picture' && layer.clip) this.#image(layer.clip);
     this.time = Math.min(this.time, this.duration);
     if (this.playing) {
       // the edit changed under the playhead: carry on from the same time
@@ -195,8 +239,8 @@ export default class EditPlayer {
 
   destroy() {
     this.#halt();
-    for (const [id, voice] of this.#videos) this.#drop(this.#videos, id, voice);
-    for (const [id, voice] of this.#sounds) this.#drop(this.#sounds, id, voice);
+    for (const map of [this.#videos, this.#overlays, this.#sounds])
+      for (const [id, voice] of map) this.#drop(map, id, voice);
     void this.#context?.close();
   }
 
@@ -236,20 +280,41 @@ export default class EditPlayer {
     return this.#edit.audio.find((item) => item.id === id)?.clip ?? '';
   }
 
-  #video(clipId: string): Voice | undefined {
-    let voice = this.#videos.get(clipId);
+  #layerClip(id: string) {
+    return this.#edit.layers.find((layer) => layer.id === id)?.clip ?? '';
+  }
+
+  #videoElement(url: string): HTMLVideoElement {
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.src = url;
+    video.addEventListener('seeked', () => {
+      if (!this.playing) this.#paintAt(this.time);
+    });
+    return video;
+  }
+
+  /** The main track's video for piece `index`. */
+  #video(clipId: string, index: number): Voice | undefined {
+    const key = slotOf(clipId, index);
+    let voice = this.#videos.get(key);
     const clip = this.#clips.get(clipId);
     if (!clip) return undefined;
     if (!voice) {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.playsInline = true;
-      video.src = clip.url;
-      video.addEventListener('seeked', () => {
-        if (!this.playing && this.#shown() === video) this.#paintAt(this.time);
-      });
-      voice = this.#voice(video);
-      this.#videos.set(clipId, voice);
+      voice = this.#voice(this.#videoElement(clip.url));
+      this.#videos.set(key, voice);
+    }
+    return voice;
+  }
+
+  #overlay(layer: Layer): Voice | undefined {
+    let voice = this.#overlays.get(layer.id);
+    const clip = this.#clips.get(layer.clip ?? '');
+    if (!clip) return undefined;
+    if (!voice) {
+      voice = this.#voice(this.#videoElement(clip.url));
+      this.#overlays.set(layer.id, voice);
     }
     return voice;
   }
@@ -289,12 +354,6 @@ export default class EditPlayer {
     return this.#clips.get(clipId)?.kind === 'image';
   }
 
-  #shown(): HTMLVideoElement | undefined {
-    const piece = this.#edit.pieces[this.#index];
-    const media = piece ? this.#videos.get(piece.clip)?.media : undefined;
-    return media as HTMLVideoElement | undefined;
-  }
-
   #ready(media: HTMLMediaElement): Promise<void> {
     if (media.readyState >= 1) return Promise.resolve();
     return new Promise((resolve) => {
@@ -315,27 +374,44 @@ export default class EditPlayer {
     }
   }
 
+  #showing(t: number): Showing | null {
+    return showingAt(this.#edit.pieces, t);
+  }
+
+  /** The pieces on show and how much of the sound each has. */
+  #places(show: Showing | null): { place: Place; weight: number }[] {
+    if (!show) return [];
+    if (!show.b) return [{ place: show.a, weight: 1 }];
+    return [
+      { place: show.a, weight: 1 - show.p },
+      { place: show.b, weight: show.p },
+    ];
+  }
+
   // ----- still frames -----
 
   async #show(t: number) {
-    const place =
-      t < total(this.#edit.pieces) ? placeAt(this.#edit.pieces, t) : null;
-    if (!place) {
-      this.#index = -1;
-      return this.#blank();
-    }
-    this.#index = place.index;
-    if (this.#isPhoto(place.piece.clip)) {
-      this.#image(place.piece.clip);
-      this.#paintAt(t);
-      return;
-    }
-    const voice = this.#video(place.piece.clip);
-    if (!voice) return;
     const seek = ++this.#seek;
-    await this.#ready(voice.media);
-    if (seek !== this.#seek) return;
-    await seekTo(voice.media as HTMLVideoElement, place.clipTime);
+    const waits: Promise<void>[] = [];
+    const goTo = async (voice: Voice, at: number) => {
+      await this.#ready(voice.media);
+      if (seek === this.#seek)
+        await seekTo(voice.media as HTMLVideoElement, at);
+    };
+    for (const { place } of this.#places(this.#showing(t))) {
+      if (this.#isPhoto(place.piece.clip)) continue;
+      const voice = this.#video(place.piece.clip, place.index);
+      if (voice) waits.push(goTo(voice, place.clipTime));
+    }
+    for (const layer of layersAt(this.#edit.layers, t)) {
+      if (layer.kind !== 'video') continue;
+      const voice = this.#overlay(layer);
+      if (voice) waits.push(goTo(voice, layer.in + (t - layer.start)));
+    }
+    // text and shapes change at once; videos follow when sought
+    this.#paintAt(t);
+    if (!waits.length) return;
+    await Promise.all(waits);
     if (seek === this.#seek && !this.playing) this.#paintAt(t);
   }
 
@@ -347,11 +423,11 @@ export default class EditPlayer {
     this.#base = time;
     this.#startedAt = performance.now();
     // every element is sought again on the next frame
-    for (const voice of [...this.#videos.values(), ...this.#sounds.values()]) {
-      voice.media.pause();
-      voice.settled = 0;
-    }
-    this.#index = -1;
+    for (const map of [this.#videos, this.#overlays, this.#sounds])
+      for (const voice of map.values()) {
+        voice.media.pause();
+        voice.settled = 0;
+      }
     this.#frame = requestAnimationFrame(this.#tick);
   }
 
@@ -374,40 +450,22 @@ export default class EditPlayer {
     }
     time = Math.max(0, time);
     this.time = time;
-    this.#playVideo(time, now);
+    const show = this.#showing(time);
+    this.#playVideo(time, now, show);
     this.#playSounds(time, now);
+    this.#paint(time, show);
     this.#frame = requestAnimationFrame(this.#tick);
   };
 
-  /** Keeps the right video playing at the clock's time and draws it. */
-  #playVideo(time: number, now: number) {
-    const pieces = this.#edit.pieces;
-    const place = time < total(pieces) ? placeAt(pieces, time) : null;
-    if (!place) {
-      for (const voice of this.#videos.values()) voice.media.pause();
-      this.#index = -1;
-      this.#blank();
-      return;
-    }
-    const local = localOf(place.piece, place.clipTime);
-    const fade = fadeAt(
-      local,
-      lengthOf(place.piece),
-      place.piece.fadeIn,
-      place.piece.fadeOut,
-    );
-    if (this.#isPhoto(place.piece.clip)) {
-      for (const other of this.#videos.values()) other.media.pause();
-      this.#index = place.index;
-      this.#paint(place.piece, fade);
-    } else {
-      const voice = this.#video(place.piece.clip);
-      if (!voice) return;
-      if (this.#index !== place.index) {
-        for (const other of this.#videos.values())
-          if (other !== voice) other.media.pause();
-        this.#index = place.index;
-      }
+  /** Keeps the right videos playing at the clock's time, each at its loudness. */
+  #playVideo(time: number, now: number, show: Showing | null) {
+    const playing = new Set<Voice>();
+    const videoLevel = levelGain(this.#edit.mix.video);
+    for (const { place, weight } of this.#places(show)) {
+      if (this.#isPhoto(place.piece.clip)) continue;
+      const voice = this.#video(place.piece.clip, place.index);
+      if (!voice) continue;
+      playing.add(voice);
       // a faster or slower piece plays at its speed; the browser keeps the pitch
       const speed = place.piece.speed || 1;
       if (voice.media.playbackRate !== speed) {
@@ -418,24 +476,52 @@ export default class EditPlayer {
       this.#level(
         voice,
         (place.piece.muted ? 0 : place.piece.volume) *
-          levelGain(this.#edit.mix.video) *
-          fade,
+          videoLevel *
+          fadeOf(place) *
+          weight,
       );
-      this.#paint(place.piece, fade);
     }
-    // the next clip seeks ahead of time
-    const next = pieces[place.index + 1];
-    if (next && next.clip !== place.piece.clip && !this.#isPhoto(next.clip)) {
-      const begin = starts(pieces)[place.index] ?? 0;
-      if (begin + lengthOf(place.piece) - time < preseek) {
-        const upcoming = this.#video(next.clip);
-        if (
-          upcoming &&
-          upcoming.media.paused &&
-          Math.abs(upcoming.media.currentTime - next.in) > 0.05
-        )
-          upcoming.media.currentTime = next.in;
-      }
+    for (const layer of layersAt(this.#edit.layers, time)) {
+      if (layer.kind !== 'video') continue;
+      const voice = this.#overlay(layer);
+      if (!voice) continue;
+      playing.add(voice);
+      this.#follow(voice, layer.in + (time - layer.start), now);
+      this.#level(voice, (layer.muted ? 0 : layer.volume) * videoLevel);
+    }
+    for (const map of [this.#videos, this.#overlays])
+      for (const voice of map.values())
+        if (!playing.has(voice) && !voice.media.paused) voice.media.pause();
+    this.#preseek(time, show);
+  }
+
+  /** The next piece's and the next overlay's videos seek ahead of time. */
+  #preseek(time: number, show: Showing | null) {
+    const pieces = this.#edit.pieces;
+    const current = show ? (show.b ?? show.a).index : -1;
+    const nextIndex = current + 1;
+    const next = pieces[nextIndex];
+    if (next && current >= 0 && !this.#isPhoto(next.clip)) {
+      const begin = starts(pieces)[nextIndex] ?? 0;
+      const upcoming = this.#video(next.clip, nextIndex);
+      if (
+        upcoming &&
+        begin - time < preseek &&
+        upcoming.media.paused &&
+        Math.abs(upcoming.media.currentTime - next.in) > 0.05
+      )
+        upcoming.media.currentTime = next.in;
+    }
+    for (const layer of this.#edit.layers) {
+      if (layer.kind !== 'video') continue;
+      const ahead = layer.start - time;
+      if (ahead <= 0 || ahead >= preseek) continue;
+      const voice = this.#overlay(layer);
+      if (
+        voice?.media.paused &&
+        Math.abs(voice.media.currentTime - layer.in) > 0.05
+      )
+        voice.media.currentTime = layer.in;
     }
   }
 
@@ -476,8 +562,8 @@ export default class EditPlayer {
   #halt() {
     cancelAnimationFrame(this.#frame);
     this.#seek++;
-    for (const voice of [...this.#videos.values(), ...this.#sounds.values()])
-      voice.media.pause();
+    for (const map of [this.#videos, this.#overlays, this.#sounds])
+      for (const voice of map.values()) voice.media.pause();
     this.playing = false;
   }
 
@@ -491,32 +577,14 @@ export default class EditPlayer {
     canvas.height = Math.round(width / this.aspect);
   }
 
-  #blank() {
-    const canvas = this.#canvas;
-    const context = canvas?.getContext('2d');
-    if (!canvas || !context) return;
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  /** Draws the piece at timeline second `t`, still. */
+  /** Draws timeline second `t`, still. */
   #paintAt(t: number) {
-    const pieces = this.#edit.pieces;
-    const place = t < total(pieces) ? placeAt(pieces, t) : null;
-    if (!place) return this.#blank();
-    this.#paint(
-      place.piece,
-      fadeAt(
-        localOf(place.piece, place.clipTime),
-        lengthOf(place.piece),
-        place.piece.fadeIn,
-        place.piece.fadeOut,
-      ),
-    );
+    this.#paint(t, this.#showing(t));
   }
 
   /** The current picture of a piece: its photo, or its video's frame. */
-  #picture(piece: Piece): Picture | null {
+  #picture(place: Place): Picture | null {
+    const piece = place.piece;
     if (this.#isPhoto(piece.clip)) {
       const image = this.#image(piece.clip);
       return image?.naturalWidth
@@ -527,27 +595,72 @@ export default class EditPlayer {
           }
         : null;
     }
-    const video = this.#videos.get(piece.clip)?.media as
+    const video = this.#videos.get(slotOf(piece.clip, place.index))?.media as
       HTMLVideoElement | undefined;
     return video?.videoWidth
       ? { source: video, width: video.videoWidth, height: video.videoHeight }
       : null;
   }
 
-  /** Draws a piece with its look, with a fade towards black below 1. */
-  #paint(piece: Piece, fade: number) {
+  #shot(place: Place): Shot {
+    return {
+      picture: this.#picture(place),
+      look: place.piece.look,
+      fade: fadeOf(place),
+    };
+  }
+
+  /** A layer's current image and its shape, for pictures and videos. */
+  #layerSource(layer: Layer): {
+    source: CanvasImageSource | null;
+    aspect: number;
+  } {
+    if (layer.kind === 'picture') {
+      const image = this.#image(layer.clip ?? '');
+      return image?.naturalWidth
+        ? { source: image, aspect: image.naturalWidth / image.naturalHeight }
+        : { source: null, aspect: 1 };
+    }
+    if (layer.kind === 'video') {
+      const video = this.#overlays.get(layer.id)?.media as
+        HTMLVideoElement | undefined;
+      return video?.videoWidth && video.readyState >= 2
+        ? { source: video, aspect: video.videoWidth / video.videoHeight }
+        : { source: null, aspect: 1 };
+    }
+    return { source: null, aspect: 1 };
+  }
+
+  /** The video track at `t`, then the layers over it. */
+  #paint(t: number, show: Showing | null) {
     const canvas = this.#canvas;
     const context = canvas?.getContext('2d');
     if (!canvas || !context) return;
-    drawPicture(
-      context,
-      this.#picture(piece),
-      piece.look,
-      canvas.width,
-      canvas.height,
-      this.fit,
-      this.#edit.background,
-      fade,
-    );
+    const W = canvas.width;
+    const H = canvas.height;
+    if (show) {
+      drawShots(
+        context,
+        this.#shot(show.a),
+        show.b ? this.#shot(show.b) : null,
+        show.kind,
+        show.p,
+        W,
+        H,
+        this.fit,
+        this.#edit.background,
+      );
+    } else {
+      context.save();
+      context.globalAlpha = 1;
+      context.filter = 'none';
+      context.fillStyle = '#000';
+      context.fillRect(0, 0, W, H);
+      context.restore();
+    }
+    for (const layer of layersAt(this.#edit.layers, t)) {
+      const { source, aspect } = this.#layerSource(layer);
+      drawLayer(context, layer, source, aspect, W, H, t);
+    }
   }
 }

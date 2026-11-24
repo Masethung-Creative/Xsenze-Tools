@@ -46,7 +46,20 @@ export interface Piece {
   /** Plays this many times faster: 0.25 to 4. */
   speed: number;
   look: Look;
+  /** How it comes in from the piece before; it overlaps that piece's end. */
+  transition: Transition;
 }
+
+export type TransitionKind =
+  'none' | 'dissolve' | 'black' | 'white' | 'wipe' | 'slide' | 'circle';
+
+export interface Transition {
+  kind: TransitionKind;
+  /** Seconds; kept under half of either piece. */
+  seconds: number;
+}
+
+export const noTransition = (): Transition => ({ kind: 'none', seconds: 1 });
 
 export type Filter =
   | 'none'
@@ -108,18 +121,37 @@ export const newId = (prefix: string) =>
 export const lengthOf = (piece: Piece) =>
   (piece.out - piece.in) / (piece.speed || 1);
 
-export function total(pieces: readonly Piece[]): number {
-  return pieces.reduce((sum, piece) => sum + lengthOf(piece), 0);
+/**
+ * Seconds piece `index` overlaps the one before it: its transition, kept
+ * under half of either piece so two transitions never meet.
+ */
+export function overlapOf(pieces: readonly Piece[], index: number): number {
+  const piece = pieces[index];
+  const before = pieces[index - 1];
+  if (!piece || !before) return 0;
+  const transition = piece.transition;
+  if (!transition || transition.kind === 'none') return 0;
+  return Math.max(
+    0,
+    Math.min(transition.seconds, lengthOf(before) / 2, lengthOf(piece) / 2),
+  );
 }
 
-/** Timeline seconds where each piece starts. */
+/** Timeline seconds where each piece starts; a transition starts it early. */
 export function starts(pieces: readonly Piece[]): number[] {
   let at = 0;
-  return pieces.map((piece) => {
+  return pieces.map((piece, index) => {
+    at -= overlapOf(pieces, index);
     const start = at;
     at += lengthOf(piece);
     return start;
   });
+}
+
+export function total(pieces: readonly Piece[]): number {
+  const begins = starts(pieces);
+  const last = pieces.length - 1;
+  return last < 0 ? 0 : begins[last]! + lengthOf(pieces[last]!);
 }
 
 export interface Place {
@@ -154,6 +186,49 @@ export function placeAt(pieces: readonly Piece[], t: number): Place | null {
   return { index, piece, start, clipTime };
 }
 
+/** What the video track shows at a second: one piece, or two in a transition. */
+export interface Showing {
+  a: Place;
+  /** The piece coming in, during a transition. */
+  b: Place | null;
+  /** 0 to 1 through the transition. */
+  p: number;
+  kind: TransitionKind;
+}
+
+function placeOf(
+  pieces: readonly Piece[],
+  begins: readonly number[],
+  index: number,
+  t: number,
+): Place {
+  const piece = pieces[index]!;
+  const start = begins[index]!;
+  const clipTime = Math.min(
+    piece.out,
+    Math.max(piece.in, piece.in + (t - start) * (piece.speed || 1)),
+  );
+  return { index, piece, start, clipTime };
+}
+
+export function showingAt(pieces: readonly Piece[], t: number): Showing | null {
+  if (!pieces.length || t >= total(pieces)) return null;
+  const begins = starts(pieces);
+  for (let i = 1; i < pieces.length; i++) {
+    const overlap = overlapOf(pieces, i);
+    const start = begins[i]!;
+    if (overlap > 0 && t >= start && t < start + overlap)
+      return {
+        a: placeOf(pieces, begins, i - 1, t),
+        b: placeOf(pieces, begins, i, t),
+        p: (t - start) / overlap,
+        kind: pieces[i]!.transition.kind,
+      };
+  }
+  const a = placeAt(pieces, t);
+  return a ? { a, b: null, p: 0, kind: 'none' } : null;
+}
+
 export function pieceFor(clip: Clip): Piece {
   return {
     id: newId('p'),
@@ -166,6 +241,7 @@ export function pieceFor(clip: Clip): Piece {
     fadeOut: 0,
     speed: 1,
     look: plainLook(),
+    transition: noTransition(),
   };
 }
 
@@ -177,7 +253,13 @@ export function split(pieces: readonly Piece[], t: number): Piece[] {
   if (clipTime - piece.in < minimumPiece || piece.out - clipTime < minimumPiece)
     return [...pieces];
   const first = { ...piece, out: clipTime, fadeOut: 0 };
-  const second = { ...piece, id: newId('p'), in: clipTime, fadeIn: 0 };
+  const second = {
+    ...piece,
+    id: newId('p'),
+    in: clipTime,
+    fadeIn: 0,
+    transition: noTransition(),
+  };
   return [...pieces.slice(0, index), first, second, ...pieces.slice(index + 1)];
 }
 
@@ -208,6 +290,7 @@ export function cutRange(
         id: start < a ? newId('p') : piece.id,
         in: piece.in + (b - start) * speed,
         fadeIn: 0,
+        transition: noTransition(),
       });
   });
   return kept.filter((piece) => lengthOf(piece) >= minimumPiece / 2);
@@ -349,6 +432,8 @@ export interface Mix {
 export interface Edit {
   pieces: Piece[];
   audio: AudioItem[];
+  /** Text and overlays over the picture; later ones are drawn on top. */
+  layers: Layer[];
   mix: Mix;
   background: Background;
 }
@@ -356,6 +441,7 @@ export interface Edit {
 export const emptyEdit = (): Edit => ({
   pieces: [],
   audio: [],
+  layers: [],
   mix: {
     video: { volume: 1, muted: false },
     music: { volume: 1, muted: false },
@@ -366,9 +452,14 @@ export const emptyEdit = (): Edit => ({
 
 export const endOf = (item: AudioItem) => item.start + (item.out - item.in);
 
-/** The whole edit's length: the video track or the last sound, whichever ends later. */
+/** The whole edit's length: the video track, or the last sound or layer if it ends later. */
 export function editLength(edit: Edit): number {
-  return Math.max(total(edit.pieces), ...edit.audio.map(endOf), 0);
+  return Math.max(
+    total(edit.pieces),
+    ...edit.audio.map(endOf),
+    ...(edit.layers ?? []).map(layerEnd),
+    0,
+  );
 }
 
 /** The volume a stretch with fades has at local second `t` of `length`. */
@@ -530,4 +621,381 @@ export function updateAudio(
   change: Partial<Omit<AudioItem, 'id' | 'clip'>>,
 ): AudioItem[] {
   return items.map((item) => (item.id === id ? { ...item, ...change } : item));
+}
+
+// ----- text and overlay layers -----
+
+export type LayerLane = 'text' | 'overlay';
+export const LAYER_LANES: readonly LayerLane[] = ['text', 'overlay'];
+
+export type LayerKind = 'text' | 'picture' | 'video' | 'shape' | 'emoji';
+export type Anim =
+  'none' | 'fade' | 'slide-up' | 'slide-left' | 'pop' | 'typewriter';
+export type FontId = 'sans' | 'display' | 'serif' | 'mono' | 'impact' | 'hand';
+export type ShapeKind = 'rect' | 'circle' | 'arrow' | 'star';
+export type Align = 'left' | 'center' | 'right';
+
+export interface TextStyle {
+  font: FontId;
+  /** Letter size as a share of the frame's height. */
+  size: number;
+  /** #rrggbb */
+  colour: string;
+  bold: boolean;
+  italic: boolean;
+  align: Align;
+  /** A box behind the text. */
+  box: boolean;
+  boxColour: string;
+  /** 0 to 1. */
+  boxOpacity: number;
+  /** A dark edge round the letters, so they read on any picture. */
+  outline: boolean;
+}
+
+/**
+ * One item over the picture, placed in time on the Text or Overlay layer:
+ * a title, a picture or logo, a small video, a shape or an emoji.
+ */
+export interface Layer {
+  id: string;
+  lane: LayerLane;
+  kind: LayerKind;
+  /** The file, for a picture or a video. */
+  clip: string | null;
+  /** Timeline seconds. */
+  start: number;
+  length: number;
+  /** Seconds into a video's clip where it starts. */
+  in: number;
+  /** The middle of the item, as shares of the frame's width and height. */
+  x: number;
+  y: number;
+  /** Width as a share of the frame's width; text sizes by its letters. */
+  w: number;
+  /** Height as a share of the frame's height, for shapes; others keep their own shape. */
+  h: number;
+  /** 0 to 1. */
+  opacity: number;
+  /** Corner rounding as a share of the shorter side, 0 to 0.5. */
+  corner: number;
+  /** Clockwise turn in degrees, -180 to 180. */
+  angle: number;
+  animIn: Anim;
+  animOut: Anim;
+  /** Seconds each animation takes. */
+  animSeconds: number;
+  text: string;
+  style: TextStyle;
+  shape: ShapeKind;
+  /** A shape's fill, #rrggbb. */
+  colour: string;
+  emoji: string;
+  /** A video's sound: 0 to 2. */
+  volume: number;
+  muted: boolean;
+}
+
+/** Seconds a new text or overlay lasts. */
+export const layerSeconds = 4;
+
+export const layerEnd = (layer: Layer) => layer.start + layer.length;
+
+export const plainTextStyle = (): TextStyle => ({
+  font: 'display',
+  size: 0.08,
+  colour: '#ffffff',
+  bold: true,
+  italic: false,
+  align: 'center',
+  box: false,
+  boxColour: '#000000',
+  boxOpacity: 0.6,
+  outline: true,
+});
+
+function baseLayer(lane: LayerLane, kind: LayerKind, start: number): Layer {
+  return {
+    id: newId('l'),
+    lane,
+    kind,
+    clip: null,
+    start: Math.max(0, start),
+    length: layerSeconds,
+    in: 0,
+    x: 0.5,
+    y: 0.5,
+    w: 0.3,
+    h: 0.2,
+    opacity: 1,
+    corner: 0,
+    angle: 0,
+    animIn: 'fade',
+    animOut: 'fade',
+    animSeconds: 0.5,
+    text: '',
+    style: plainTextStyle(),
+    shape: 'rect',
+    colour: '#ff8a00',
+    emoji: '',
+    volume: 1,
+    muted: false,
+  };
+}
+
+export type TextPreset = 'title' | 'subtitle' | 'caption' | 'lower';
+
+/** A new title, styled for what it is for. */
+export function textLayer(preset: TextPreset, start: number): Layer {
+  const layer = baseLayer('text', 'text', start);
+  const style = plainTextStyle();
+  switch (preset) {
+    case 'title':
+      return { ...layer, text: 'Your title', style: { ...style, size: 0.11 } };
+    case 'subtitle':
+      return {
+        ...layer,
+        text: 'A line under the title',
+        y: 0.62,
+        style: { ...style, size: 0.055, bold: false, font: 'sans' },
+      };
+    case 'caption':
+      return {
+        ...layer,
+        text: 'Caption',
+        y: 0.86,
+        animIn: 'none',
+        animOut: 'none',
+        style: {
+          ...style,
+          size: 0.05,
+          font: 'sans',
+          bold: false,
+          box: true,
+          outline: false,
+        },
+      };
+    case 'lower':
+      return {
+        ...layer,
+        text: 'Name Surname\nWhat they do',
+        x: 0.28,
+        y: 0.8,
+        animIn: 'slide-left',
+        style: {
+          ...style,
+          size: 0.045,
+          font: 'sans',
+          align: 'left',
+          box: true,
+          boxColour: '#111111',
+          boxOpacity: 0.8,
+          outline: false,
+        },
+      };
+  }
+}
+
+/** A picture, logo or small video over the picture: a logo top right, a video bottom right. */
+export function mediaLayer(clip: Clip, start: number): Layer {
+  const video = clip.kind === 'video';
+  const layer = baseLayer('overlay', video ? 'video' : 'picture', start);
+  return {
+    ...layer,
+    clip: clip.id,
+    length: video ? Math.max(minimumPiece, clip.duration) : layerSeconds,
+    w: video ? 0.32 : 0.18,
+    x: video ? 0.79 : 0.86,
+    y: video ? 0.76 : 0.14,
+    animIn: video ? 'pop' : 'fade',
+    corner: video ? 0.08 : 0,
+  };
+}
+
+export function shapeLayer(shape: ShapeKind, start: number): Layer {
+  const layer = baseLayer('overlay', 'shape', start);
+  return {
+    ...layer,
+    shape,
+    w: shape === 'arrow' ? 0.2 : 0.18,
+    h: shape === 'arrow' ? 0.14 : 0.3,
+    opacity: shape === 'rect' ? 0.85 : 1,
+    corner: shape === 'rect' ? 0.15 : 0,
+    animIn: 'pop',
+  };
+}
+
+export function emojiLayer(emoji: string, start: number): Layer {
+  return {
+    ...baseLayer('overlay', 'emoji', start),
+    emoji,
+    w: 0.12,
+    animIn: 'pop',
+  };
+}
+
+/** The layers showing at timeline second `t`, in drawing order: overlays, then text. */
+export function layersAt(layers: readonly Layer[], t: number): Layer[] {
+  const on = layers.filter((l) => t >= l.start && t < layerEnd(l));
+  return [
+    ...on.filter((l) => l.lane === 'overlay'),
+    ...on.filter((l) => l.lane === 'text'),
+  ];
+}
+
+export function updateLayer(
+  layers: readonly Layer[],
+  id: string,
+  change: Partial<Omit<Layer, 'id'>>,
+): Layer[] {
+  return layers.map((layer) =>
+    layer.id === id ? { ...layer, ...change } : layer,
+  );
+}
+
+export function moveLayer(
+  layers: readonly Layer[],
+  id: string,
+  start: number,
+): Layer[] {
+  return updateLayer(layers, id, { start: Math.max(0, start) });
+}
+
+/**
+ * New timeline start and end for a layer. A video's first frame moves with
+ * its start, and it cannot run past its clip.
+ */
+export function trimLayer(
+  layers: readonly Layer[],
+  id: string,
+  start: number,
+  end: number,
+  clipDuration: number | null,
+): Layer[] {
+  return layers.map((layer) => {
+    if (layer.id !== id) return layer;
+    const startMoved = Math.abs(start - layer.start) > 1e-9;
+    let a = Math.max(0, start);
+    let b = Math.max(0, end);
+    let inPoint = layer.in;
+    if (layer.kind === 'video' && clipDuration !== null) {
+      inPoint = layer.in + (a - layer.start);
+      if (inPoint < 0) {
+        a -= inPoint;
+        inPoint = 0;
+      }
+      b = Math.min(b, a + (clipDuration - inPoint));
+    }
+    if (b - a < minimumPiece) {
+      // the edge that moved gives way
+      if (startMoved) {
+        const shift = b - minimumPiece - a;
+        a += shift;
+        inPoint += shift;
+      } else b = a + minimumPiece;
+    }
+    return { ...layer, start: a, length: b - a, in: Math.max(0, inPoint) };
+  });
+}
+
+/** Cuts a layer in two at timeline second `t`. */
+export function splitLayer(
+  layers: readonly Layer[],
+  id: string,
+  t: number,
+): Layer[] {
+  const index = layers.findIndex((layer) => layer.id === id);
+  const layer = layers[index];
+  if (!layer) return [...layers];
+  const local = t - layer.start;
+  if (local < minimumPiece || layer.length - local < minimumPiece)
+    return [...layers];
+  return [
+    ...layers.slice(0, index),
+    { ...layer, length: local, animOut: 'none' },
+    {
+      ...layer,
+      id: newId('l'),
+      start: t,
+      length: layer.length - local,
+      in: layer.in + local,
+      animIn: 'none',
+    },
+    ...layers.slice(index + 1),
+  ];
+}
+
+/** Removes timeline seconds `from` to `to` from the layers, as cutRangeAudio does. */
+export function cutRangeLayers(
+  layers: readonly Layer[],
+  from: number,
+  to: number,
+): Layer[] {
+  const [a, b] = from <= to ? [from, to] : [to, from];
+  const gap = b - a;
+  if (gap <= 0) return [...layers];
+  const kept: Layer[] = [];
+  for (const layer of layers) {
+    const end = layerEnd(layer);
+    if (end <= a) kept.push(layer);
+    else if (layer.start >= b)
+      kept.push({ ...layer, start: layer.start - gap });
+    else {
+      // what is left before and after the range joins up as one
+      const before = Math.max(0, a - layer.start);
+      const after = Math.max(0, end - b);
+      if (before + after >= minimumPiece / 2)
+        kept.push({
+          ...layer,
+          start: Math.min(layer.start, a),
+          length: before + after,
+          // a video loses its middle: it starts where what is left starts
+          in: before > 0 ? layer.in : layer.in + (b - layer.start),
+        });
+    }
+  }
+  return kept;
+}
+
+/** A copy of a layer right after it, on top. */
+export function duplicateLayer(layers: readonly Layer[], id: string): Layer[] {
+  const layer = layers.find((l) => l.id === id);
+  if (!layer) return [...layers];
+  return [...layers, { ...layer, id: newId('l'), start: layerEnd(layer) }];
+}
+
+/** Moves a layer up (drawn over others) or down the drawing order. */
+export function restack(
+  layers: readonly Layer[],
+  id: string,
+  by: number,
+): Layer[] {
+  const from = layers.findIndex((l) => l.id === id);
+  if (from < 0) return [...layers];
+  const to = Math.min(layers.length - 1, Math.max(0, from + by));
+  const rest = layers.filter((l) => l.id !== id);
+  rest.splice(to, 0, layers[from]!);
+  return rest;
+}
+
+/**
+ * Rows for one lane's layers, so overlapping ones sit one above another:
+ * each goes in the first row that is free at its start.
+ */
+export function layerRows(
+  layers: readonly Layer[],
+  lane: LayerLane,
+): { rows: Map<string, number>; count: number } {
+  const ends: number[] = [];
+  const rows = new Map<string, number>();
+  const sorted = layers
+    .filter((l) => l.lane === lane)
+    .sort((x, y) => x.start - y.start);
+  for (const layer of sorted) {
+    let row = ends.findIndex((end) => end <= layer.start + 1e-9);
+    if (row < 0) row = ends.length;
+    ends[row] = layerEnd(layer);
+    rows.set(layer.id, row);
+  }
+  return { rows, count: Math.max(1, ends.length) };
 }

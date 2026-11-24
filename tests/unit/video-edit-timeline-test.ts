@@ -16,11 +16,22 @@ import {
   move,
   placeAt,
   plainLook,
+  noTransition,
+  overlapOf,
+  showingAt,
+  textLayer,
+  layerRows,
+  layerSeconds,
+  layersAt,
+  trimLayer,
+  splitLayer,
+  cutRangeLayers,
   split,
   starts,
   total,
   trim,
   type Piece,
+  type Layer,
 } from 'xsenze-tools/lib/video/edit/timeline';
 
 const piece = (id: string, clip: string, a: number, b: number): Piece => ({
@@ -34,6 +45,7 @@ const piece = (id: string, clip: string, a: number, b: number): Piece => ({
   fadeOut: 0,
   speed: 1,
   look: plainLook(),
+  transition: noTransition(),
 });
 
 // clip A 0–10 s, clip B 2–6 s: 14 s in all
@@ -217,5 +229,80 @@ module('Unit | video edit | timeline', function () {
       'A:6-10',
       'B:2-6',
     ]);
+  });
+
+  test('a transition overlaps the piece before it', function (assert) {
+    const pieces = edit();
+    pieces[1] = { ...pieces[1]!, transition: { kind: 'dissolve', seconds: 1 } };
+    assert.strictEqual(overlapOf(pieces, 1), 1);
+    assert.deepEqual(starts(pieces), [0, 9]);
+    assert.strictEqual(total(pieces), 13, 'one second shorter');
+    const mid = showingAt(pieces, 9.5);
+    assert.strictEqual(mid?.a.index, 0);
+    assert.strictEqual(mid?.b?.index, 1);
+    assert.strictEqual(mid?.p, 0.5);
+    assert.strictEqual(mid?.b?.clipTime, 2.5);
+    assert.strictEqual(showingAt(pieces, 5)?.b, null, 'no transition there');
+    // kept under half of the shorter piece: B lasts 4 s
+    pieces[1] = { ...pieces[1], transition: { kind: 'wipe', seconds: 9 } };
+    assert.strictEqual(overlapOf(pieces, 1), 2);
+    // a cut across the second piece's start drops its transition
+    const cut = cutRange(pieces, 7.5, 8.5);
+    assert.deepEqual(
+      cut.map((p) => p.transition.kind),
+      ['none', 'none', 'none'],
+    );
+  });
+
+  test('layers: rows, trims, splits and cuts', function (assert) {
+    const title = { ...textLayer('title', 1), id: 't1' };
+    const caption = { ...textLayer('caption', 2), id: 't2' };
+    const later = { ...textLayer('caption', 6), id: 't3' };
+    const layers = [title, caption, later];
+    const { rows, count } = layerRows(layers, 'text');
+    assert.strictEqual(count, 2, 'the overlapping caption takes a second row');
+    assert.deepEqual(
+      [rows.get('t1'), rows.get('t2'), rows.get('t3')],
+      [0, 1, 0],
+    );
+    assert.strictEqual(
+      editLength({ ...emptyEdit(), layers }),
+      6 + layerSeconds,
+      'the edit lasts until the last layer ends',
+    );
+    assert.deepEqual(
+      layersAt(layers, 2.5).map((l) => l.id),
+      ['t1', 't2'],
+    );
+    // a video overlay's first frame moves with its start, inside its clip
+    const pip: Layer = {
+      ...textLayer('title', 2),
+      id: 'v',
+      kind: 'video',
+      in: 1,
+      length: 3,
+    };
+    const [early] = trimLayer([pip], 'v', 0, 5, 10);
+    assert.deepEqual([early!.start, early!.in, early!.length], [1, 0, 4]);
+    const [long] = trimLayer([pip], 'v', 2, 20, 10);
+    assert.strictEqual(long!.length, 9, 'stops at the end of its clip');
+    const halves = splitLayer([pip], 'v', 3);
+    assert.deepEqual(
+      halves.map((l) => [l.start, l.length, l.in]),
+      [
+        [2, 1, 1],
+        [3, 2, 2],
+      ],
+    );
+    // cutting 3–4 s: the title (1–5) loses a second, the last one moves up
+    const cut = cutRangeLayers(layers, 3, 4);
+    assert.deepEqual(
+      cut.map((l) => [l.start, l.length]),
+      [
+        [1, 3],
+        [2, 3],
+        [5, 4],
+      ],
+    );
   });
 });

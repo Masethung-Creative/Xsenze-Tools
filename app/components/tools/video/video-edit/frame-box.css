@@ -1,0 +1,49 @@
+/* the text and overlays on the preview, as things to grab */
+.ve-boxes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.ve-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid var(--xz-accent-2);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%);
+  cursor: move;
+}
+
+.ve-box__size {
+  position: absolute;
+  inset-block-end: -7px;
+  inset-inline-end: -7px;
+  inline-size: 14px;
+  block-size: 14px;
+  border: 2px solid var(--xz-on-accent-2);
+  border-radius: 50%;
+  background: var(--xz-accent-2);
+  cursor: nwse-resize;
+}
+
+/* the frame's middle lines, while a moved item snaps to them */
+.ve-guide {
+  position: absolute;
+  background: var(--xz-accent-2);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.ve-guide--x {
+  inset-block: 0;
+  inset-inline-start: 50%;
+  inline-size: 1px;
+}
+
+.ve-guide--y {
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: 1px;
+}

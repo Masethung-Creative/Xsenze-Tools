@@ -25,9 +25,17 @@ import {
   thumbnails,
 } from 'xsenze-tools/components/tools/shared/media/frames';
 import PropSlider from 'xsenze-tools/components/tools/video/video-edit/prop-slider';
+import FrameBox from 'xsenze-tools/components/tools/video/video-edit/frame-box';
+import LayerProps, {
+  type LayerTab,
+} from 'xsenze-tools/components/tools/video/video-edit/layer-props';
 import Timeline, {
   type Selection,
 } from 'xsenze-tools/components/tools/video/video-edit/timeline';
+import {
+  EMOJI,
+  SHAPES as SHAPE_NAMES,
+} from 'xsenze-tools/lib/video/edit/layers';
 import { formatFps } from 'xsenze-tools/lib/video/media-probe';
 import { formatTimestamp } from 'xsenze-tools/lib/subtitles/subtitles';
 import {
@@ -37,7 +45,7 @@ import {
   acceptAttr,
 } from 'xsenze-tools/lib/tools';
 import XzColourWell from 'xsenze-tools/components/xz/colour-well';
-import { FILTERS } from 'xsenze-tools/lib/video/edit/draw';
+import { FILTERS, TRANSITIONS } from 'xsenze-tools/lib/video/edit/draw';
 import { hex, parseHex, type Rgb } from 'xsenze-tools/lib/xz/colour';
 import {
   mediaKind,
@@ -85,6 +93,23 @@ import {
   type Background,
   type Filter,
   type Look,
+  cutRangeLayers,
+  duplicateLayer,
+  emojiLayer,
+  layerEnd,
+  mediaLayer,
+  moveLayer,
+  overlapOf,
+  restack,
+  shapeLayer,
+  splitLayer,
+  textLayer,
+  trimLayer,
+  updateLayer,
+  type Layer,
+  type ShapeKind,
+  type TextPreset,
+  type TransitionKind,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import Job from 'xsenze-tools/components/tools/shared/media/job';
 import { downloadBlob } from 'xsenze-tools/lib/download';
@@ -129,6 +154,14 @@ const RotateRightIcon = icon('rotate-cw');
 const FlipHIcon = icon('flip-horizontal-2');
 const FlipVIcon = icon('flip-vertical-2');
 const ResetIcon = icon('rotate-ccw-square');
+const LayersIcon = icon('layers');
+const SHAPE_ICON_PARTS = {
+  rect: icon('square'),
+  circle: icon('circle'),
+  arrow: icon('arrow-right'),
+  star: icon('star'),
+};
+const shapeIcon = (shape: ShapeKind) => SHAPE_ICON_PARTS[shape];
 
 // ----- export settings -----
 
@@ -170,23 +203,13 @@ const EXPORT_ERROR = "Couldn't export. Try another format or a smaller size.";
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
 
 type ToolId = 'media' | 'text' | 'overlay' | 'audio' | 'canvas';
-type TabId = 'edit' | 'adjust' | 'audio';
+type TabId = 'edit' | 'adjust' | 'audio' | 'transition' | 'style' | 'anim';
 
 /** The editor's tool rail. */
-const TOOLS: { id: ToolId; label: string; icon: string; soon?: string }[] = [
+const TOOLS: { id: ToolId; label: string; icon: string }[] = [
   { id: 'media', label: 'Media', icon: 'film' },
-  {
-    id: 'text',
-    label: 'Text',
-    icon: 'type',
-    soon: 'Titles with font, size, colour, background and position.',
-  },
-  {
-    id: 'overlay',
-    label: 'Overlay',
-    icon: 'layers',
-    soon: 'A logo, watermark or small video over the picture, moved and sized on the preview.',
-  },
+  { id: 'text', label: 'Text', icon: 'type' },
+  { id: 'overlay', label: 'Overlay', icon: 'layers' },
   { id: 'audio', label: 'Audio', icon: 'audio-lines' },
   { id: 'canvas', label: 'Canvas', icon: 'frame' },
 ];
@@ -194,7 +217,35 @@ const TAB_LABELS: Record<TabId, string> = {
   edit: 'Edit',
   adjust: 'Adjust',
   audio: 'Audio',
+  transition: 'Transition',
+  style: 'Style',
+  anim: 'Animate',
 };
+
+const TEXT_PRESETS: { id: TextPreset; label: string; icon: string }[] = [
+  { id: 'title', label: 'Title', icon: 'heading' },
+  { id: 'subtitle', label: 'Subtitle', icon: 'text-cursor-input' },
+  { id: 'caption', label: 'Caption', icon: 'captions' },
+  { id: 'lower', label: 'Name and role', icon: 'subtitles' },
+];
+const SHAPE_KINDS = Object.keys(SHAPE_NAMES) as ShapeKind[];
+const OVERLAY_ACCEPT = acceptAttr([...IMAGE_ACCEPT, ...VIDEO_ACCEPT]);
+const TRANSITION_IDS = Object.keys(TRANSITIONS) as TransitionKind[];
+const TRANSITION_LABELS = TRANSITION_IDS.map((id) => TRANSITIONS[id]);
+const secondsReadout = (value: number) => `${value.toFixed(1)} s`;
+
+/** Frame shapes for where the video will be posted; each sets 1080p. */
+const PRESETS: { label: string; shape: number }[] = [
+  { label: 'YouTube', shape: 1 },
+  { label: 'Shorts', shape: 2 },
+  { label: 'Reels', shape: 2 },
+  { label: 'TikTok', shape: 2 },
+  { label: 'Insta post', shape: 3 },
+  { label: 'Insta story', shape: 2 },
+  { label: 'Facebook', shape: 3 },
+  { label: 'X', shape: 1 },
+];
+const PRESET_LABELS = PRESETS.map((p) => p.label);
 
 /** 0:05.20, 1:02:03.40: minutes, seconds and hundredths. */
 function clock(seconds: number): string {
@@ -307,7 +358,11 @@ export default class VideoEdit extends Component {
   }
 
   get hasItems() {
-    return this.edit.pieces.length > 0 || this.edit.audio.length > 0;
+    return (
+      this.edit.pieces.length > 0 ||
+      this.edit.audio.length > 0 ||
+      this.edit.layers.length > 0
+    );
   }
 
   get empty() {
@@ -334,7 +389,7 @@ export default class VideoEdit extends Component {
 
   get chosen(): Chosen | null {
     const s = this.selected;
-    if (!s) return null;
+    if (!s || s.kind === 'layer') return null;
     if (s.kind === 'video') {
       const index = this.pieces.findIndex((p) => p.id === s.id);
       const piece = this.pieces[index];
@@ -373,8 +428,307 @@ export default class VideoEdit extends Component {
   }
 
   get nothingChosen() {
-    return !this.chosen;
+    return !this.chosen && !this.chosenLayer;
   }
+
+  /** Something is selected: a clip, a sound or a layer. */
+  get anyChosen() {
+    return !this.nothingChosen;
+  }
+
+  // ----- the selected text or overlay -----
+
+  get chosenLayer(): Layer | null {
+    const s = this.selected;
+    return s?.kind === 'layer'
+      ? (this.edit.layers.find((l) => l.id === s.id) ?? null)
+      : null;
+  }
+
+  get chosenLayerClip(): Clip | undefined {
+    return this.clipMap.get(this.chosenLayer?.clip ?? '');
+  }
+
+  get layerStackIndex() {
+    const layer = this.chosenLayer;
+    return layer ? this.edit.layers.indexOf(layer) : -1;
+  }
+
+  get layerTab(): LayerTab {
+    const tab = this.tabShown;
+    return tab === 'style' || tab === 'anim' || tab === 'audio' ? tab : 'edit';
+  }
+
+  #layerName(layer: Layer) {
+    switch (layer.kind) {
+      case 'text':
+        return layer.text.split('\n')[0] || 'Text';
+      case 'emoji':
+        return `Emoji ${layer.emoji}`;
+      case 'shape':
+        return SHAPE_NAMES[layer.shape];
+      default:
+        return this.clipMap.get(layer.clip ?? '')?.name ?? 'Picture';
+    }
+  }
+
+  get headName() {
+    const layer = this.chosenLayer;
+    if (layer) return this.#layerName(layer);
+    return this.chosen?.name ?? 'Project';
+  }
+
+  get headDetail() {
+    const layer = this.chosenLayer;
+    if (layer) {
+      const where = layer.lane === 'text' ? 'Text' : 'Overlay';
+      return `${where} · ${clock(layer.start)} – ${clock(layerEnd(layer))}`;
+    }
+    return this.chosen ? this.chosenDetail : this.summary;
+  }
+
+  /** Changes the selected layer; `live` keeps one history step for a drag or typing. */
+  patchLayer = (change: Partial<Layer>, live: boolean) => {
+    const layer = this.chosenLayer;
+    if (!layer) return;
+    this.#change(
+      { layers: updateLayer(this.edit.layers, layer.id, change) },
+      this.#liveRecord(live),
+    );
+  };
+
+  /** Typing or a drag on a layer has ended: the next change is a step of its own. */
+  endLive = () => (this.#dragging = false);
+
+  restackLayer = (by: number) => {
+    const layer = this.chosenLayer;
+    if (layer)
+      this.#change({ layers: restack(this.edit.layers, layer.id, by) });
+  };
+
+  /** A new layer, selected, with the playhead inside it. */
+  #addLayer(layer: Layer, tab: TabId = 'edit') {
+    this.#change({ layers: [...this.edit.layers, layer] });
+    this.selected = { kind: 'layer', id: layer.id };
+    this.tab = tab;
+    if (this.player.time < layer.start || this.player.time >= layerEnd(layer))
+      this.player.scrub(layer.start);
+  }
+
+  /** Where a new layer starts: the playhead, or the start once past the end. */
+  get #layerStart() {
+    const t = this.player.time;
+    return t >= this.length - 0.05 ? 0 : t;
+  }
+
+  addText = (preset: TextPreset) =>
+    this.#addLayer(textLayer(preset, this.#layerStart));
+
+  addShape = (shape: ShapeKind) =>
+    this.#addLayer(shapeLayer(shape, this.#layerStart), 'style');
+
+  addEmoji = (emoji: string) =>
+    this.#addLayer(emojiLayer(emoji, this.#layerStart), 'style');
+
+  /** A photo or video from Media goes over the picture at the playhead. */
+  addAsOverlay = (id: string) => {
+    const clip = this.clipMap.get(id);
+    if (clip && clip.kind !== 'audio')
+      this.#addLayer(mediaLayer(clip, this.#layerStart), 'style');
+  };
+
+  /** Files dropped on the Overlay panel: read, then put over the picture. */
+  addOverlayFiles = async (files: File[]) => {
+    const before = new Set(this.clips.map((clip) => clip.id));
+    await this.addFiles(files, true);
+    const added = this.clips.filter(
+      (clip) => !before.has(clip.id) && clip.kind !== 'audio',
+    );
+    const start = this.#layerStart;
+    const layers = added.map((clip) => mediaLayer(clip, start));
+    if (!layers.length) return;
+    this.#change({ layers: [...this.edit.layers, ...layers] });
+    this.selected = { kind: 'layer', id: layers[layers.length - 1]!.id };
+    this.tab = 'style';
+  };
+
+  get textRows() {
+    return this.edit.layers
+      .filter((layer) => layer.lane === 'text')
+      .map((layer) => this.#layerRow(layer));
+  }
+
+  get overlayRows() {
+    return this.edit.layers
+      .filter((layer) => layer.lane === 'overlay')
+      .map((layer) => this.#layerRow(layer));
+  }
+
+  #layerRow(layer: Layer) {
+    const s = this.selected;
+    return {
+      id: layer.id,
+      name: this.#layerName(layer),
+      detail: `${clock(layer.start)} – ${clock(layerEnd(layer))}`,
+      on: s?.kind === 'layer' && s.id === layer.id,
+    };
+  }
+
+  get overlayClips() {
+    return this.clipRows.filter((row) => row.isVideo);
+  }
+
+  pickLayer = (id: string) => {
+    const layer = this.edit.layers.find((l) => l.id === id);
+    if (!layer) return;
+    this.selected = { kind: 'layer', id };
+    if (this.player.time < layer.start || this.player.time >= layerEnd(layer))
+      this.player.scrub(layer.start);
+  };
+
+  /** A layer picked on the preview; null picks nothing. */
+  pickOnFrame = (id: string | null) => {
+    if (id) this.selected = { kind: 'layer', id };
+    else if (this.selected?.kind === 'layer') this.selected = null;
+  };
+
+  frameBegin = () => {
+    this.history.record(this.edit);
+    this.#syncHistory();
+  };
+
+  frameChange = (id: string, change: Partial<Layer>) =>
+    this.#change({ layers: updateLayer(this.edit.layers, id, change) }, false);
+
+  frameEnd = () => undefined;
+
+  moveLayerTo = (id: string, start: number) => {
+    this.#change({ layers: moveLayer(this.edit.layers, id, start) });
+    this.selected = { kind: 'layer', id };
+  };
+
+  trimLayerTo = (id: string, start: number, end: number) => {
+    const layer = this.edit.layers.find((l) => l.id === id);
+    if (!layer) return;
+    const clip = this.clipMap.get(layer.clip ?? '');
+    this.#change(
+      {
+        layers: trimLayer(
+          this.edit.layers,
+          id,
+          start,
+          end,
+          layer.kind === 'video' ? (clip?.duration ?? null) : null,
+        ),
+      },
+      false,
+    );
+  };
+
+  // ----- transitions -----
+
+  /** The selected piece's place, when it has one before it to come in from. */
+  get transitionIndex() {
+    return this.selectedIndex > 0 ? this.selectedIndex : -1;
+  }
+
+  get transition() {
+    return this.chosenPiece?.transition ?? { kind: 'none', seconds: 1 };
+  }
+
+  get transitionKindIndex() {
+    return TRANSITION_IDS.indexOf(this.transition.kind);
+  }
+
+  get transitionOff() {
+    return this.transition.kind === 'none';
+  }
+
+  /** The longest the selected piece's transition can be. */
+  get transitionMax() {
+    const index = this.transitionIndex;
+    if (index < 0) return 0.1;
+    const lengths = [index - 1, index].map((i) => {
+      const piece = this.pieces[i]!;
+      return (piece.out - piece.in) / (piece.speed || 1);
+    });
+    return Math.max(0.1, Math.min(...lengths) / 2);
+  }
+
+  get transitionShown() {
+    const index = this.transitionIndex;
+    return index > 0 ? overlapOf(this.pieces, index) : 0;
+  }
+
+  pickTransition = (index: number) => {
+    const kind = TRANSITION_IDS[index];
+    if (kind) this.#setPiece({ transition: { ...this.transition, kind } });
+  };
+
+  setTransitionSeconds = (seconds: number, dragging: boolean) =>
+    this.#setPiece(
+      { transition: { ...this.transition, seconds } },
+      this.#liveRecord(dragging),
+    );
+
+  /**
+   * The bar's Transition button: the selected clip's join, or the next join
+   * after the playhead; a dissolve goes on when it has none.
+   */
+  get transitionTarget(): number {
+    if (this.transitionIndex > 0) return this.transitionIndex;
+    const t = this.player.time;
+    const begins = starts(this.pieces);
+    const next = begins.findIndex((start, i) => i > 0 && start >= t - 0.01);
+    if (next > 0) return next;
+    return this.pieces.length > 1 ? this.pieces.length - 1 : -1;
+  }
+
+  get cannotTransition() {
+    return this.transitionTarget < 0;
+  }
+
+  addTransition = () => {
+    const index = this.transitionTarget;
+    const piece = this.pieces[index];
+    if (!piece) return;
+    if (piece.transition.kind === 'none')
+      this.#change({
+        pieces: update(this.pieces, piece.id, {
+          transition: { kind: 'dissolve', seconds: 1 },
+        }),
+      });
+    this.selected = { kind: 'video', id: piece.id };
+    this.tab = 'transition';
+  };
+
+  /** A join's mark on the timeline: its transition opens. */
+  openJoin = (id: string) => {
+    this.selected = { kind: 'video', id };
+    this.tab = 'transition';
+  };
+
+  get chosenLayerId() {
+    return this.chosenLayer?.id ?? null;
+  }
+
+  // ----- social presets -----
+
+  @tracked presetIndex = -1;
+
+  get presetIndexShown() {
+    return this.presetIndex >= 0 ? this.presetIndex : null;
+  }
+
+  pickPreset = (index: number) => {
+    const preset = PRESETS[index];
+    if (!preset) return;
+    this.#setting(() => {
+      this.presetIndex = index;
+      this.shapeIndex = preset.shape;
+      this.sizeIndex = 0;
+    });
+  };
 
   get chosenIsVideo() {
     return this.chosen?.kind === 'video';
@@ -442,6 +796,15 @@ export default class VideoEdit extends Component {
   get splitTarget(): Selection | null {
     const s = this.selected;
     const t = this.player.time;
+    if (s?.kind === 'layer') {
+      const layer = this.chosenLayer;
+      if (
+        layer &&
+        t - layer.start >= minimumPiece &&
+        layerEnd(layer) - t >= minimumPiece
+      )
+        return s;
+    }
     if (s?.kind === 'audio') {
       const item = this.edit.audio.find((a) => a.id === s.id);
       if (
@@ -497,11 +860,14 @@ export default class VideoEdit extends Component {
 
   get summary() {
     if (!this.hasItems) return 'Empty';
-    const { pieces, audio } = this.edit;
+    const { pieces, audio, layers } = this.edit;
     const parts = [
       pieces.length ? `${pieces.length} video` : null,
       audio.length
         ? `${audio.length} sound${audio.length === 1 ? '' : 's'}`
+        : null,
+      layers.length
+        ? `${layers.length} text and overlay${layers.length === 1 ? '' : 's'}`
         : null,
       tc(this.length),
     ];
@@ -571,13 +937,13 @@ export default class VideoEdit extends Component {
     if (record) this.history.record(this.edit);
     this.edit = next;
     const s = this.selected;
-    if (
-      s &&
-      !(s.kind === 'video' ? next.pieces : next.audio).some(
-        (i) => i.id === s.id,
-      )
-    )
-      this.selected = null;
+    const items: { id: string }[] =
+      s?.kind === 'video'
+        ? next.pieces
+        : s?.kind === 'layer'
+          ? next.layers
+          : next.audio;
+    if (s && !items.some((i) => i.id === s.id)) this.selected = null;
     this.#syncHistory();
     this.#stale();
     this.player.shape(this.outAspect, this.fit);
@@ -711,7 +1077,11 @@ export default class VideoEdit extends Component {
   pickFormat = (i: number) => this.#setting(() => (this.formatIndex = i));
   pickCodec = (i: number) =>
     this.#setting(() => (this.codecChoice = this.codecs[i] ?? null));
-  pickShape = (i: number) => this.#setting(() => (this.shapeIndex = i));
+  pickShape = (i: number) =>
+    this.#setting(() => {
+      this.shapeIndex = i;
+      this.presetIndex = -1;
+    });
   pickFit = (i: number) => this.#setting(() => (this.fitIndex = i));
   pickSize = (i: number) => this.#setting(() => (this.sizeIndex = i));
   pickRate = (i: number) => this.#setting(() => (this.rateIndex = i));
@@ -783,7 +1153,8 @@ export default class VideoEdit extends Component {
     this.canRedo = this.history.canRedo;
   }
 
-  addFiles = async (files: File[]) => {
+  /** Reads files in; videos and photos join the track, unless they go over it. */
+  addFiles = async (files: File[], asOverlay = false) => {
     const wanted = files.filter((file) => mediaKind(file));
     if (!wanted.length) return;
     this.problems = [];
@@ -820,10 +1191,12 @@ export default class VideoEdit extends Component {
       ];
     }
     this.#change({
-      pieces: [
-        ...this.pieces,
-        ...added.filter((c) => c.kind !== 'audio').map(pieceFor),
-      ],
+      pieces: asOverlay
+        ? this.pieces
+        : [
+            ...this.pieces,
+            ...added.filter((c) => c.kind !== 'audio').map(pieceFor),
+          ],
       audio,
     });
     for (const clip of added) void this.#describe(clip);
@@ -890,6 +1263,13 @@ export default class VideoEdit extends Component {
     const target = this.splitTarget;
     if (!target) return;
     const t = this.player.time;
+    if (target.kind === 'layer') {
+      const layers = splitLayer(this.edit.layers, target.id, t);
+      this.#change({ layers });
+      const after = layers.find((l) => l.start === t && l.id !== target.id);
+      if (after) this.selected = { kind: 'layer', id: after.id };
+      return;
+    }
     if (target.kind === 'audio') {
       const audio = splitAudio(this.edit.audio, target.id, t);
       this.#change({ audio });
@@ -907,6 +1287,10 @@ export default class VideoEdit extends Component {
   deleteSelected = () => {
     const s = this.selected;
     if (!s) return;
+    if (s.kind === 'layer') {
+      this.#change({ layers: this.edit.layers.filter((l) => l.id !== s.id) });
+      return;
+    }
     if (s.kind === 'audio') {
       this.#change({ audio: this.edit.audio.filter((a) => a.id !== s.id) });
       return;
@@ -922,6 +1306,11 @@ export default class VideoEdit extends Component {
     const s = this.selected;
     if (s?.kind === 'video') {
       this.#change({ pieces: duplicate(this.pieces, s.id) });
+    } else if (s?.kind === 'layer') {
+      const layers = duplicateLayer(this.edit.layers, s.id);
+      this.#change({ layers });
+      const copy = layers[layers.length - 1];
+      if (copy) this.selected = { kind: 'layer', id: copy.id };
     } else if (s?.kind === 'audio') {
       const item = this.edit.audio.find((a) => a.id === s.id);
       if (!item) return;
@@ -1223,6 +1612,7 @@ export default class VideoEdit extends Component {
     this.#change({
       pieces: cutRange(this.pieces, range[0], range[1]),
       audio: cutRangeAudio(this.edit.audio, range[0], range[1]),
+      layers: cutRangeLayers(this.edit.layers, range[0], range[1]),
     });
     this.clearMarks();
     this.player.scrub(range[0]);
@@ -1304,12 +1694,12 @@ export default class VideoEdit extends Component {
     return this.#tool.label;
   }
 
-  get toolIcon() {
-    return this.#tool.icon;
+  get toolIsText() {
+    return this.tool === 'text';
   }
 
-  get toolSoon() {
-    return this.#tool.soon ?? '';
+  get toolIsOverlay() {
+    return this.tool === 'overlay';
   }
 
   get toolIsMedia() {
@@ -1338,12 +1728,25 @@ export default class VideoEdit extends Component {
 
   /** The tabs the selected item has. */
   get tabs(): TabId[] {
+    const layer = this.chosenLayer;
+    if (layer) {
+      const sound =
+        layer.kind === 'video' && this.chosenLayerClip?.hasAudio !== false;
+      return sound
+        ? ['edit', 'style', 'anim', 'audio']
+        : ['edit', 'style', 'anim'];
+    }
     const c = this.chosen;
     if (!c) return [];
     if (c.kind === 'audio') return ['edit', 'audio'];
-    return this.chosenIsPhoto
+    const tabs: TabId[] = this.chosenIsPhoto
       ? ['edit', 'adjust']
       : ['edit', 'adjust', 'audio'];
+    return this.transitionIndex > 0 ? [...tabs, 'transition'] : tabs;
+  }
+
+  get tabIsTransition() {
+    return this.tabShown === 'transition';
   }
 
   /** The tab on show: the chosen one when the item has it. */
@@ -1373,7 +1776,9 @@ export default class VideoEdit extends Component {
   closeExport = () => (this.exportOpen = false);
 
   get shapeLabel() {
-    return SHAPE_LABELS[this.shapeIndex] ?? '';
+    const preset = PRESETS[this.presetIndex];
+    const shape = SHAPE_LABELS[this.shapeIndex] ?? '';
+    return preset ? `${preset.label} · ${shape}` : shape;
   }
 
   get fitLabel() {
@@ -1562,6 +1967,13 @@ export default class VideoEdit extends Component {
                             title="Add to the end"
                             {{on "click" (fn this.addVideoAgain row.clip.id)}}
                           ><IconSvg @name="list-plus" /></button>
+                          <button
+                            type="button"
+                            class="xz-btn xz-btn--ghost xz-btn--icon xz-btn--sm ve-to-overlay"
+                            aria-label="Put {{row.clip.name}} over the picture at the playhead"
+                            title="Put over the picture at the playhead"
+                            {{on "click" (fn this.addAsOverlay row.clip.id)}}
+                          ><IconSvg @name="layers" /></button>
                         {{else}}
                           <button
                             type="button"
@@ -1593,6 +2005,111 @@ export default class VideoEdit extends Component {
                 <p class="ve-hint">Videos and photos join in the order you add
                   them; sounds go on the Music layer.</p>
               {{/if}}
+            {{else if this.toolIsText}}
+              <p class="ve-hint">A title goes in at the playhead. Change its
+                words, look and animation under Selected.</p>
+              <XzGrid @columns={{2}}>
+                {{#each TEXT_PRESETS as |preset|}}
+                  <button
+                    type="button"
+                    class="ve-add-tile ve-add-text--{{preset.id}}"
+                    {{on "click" (fn this.addText preset.id)}}
+                  >
+                    <IconSvg @name={{preset.icon}} />
+                    <span>{{preset.label}}</span>
+                  </button>
+                {{/each}}
+              </XzGrid>
+              {{#if this.textRows.length}}
+                <XzHeading @text="In this edit" />
+                <ul class="ve-layer-list">
+                  {{#each this.textRows as |row|}}
+                    <li>
+                      <button
+                        type="button"
+                        class="ve-layer-pick {{if row.on 'is-on'}}"
+                        {{on "click" (fn this.pickLayer row.id)}}
+                      >
+                        <IconSvg @name="type" />
+                        <span>{{row.name}}</span>
+                        <small>{{row.detail}}</small>
+                      </button>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{/if}}
+            {{else if this.toolIsOverlay}}
+              <XzDropZone
+                class="ve-drop-zone ve-overlay-drop"
+                @prompt="Drop a logo, picture or small video, or press Files"
+                @icon={{LayersIcon}}
+                @accept={{OVERLAY_ACCEPT}}
+                @multiple={{true}}
+                @onFiles={{this.addOverlayFiles}}
+              />
+              {{#if this.overlayClips.length}}
+                <XzHeading @text="From Media" />
+                <ul class="ve-layer-list">
+                  {{#each this.overlayClips as |row|}}
+                    <li>
+                      <button
+                        type="button"
+                        class="ve-layer-pick ve-overlay-clip"
+                        title="Put over the picture at the playhead"
+                        {{on "click" (fn this.addAsOverlay row.clip.id)}}
+                      >
+                        {{#if row.thumb}}
+                          <img src={{row.thumb}} alt="" />
+                        {{else}}
+                          <IconSvg @name="image" />
+                        {{/if}}
+                        <span>{{row.clip.name}}</span>
+                        <IconSvg @name="plus" />
+                      </button>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{/if}}
+              <XzHeading @text="Shapes" />
+              <XzGrid @columns={{4}}>
+                {{#each SHAPE_KINDS as |shape|}}
+                  <XzButton
+                    class="ve-add-shape--{{shape}}"
+                    @label="Add a {{shape}}"
+                    @icon={{shapeIcon shape}}
+                    @onClick={{fn this.addShape shape}}
+                  />
+                {{/each}}
+              </XzGrid>
+              <XzHeading @text="Emoji" />
+              <div class="ve-emoji">
+                {{#each EMOJI as |emoji|}}
+                  <button
+                    type="button"
+                    class="ve-emoji__pick"
+                    aria-label="Add {{emoji}}"
+                    {{on "click" (fn this.addEmoji emoji)}}
+                  >{{emoji}}</button>
+                {{/each}}
+              </div>
+              {{#if this.overlayRows.length}}
+                <XzHeading @text="In this edit" />
+                <ul class="ve-layer-list">
+                  {{#each this.overlayRows as |row|}}
+                    <li>
+                      <button
+                        type="button"
+                        class="ve-layer-pick {{if row.on 'is-on'}}"
+                        {{on "click" (fn this.pickLayer row.id)}}
+                      >
+                        <IconSvg @name="layers" />
+                        <span>{{row.name}}</span>
+                        <small>{{row.detail}}</small>
+                      </button>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{/if}}
             {{else if this.toolIsAudio}}
               <p class="ve-hint">How loud each layer plays. Each clip has its
                 own volume too, under Selected › Audio.</p>
@@ -1615,6 +2132,14 @@ export default class VideoEdit extends Component {
               </XzRows>
             {{else if this.toolIsCanvas}}
               <XzRows @framed={{true}}>
+                <XzHeading @text="Made for" />
+                <XzSegmented
+                  class="ve-preset"
+                  @items={{PRESET_LABELS}}
+                  @selected={{this.presetIndexShown}}
+                  @columns={{2}}
+                  @onChange={{this.pickPreset}}
+                />
                 <XzHeading @text="Shape" />
                 <XzSegmented
                   class="ve-shape"
@@ -1648,12 +2173,6 @@ export default class VideoEdit extends Component {
               </XzRows>
               <p class="ve-hint">The background shows around a clip whose shape
                 differs from the frame's.</p>
-            {{else}}
-              <div class="ve-soon">
-                <IconSvg @name={{this.toolIcon}} />
-                <strong>{{this.toolLabel}} comes in the next step</strong>
-                <p>{{this.toolSoon}}</p>
-              </div>
             {{/if}}
           </div>
         </section>
@@ -1677,12 +2196,25 @@ export default class VideoEdit extends Component {
           <span class="ve-stage__size">{{this.sizeText}}</span>
         </div>
         <div class="ve-stage__canvas" {{this.measureStage}}>
-          <canvas
-            class="ve-canvas"
-            style={{this.canvasStyle}}
-            aria-label="Preview of the edit"
-            {{this.player.register}}
-          ></canvas>
+          <div class="ve-frame" style={{this.canvasStyle}}>
+            <canvas
+              class="ve-canvas"
+              aria-label="Preview of the edit"
+              {{this.player.register}}
+            ></canvas>
+            {{#if this.edit.layers.length}}
+              <FrameBox
+                @layers={{this.edit.layers}}
+                @time={{this.player.time}}
+                @clips={{this.clipMap}}
+                @selectedId={{this.chosenLayerId}}
+                @onSelect={{this.pickOnFrame}}
+                @onBegin={{this.frameBegin}}
+                @onChange={{this.frameChange}}
+                @onEnd={{this.frameEnd}}
+              />
+            {{/if}}
+          </div>
         </div>
         <div class="ve-transport">
           <button
@@ -1732,10 +2264,10 @@ export default class VideoEdit extends Component {
       {{! ----- selected item ----- }}
       <aside class="ve-props" aria-label="Selected">
         <header class="ve-props__head">
-          <strong>{{if this.chosen this.chosen.name "Project"}}</strong>
-          <small>{{if this.chosen this.chosenDetail this.summary}}</small>
+          <strong>{{this.headName}}</strong>
+          <small>{{this.headDetail}}</small>
         </header>
-        {{#if this.chosen}}
+        {{#if this.anyChosen}}
           <div class="ve-tabs" role="tablist">
             {{#each this.tabButtons as |tab|}}
               <button
@@ -1748,225 +2280,267 @@ export default class VideoEdit extends Component {
             {{/each}}
           </div>
           <div class="ve-props__body">
-            {{#if this.tabIsEdit}}
-              <XzRows @framed={{true}}>
-                {{#if this.chosenIsAudio}}
+            {{#if this.chosenLayer}}
+              <LayerProps
+                @layer={{this.chosenLayer}}
+                @clip={{this.chosenLayerClip}}
+                @tab={{this.layerTab}}
+                @frameAspect={{this.outAspect}}
+                @stackIndex={{this.layerStackIndex}}
+                @stackCount={{this.edit.layers.length}}
+                @onChange={{this.patchLayer}}
+                @onEndLive={{this.endLive}}
+                @onStack={{this.restackLayer}}
+              />
+            {{else if this.chosen}}
+              {{#if this.tabIsTransition}}
+                <XzRows @framed={{true}}>
+                  <XzHeading @text="From the clip before" />
                   <XzSegmented
-                    class="ve-lane-pick"
-                    @items={{laneLabels}}
-                    @selected={{this.laneIndex}}
-                    @onChange={{this.setLane}}
+                    class="ve-transition"
+                    @items={{TRANSITION_LABELS}}
+                    @selected={{this.transitionKindIndex}}
+                    @columns={{3}}
+                    @onChange={{this.pickTransition}}
                   />
-                  <XzRow @title="Starts at" @form="flush" as |titleId|>
-                    <XzDecimalField
-                      class="ve-start"
-                      @value={{this.chosen.start}}
-                      @unit="s"
-                      @labelledBy={{titleId}}
-                      @onChange={{this.setStart}}
-                    />
-                  </XzRow>
-                {{/if}}
-                {{#if this.chosenIsPhoto}}
-                  <XzRow @title="Shows for" @form="flush" as |titleId|>
-                    <XzDecimalField
-                      class="ve-photo-seconds"
-                      @value={{this.photoSeconds}}
-                      @min={{0.1}}
-                      @max={{photoLimit}}
-                      @unit="s"
-                      @labelledBy={{titleId}}
-                      @onChange={{this.setPhotoSeconds}}
-                    />
-                  </XzRow>
-                {{else}}
-                  <XzRow @title="From" @form="flush" as |titleId|>
-                    <XzDecimalField
-                      class="ve-in"
-                      @value={{this.chosen.in}}
-                      @max={{this.inMax}}
-                      @unit="s"
-                      @labelledBy={{titleId}}
-                      @onChange={{this.setIn}}
-                    />
-                  </XzRow>
-                  <XzRow @title="To" @form="flush" as |titleId|>
-                    <XzDecimalField
-                      class="ve-out"
-                      @value={{this.chosen.out}}
-                      @min={{this.outMin}}
-                      @max={{this.outMax}}
-                      @unit="s"
-                      @labelledBy={{titleId}}
-                      @onChange={{this.setOut}}
-                    />
-                  </XzRow>
-                {{/if}}
-                <XzRow @title="Length" @detail={{this.chosenLength}} />
-                {{#if this.chosenIsVideo}}
-                  {{#if this.chosenHasTimes}}
-                    <XzHeading @text="Speed" />
-                    <XzSegmented
-                      class="ve-speed"
-                      @items={{SPEED_LABELS}}
-                      @selected={{this.speedIndex}}
-                      @columns={{3}}
-                      @onChange={{this.pickSpeed}}
-                    />
-                  {{/if}}
-                  <XzHeading @text="Rotate and flip" />
-                  <XzGrid>
-                    <XzButton
-                      class="ve-rotate-left"
-                      @label="Rotate left"
-                      @icon={{RotateLeftIcon}}
-                      @onClick={{this.rotateLeft}}
-                    />
-                    <XzButton
-                      class="ve-rotate-right"
-                      @label="Rotate right"
-                      @icon={{RotateRightIcon}}
-                      @onClick={{this.rotateRight}}
-                    />
-                    <XzButton
-                      class="ve-flip-h"
-                      @label="Flip left to right"
-                      @icon={{FlipHIcon}}
-                      @selected={{this.look.flipH}}
-                      @onClick={{this.flipH}}
-                    />
-                    <XzButton
-                      class="ve-flip-v"
-                      @label="Flip upside down"
-                      @icon={{FlipVIcon}}
-                      @selected={{this.look.flipV}}
-                      @onClick={{this.flipV}}
-                    />
-                  </XzGrid>
-                  <XzHeading @text="Crop" />
-                  {{#each this.cropRows as |row|}}
+                  {{#unless this.transitionOff}}
                     <PropSlider
-                      class="ve-crop-{{row.side}}"
+                      class="ve-transition-seconds"
+                      @label="Takes"
+                      @value={{this.transition.seconds}}
+                      @min={{0.1}}
+                      @max={{this.transitionMax}}
+                      @step={{0.05}}
+                      @nudge={{0.1}}
+                      @readout={{secondsReadout}}
+                      @onChange={{this.setTransitionSeconds}}
+                    />
+                  {{/unless}}
+                </XzRows>
+                <p class="ve-hint">The two clips overlap while it plays, so the
+                  edit gets that much shorter. It lasts at most half of either
+                  clip.</p>
+              {{else if this.tabIsEdit}}
+                <XzRows @framed={{true}}>
+                  {{#if this.chosenIsAudio}}
+                    <XzSegmented
+                      class="ve-lane-pick"
+                      @items={{laneLabels}}
+                      @selected={{this.laneIndex}}
+                      @onChange={{this.setLane}}
+                    />
+                    <XzRow @title="Starts at" @form="flush" as |titleId|>
+                      <XzDecimalField
+                        class="ve-start"
+                        @value={{this.chosen.start}}
+                        @unit="s"
+                        @labelledBy={{titleId}}
+                        @onChange={{this.setStart}}
+                      />
+                    </XzRow>
+                  {{/if}}
+                  {{#if this.chosenIsPhoto}}
+                    <XzRow @title="Shows for" @form="flush" as |titleId|>
+                      <XzDecimalField
+                        class="ve-photo-seconds"
+                        @value={{this.photoSeconds}}
+                        @min={{0.1}}
+                        @max={{photoLimit}}
+                        @unit="s"
+                        @labelledBy={{titleId}}
+                        @onChange={{this.setPhotoSeconds}}
+                      />
+                    </XzRow>
+                  {{else}}
+                    <XzRow @title="From" @form="flush" as |titleId|>
+                      <XzDecimalField
+                        class="ve-in"
+                        @value={{this.chosen.in}}
+                        @max={{this.inMax}}
+                        @unit="s"
+                        @labelledBy={{titleId}}
+                        @onChange={{this.setIn}}
+                      />
+                    </XzRow>
+                    <XzRow @title="To" @form="flush" as |titleId|>
+                      <XzDecimalField
+                        class="ve-out"
+                        @value={{this.chosen.out}}
+                        @min={{this.outMin}}
+                        @max={{this.outMax}}
+                        @unit="s"
+                        @labelledBy={{titleId}}
+                        @onChange={{this.setOut}}
+                      />
+                    </XzRow>
+                  {{/if}}
+                  <XzRow @title="Length" @detail={{this.chosenLength}} />
+                  {{#if this.chosenIsVideo}}
+                    {{#if this.chosenHasTimes}}
+                      <XzHeading @text="Speed" />
+                      <XzSegmented
+                        class="ve-speed"
+                        @items={{SPEED_LABELS}}
+                        @selected={{this.speedIndex}}
+                        @columns={{3}}
+                        @onChange={{this.pickSpeed}}
+                      />
+                    {{/if}}
+                    <XzHeading @text="Rotate and flip" />
+                    <XzGrid>
+                      <XzButton
+                        class="ve-rotate-left"
+                        @label="Rotate left"
+                        @icon={{RotateLeftIcon}}
+                        @onClick={{this.rotateLeft}}
+                      />
+                      <XzButton
+                        class="ve-rotate-right"
+                        @label="Rotate right"
+                        @icon={{RotateRightIcon}}
+                        @onClick={{this.rotateRight}}
+                      />
+                      <XzButton
+                        class="ve-flip-h"
+                        @label="Flip left to right"
+                        @icon={{FlipHIcon}}
+                        @selected={{this.look.flipH}}
+                        @onClick={{this.flipH}}
+                      />
+                      <XzButton
+                        class="ve-flip-v"
+                        @label="Flip upside down"
+                        @icon={{FlipVIcon}}
+                        @selected={{this.look.flipV}}
+                        @onClick={{this.flipV}}
+                      />
+                    </XzGrid>
+                    <XzHeading @text="Crop" />
+                    {{#each this.cropRows as |row|}}
+                      <PropSlider
+                        class="ve-crop-{{row.side}}"
+                        @label={{row.label}}
+                        @value={{row.value}}
+                        @max={{0.45}}
+                        @step={{0.01}}
+                        @nudge={{0.01}}
+                        @readout={{cropReadout}}
+                        @onChange={{fn this.setCrop row.side}}
+                      />
+                    {{/each}}
+                    <XzGrid>
+                      <XzButton
+                        class="ve-move-left"
+                        @text="Earlier"
+                        @icon={{LeftIcon}}
+                        @disabled={{this.cannotMoveLeft}}
+                        @onClick={{this.moveLeft}}
+                      />
+                      <XzButton
+                        class="ve-move-right"
+                        @text="Later"
+                        @icon={{RightIcon}}
+                        @disabled={{this.cannotMoveRight}}
+                        @onClick={{this.moveRight}}
+                      />
+                    </XzGrid>
+                  {{/if}}
+                </XzRows>
+              {{else if this.tabIsAdjust}}
+                <XzRows @framed={{true}}>
+                  {{#each this.adjustRows as |row|}}
+                    <PropSlider
+                      class="ve-{{row.key}}"
                       @label={{row.label}}
                       @value={{row.value}}
-                      @max={{0.45}}
+                      @max={{2}}
                       @step={{0.01}}
-                      @nudge={{0.01}}
-                      @readout={{cropReadout}}
-                      @onChange={{fn this.setCrop row.side}}
+                      @nudge={{0.05}}
+                      @readout={{percent}}
+                      @onChange={{fn this.setAdjust row.key}}
                     />
                   {{/each}}
+                  <XzHeading @text="Filter" />
+                  <XzSegmented
+                    class="ve-filter"
+                    @items={{FILTER_LABELS}}
+                    @selected={{this.filterIndex}}
+                    @columns={{3}}
+                    @onChange={{this.pickFilter}}
+                  />
                   <XzGrid>
                     <XzButton
-                      class="ve-move-left"
-                      @text="Earlier"
-                      @icon={{LeftIcon}}
-                      @disabled={{this.cannotMoveLeft}}
-                      @onClick={{this.moveLeft}}
-                    />
-                    <XzButton
-                      class="ve-move-right"
-                      @text="Later"
-                      @icon={{RightIcon}}
-                      @disabled={{this.cannotMoveRight}}
-                      @onClick={{this.moveRight}}
+                      class="ve-reset-look"
+                      @text="Reset picture"
+                      @icon={{ResetIcon}}
+                      @disabled={{this.lookPlain}}
+                      @onClick={{this.resetLook}}
                     />
                   </XzGrid>
-                {{/if}}
-              </XzRows>
-            {{else if this.tabIsAdjust}}
-              <XzRows @framed={{true}}>
-                {{#each this.adjustRows as |row|}}
+                </XzRows>
+              {{else}}
+                <XzRows @framed={{true}}>
                   <PropSlider
-                    class="ve-{{row.key}}"
-                    @label={{row.label}}
-                    @value={{row.value}}
+                    class="ve-volume"
+                    @label="Volume"
+                    @value={{this.chosen.volume}}
                     @max={{2}}
                     @step={{0.01}}
                     @nudge={{0.05}}
                     @readout={{percent}}
-                    @onChange={{fn this.setAdjust row.key}}
+                    @onChange={{this.setVolume}}
+                    @on={{this.chosenSoundOn}}
+                    @onToggle={{this.setSoundOn}}
+                    @toggleLabel="Sound on"
                   />
-                {{/each}}
-                <XzHeading @text="Filter" />
-                <XzSegmented
-                  class="ve-filter"
-                  @items={{FILTER_LABELS}}
-                  @selected={{this.filterIndex}}
-                  @columns={{3}}
-                  @onChange={{this.pickFilter}}
-                />
-                <XzGrid>
-                  <XzButton
-                    class="ve-reset-look"
-                    @text="Reset picture"
-                    @icon={{ResetIcon}}
-                    @disabled={{this.lookPlain}}
-                    @onClick={{this.resetLook}}
-                  />
-                </XzGrid>
-              </XzRows>
-            {{else}}
-              <XzRows @framed={{true}}>
-                <PropSlider
-                  class="ve-volume"
-                  @label="Volume"
-                  @value={{this.chosen.volume}}
-                  @max={{2}}
-                  @step={{0.01}}
-                  @nudge={{0.05}}
-                  @readout={{percent}}
-                  @onChange={{this.setVolume}}
-                  @on={{this.chosenSoundOn}}
-                  @onToggle={{this.setSoundOn}}
-                  @toggleLabel="Sound on"
-                />
-                <XzRow
-                  @title="Fade in"
-                  @detail={{if
-                    this.chosenIsVideo
-                    "From black and silence"
-                    "From silence"
-                  }}
-                  @form="flush"
-                  as |titleId|
-                >
-                  <XzDecimalField
-                    class="ve-fade-in"
-                    @value={{this.chosen.fadeIn}}
-                    @max={{this.fadeMax}}
-                    @unit="s"
-                    @labelledBy={{titleId}}
-                    @onChange={{this.setFadeIn}}
-                  />
-                </XzRow>
-                <XzRow
-                  @title="Fade out"
-                  @detail={{if
-                    this.chosenIsVideo
-                    "To black and silence"
-                    "To silence"
-                  }}
-                  @form="flush"
-                  as |titleId|
-                >
-                  <XzDecimalField
-                    class="ve-fade-out"
-                    @value={{this.chosen.fadeOut}}
-                    @max={{this.fadeMax}}
-                    @unit="s"
-                    @labelledBy={{titleId}}
-                    @onChange={{this.setFadeOut}}
-                  />
-                </XzRow>
-              </XzRows>
+                  <XzRow
+                    @title="Fade in"
+                    @detail={{if
+                      this.chosenIsVideo
+                      "From black and silence"
+                      "From silence"
+                    }}
+                    @form="flush"
+                    as |titleId|
+                  >
+                    <XzDecimalField
+                      class="ve-fade-in"
+                      @value={{this.chosen.fadeIn}}
+                      @max={{this.fadeMax}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setFadeIn}}
+                    />
+                  </XzRow>
+                  <XzRow
+                    @title="Fade out"
+                    @detail={{if
+                      this.chosenIsVideo
+                      "To black and silence"
+                      "To silence"
+                    }}
+                    @form="flush"
+                    as |titleId|
+                  >
+                    <XzDecimalField
+                      class="ve-fade-out"
+                      @value={{this.chosen.fadeOut}}
+                      @max={{this.fadeMax}}
+                      @unit="s"
+                      @labelledBy={{titleId}}
+                      @onChange={{this.setFadeOut}}
+                    />
+                  </XzRow>
+                </XzRows>
+              {{/if}}
             {{/if}}
           </div>
         {{else}}
           <div class="ve-props__body">
             <div class="ve-empty">
               <IconSvg @name="mouse-pointer-click" />
-              <p>Click a clip or sound on the timeline to change it here.</p>
+              <p>Click a clip, sound, title or overlay on the timeline or the
+                preview to change it here.</p>
             </div>
             <XzRows @framed={{true}}>
               <XzRow @title="Frame" @detail={{this.sizeText}} />
@@ -2004,6 +2578,13 @@ export default class VideoEdit extends Component {
             disabled={{this.nothingChosen}}
             {{on "click" this.duplicateSelected}}
           ><IconSvg @name="copy-plus" /> Duplicate</button>
+          <button
+            type="button"
+            class="xz-btn xz-btn--ghost xz-btn--sm ve-add-transition"
+            title="A transition on the selected clip's join, or the next one"
+            disabled={{this.cannotTransition}}
+            {{on "click" this.addTransition}}
+          ><IconSvg @name="arrow-left-right" /> Transition</button>
           <span class="ve-tl-sep" aria-hidden="true"></span>
           <button
             type="button"
@@ -2079,6 +2660,9 @@ export default class VideoEdit extends Component {
               @onMove={{this.movePiece}}
               @onAudioTrim={{this.trimSound}}
               @onAudioMove={{this.moveSound}}
+              @onLayerTrim={{this.trimLayerTo}}
+              @onLayerMove={{this.moveLayerTo}}
+              @onJoin={{this.openJoin}}
             />
           {{else}}
             <p class="ve-timeline-empty">Add videos, photos and sounds in Media

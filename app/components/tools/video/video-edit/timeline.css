@@ -2,7 +2,7 @@
 .ve-timeline {
   display: grid;
   grid-template-columns: 3.5rem minmax(0, 1fr);
-  block-size: 100%;
+  min-block-size: 100%;
   background: var(--xz-surface-2);
 }
 
@@ -159,6 +159,82 @@
 .ve-item__muted {
   inset-block: auto 3px;
   inset-inline: auto 10px;
+}
+
+/* text and overlays: slim blocks, stacked in rows where they overlap */
+.ve-lane--layer {
+  background: color-mix(in srgb, var(--xz-surface) 35%, transparent);
+}
+
+.ve-layer {
+  inset-block: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 12px;
+  border-color: var(--xz-border);
+  font-size: 0.6875rem;
+  font-weight: var(--xz-font-weight-medium);
+}
+
+.ve-layer--text {
+  background: var(--xz-accent-2-soft);
+  color: var(--xz-text);
+}
+
+.ve-layer--overlay {
+  background: var(--xz-warning-soft, var(--xz-surface-3));
+  color: var(--xz-text);
+}
+
+.ve-layer svg {
+  flex: none;
+  inline-size: 13px;
+  block-size: 13px;
+  pointer-events: none;
+}
+
+.ve-layer__thumb {
+  flex: none;
+  block-size: 18px;
+  inline-size: 24px;
+  border-radius: var(--xz-radius-sm);
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.ve-layer__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* a transition on a join: a mark over the overlap */
+.ve-join {
+  position: absolute;
+  inset-block: 50% auto;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  block-size: 22px;
+  margin-block-start: -11px;
+  padding: 0;
+  border: 1px solid var(--xz-accent-2);
+  border-radius: var(--xz-radius-pill, 999px);
+  background: color-mix(in srgb, var(--xz-accent-2) 30%, transparent);
+  color: var(--xz-text);
+  cursor: pointer;
+}
+
+.ve-join svg {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.ve-join:focus-visible {
+  outline: 2px solid var(--xz-focus-ring, var(--xz-text));
+  outline-offset: 2px;
 }
 
 /* trim handles on the selected item */

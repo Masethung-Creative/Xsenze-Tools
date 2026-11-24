@@ -1,27 +1,32 @@
 /**
  * Video Edit's export: the edit rendered and encoded into one file, on the
  * device. The video track is drawn frame by frame onto one canvas (black
- * bars or a crop, fades to black); every sound (the video's own, Music,
- * Voice) is mixed with its volume and fades into 48 kHz stereo. Both are
- * made in windows of a few seconds, so memory stays low and the two tracks
- * are written side by side.
+ * bars or a crop, fades, transitions), with the text and overlays over it;
+ * every sound (the videos' own, Music, Voice) is mixed with its volume and
+ * fades into 48 kHz stereo. Both are made in windows of a few seconds, so
+ * memory stays low and the two tracks are written side by side.
  */
 import { loadMediabunny, openInput } from 'xsenze-tools/lib/video/media-probe';
 import { stretchBuffer } from 'xsenze-tools/lib/audio/stretch';
 import {
-  drawPicture,
+  drawShots,
   type Fit,
   type Picture,
+  type Shot,
 } from 'xsenze-tools/lib/video/edit/draw';
+import { drawLayer, fontsOf } from 'xsenze-tools/lib/video/edit/layers';
 import {
   editLength,
   fadeAt,
+  layersAt,
   lengthOf,
+  overlapOf,
+  showingAt,
   starts,
-  total,
   type Clip,
   type Edit,
   type Level,
+  type Place,
 } from 'xsenze-tools/lib/video/edit/timeline';
 
 export type ExportContainer = 'mp4' | 'webm';
@@ -145,10 +150,25 @@ function stretches(clips: ReadonlyMap<string, Clip>, edit: Edit): Stretch[] {
       out: piece.out,
       speed: piece.speed || 1,
       gain,
-      fadeIn: piece.fadeIn,
-      fadeOut: piece.fadeOut,
+      // a transition crossfades the sound of the two pieces
+      fadeIn: Math.max(piece.fadeIn, overlapOf(edit.pieces, i)),
+      fadeOut: Math.max(piece.fadeOut, overlapOf(edit.pieces, i + 1)),
     });
   });
+  for (const layer of edit.layers) {
+    const clip = clips.get(layer.clip ?? '');
+    const gain = (layer.muted ? 0 : layer.volume) * videoLevel;
+    if (layer.kind !== 'video' || !clip?.hasAudio || gain <= 0) continue;
+    out.push({
+      clip,
+      start: layer.start,
+      in: layer.in,
+      out: Math.min(clip.duration, layer.in + layer.length),
+      gain,
+      fadeIn: 0,
+      fadeOut: 0,
+    });
+  }
   for (const item of edit.audio) {
     const clip = clips.get(item.clip);
     const gain =
@@ -253,93 +273,48 @@ async function mixWindow(
   return context.startRendering();
 }
 
-/** Hands out the frame for each output time, piece by piece, in order. */
-class Frames {
-  #m: Mediabunny;
-  #clips: ReadonlyMap<string, Clip>;
-  #edit: Edit;
-  #begins: number[];
-  #index = -1;
-  #samples: AsyncGenerator<import('mediabunny').VideoSample> | null = null;
-  #current: import('mediabunny').VideoSample | null = null;
-  #next: import('mediabunny').VideoSample | null = null;
-  #photos = new Map<string, ImageBitmap | null>();
+type Sample = import('mediabunny').VideoSample;
 
-  constructor(m: Mediabunny, clips: ReadonlyMap<string, Clip>, edit: Edit) {
-    this.#m = m;
-    this.#clips = clips;
-    this.#edit = edit;
-    this.#begins = starts(edit.pieces);
+/** Frames of one stretch of a video, handed out in time order. */
+class Reader {
+  #samples: AsyncGenerator<Sample> | null;
+  #current: Sample | null = null;
+  #next: Sample | null = null;
+
+  private constructor(samples: AsyncGenerator<Sample> | null) {
+    this.#samples = samples;
   }
 
-  /** The piece at timeline second `t` and its frame there, or null past the video. */
-  async at(t: number) {
-    const pieces = this.#edit.pieces;
-    if (t >= total(pieces)) {
-      await this.close();
-      return null;
-    }
-    let index = this.#index;
-    while (
-      index < pieces.length - 1 &&
-      (index < 0 || t >= this.#begins[index]! + lengthOf(pieces[index]!))
-    )
-      index++;
-    const piece = pieces[index]!;
-    if (index !== this.#index) {
-      await this.close();
-      this.#index = index;
-      const clip = this.#clips.get(piece.clip);
-      if (clip && clip.kind === 'video') {
-        const track = await openInput(
-          this.#m,
-          clip.file,
-        ).getPrimaryVideoTrack();
-        if (track && (await track.canDecode()))
-          this.#samples = new this.#m.VideoSampleSink(track).samples(
-            piece.in,
-            piece.out,
-          );
-      }
-    }
-    const local = t - this.#begins[index]!;
-    const clipTime = piece.in + local * (piece.speed || 1);
-    const clip = this.#clips.get(piece.clip);
-    if (clip?.kind === 'image')
-      return { piece, picture: await this.#photo(clip), local };
-    // step forward to the last frame that starts at or before clipTime
+  static async open(m: Mediabunny, clip: Clip, from: number, to: number) {
+    const track = await openInput(m, clip.file).getPrimaryVideoTrack();
+    const samples =
+      track && (await track.canDecode())
+        ? new m.VideoSampleSink(track).samples(from, to)
+        : null;
+    return new Reader(samples);
+  }
+
+  /** The last frame that starts at or before clip second `t`. */
+  async at(t: number): Promise<Picture | null> {
     while (this.#samples) {
       if (!this.#next) {
         const step = await this.#samples.next();
         if (step.done) break;
         this.#next = step.value;
       }
-      if (this.#current && this.#next.timestamp > clipTime + 1e-6) break;
+      if (this.#current && this.#next.timestamp > t + 1e-6) break;
       this.#current?.close();
       this.#current = this.#next;
       this.#next = null;
     }
     const sample = this.#current;
-    const picture: Picture | null = sample
+    return sample
       ? {
           source: sample.toCanvasImageSource(),
           width: sample.codedWidth,
           height: sample.codedHeight,
           rotation: sample.rotation,
         }
-      : null;
-    return { piece, picture, local };
-  }
-
-  /** A photo, decoded once for the whole export. */
-  async #photo(clip: Clip): Promise<Picture | null> {
-    let bitmap = this.#photos.get(clip.id);
-    if (bitmap === undefined) {
-      bitmap = await createImageBitmap(clip.file).catch(() => null);
-      this.#photos.set(clip.id, bitmap);
-    }
-    return bitmap
-      ? { source: bitmap, width: bitmap.width, height: bitmap.height }
       : null;
   }
 
@@ -353,6 +328,177 @@ class Frames {
   }
 }
 
+/**
+ * Hands out the pictures each output frame needs: the pieces on show and
+ * the overlay videos and pictures. A reader closes once its stretch is past.
+ */
+class Pictures {
+  #m: Mediabunny;
+  #readers = new Map<string, Promise<Reader>>();
+  #photos = new Map<string, Promise<ImageBitmap | null>>();
+  #used = new Set<string>();
+
+  constructor(m: Mediabunny) {
+    this.#m = m;
+  }
+
+  /** A video's frame at clip second `t`, from the reader under `key`. */
+  async frame(
+    key: string,
+    clip: Clip,
+    from: number,
+    to: number,
+    t: number,
+  ): Promise<Picture | null> {
+    this.#used.add(key);
+    let reader = this.#readers.get(key);
+    if (!reader) {
+      reader = Reader.open(this.#m, clip, from, to);
+      this.#readers.set(key, reader);
+    }
+    return (await reader).at(t);
+  }
+
+  /** A photo, decoded once for the whole export. */
+  async photo(clip: Clip): Promise<Picture | null> {
+    let bitmap = this.#photos.get(clip.id);
+    if (!bitmap) {
+      bitmap = createImageBitmap(clip.file).catch(() => null);
+      this.#photos.set(clip.id, bitmap);
+    }
+    const image = await bitmap;
+    return image
+      ? { source: image, width: image.width, height: image.height }
+      : null;
+  }
+
+  /** Closes the readers this frame did not use: time only goes on. */
+  async sweep() {
+    for (const [key, reader] of this.#readers)
+      if (!this.#used.has(key)) {
+        this.#readers.delete(key);
+        await (await reader).close();
+      }
+    this.#used.clear();
+  }
+
+  async close() {
+    for (const reader of this.#readers.values()) await (await reader).close();
+    this.#readers.clear();
+    for (const bitmap of this.#photos.values()) (await bitmap)?.close();
+    this.#photos.clear();
+  }
+}
+
+/** Draws output second `t`: the video track, then the layers. */
+async function drawFrame(
+  context: OffscreenCanvasRenderingContext2D,
+  pictures: Pictures,
+  clips: ReadonlyMap<string, Clip>,
+  edit: Edit,
+  t: number,
+  W: number,
+  H: number,
+  fit: Fit,
+) {
+  const show = showingAt(edit.pieces, t);
+  const shot = async (place: Place): Promise<Shot> => {
+    const { piece, index, clipTime } = place;
+    const clip = clips.get(piece.clip);
+    const picture = !clip
+      ? null
+      : clip.kind === 'image'
+        ? await pictures.photo(clip)
+        : await pictures.frame(
+            `p${index}`,
+            clip,
+            piece.in,
+            piece.out,
+            clipTime,
+          );
+    const local = (clipTime - piece.in) / (piece.speed || 1);
+    return {
+      picture,
+      look: piece.look,
+      fade: fadeAt(local, lengthOf(piece), piece.fadeIn, piece.fadeOut),
+    };
+  };
+  if (show) {
+    const a = await shot(show.a);
+    const b = show.b ? await shot(show.b) : null;
+    drawShots(context, a, b, show.kind, show.p, W, H, fit, edit.background);
+  } else {
+    context.save();
+    context.globalAlpha = 1;
+    context.filter = 'none';
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, W, H);
+    context.restore();
+  }
+  for (const layer of layersAt(edit.layers, t)) {
+    const clip = clips.get(layer.clip ?? '');
+    let picture: Picture | null = null;
+    if (layer.kind === 'picture' && clip) picture = await pictures.photo(clip);
+    if (layer.kind === 'video' && clip)
+      picture = await pictures.frame(
+        `l${layer.id}`,
+        clip,
+        layer.in,
+        layer.in + layer.length,
+        layer.in + (t - layer.start),
+      );
+    if (layer.kind === 'video' && picture?.rotation) {
+      // an overlay video is drawn as stored; turned files go through a canvas
+      picture = upright(picture);
+    }
+    drawLayer(
+      context,
+      layer,
+      picture?.source ?? null,
+      picture ? picture.width / picture.height : 1,
+      W,
+      H,
+      t,
+    );
+  }
+  await pictures.sweep();
+}
+
+let turnCanvas: OffscreenCanvas | null = null;
+
+/** A turned video frame, drawn the right way up. */
+function upright(picture: Picture): Picture {
+  const turned = (picture.rotation ?? 0) % 180 !== 0;
+  const width = turned ? picture.height : picture.width;
+  const height = turned ? picture.width : picture.height;
+  turnCanvas ??= new OffscreenCanvas(width, height);
+  turnCanvas.width = width;
+  turnCanvas.height = height;
+  const ctx = turnCanvas.getContext('2d')!;
+  ctx.save();
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(((picture.rotation ?? 0) * Math.PI) / 180);
+  ctx.drawImage(
+    picture.source,
+    -picture.width / 2,
+    -picture.height / 2,
+    picture.width,
+    picture.height,
+  );
+  ctx.restore();
+  return { source: turnCanvas, width, height };
+}
+
+/** Waits for the fonts the titles use, so the first frames have them. */
+async function fontsReady(edit: Edit) {
+  if (typeof document === 'undefined' || !document.fonts) return;
+  await Promise.all(
+    fontsOf(edit.layers).map((font) =>
+      document.fonts.load(font).catch(() => []),
+    ),
+  );
+}
+
 /** Renders and encodes the edit. Aborting the signal stops it with an AbortError. */
 export async function exportEdit(
   clips: readonly Clip[],
@@ -364,6 +510,7 @@ export async function exportEdit(
   const length = editLength(edit);
   if (length <= 0) throw new Error('export-empty');
   const { width, height, fps, signal } = options;
+  await fontsReady(edit);
   const format =
     options.container === 'webm'
       ? new m.WebMOutputFormat()
@@ -387,7 +534,7 @@ export async function exportEdit(
     : null;
   if (audio) output.addAudioTrack(audio);
 
-  const frames = new Frames(m, clipMap, edit);
+  const pictures = new Pictures(m);
   const totalFrames = Math.max(1, Math.round(length * fps));
   const abort = () => {
     if (signal?.aborted)
@@ -404,33 +551,24 @@ export async function exportEdit(
       for (; frame < totalFrames && frame / fps < to - 1e-9; frame++) {
         abort();
         const t = frame / fps;
-        const shown = await frames.at(t);
-        if (shown) {
-          const { piece, picture, local } = shown;
-          drawPicture(
-            context,
-            picture,
-            piece.look,
-            width,
-            height,
-            options.fit,
-            edit.background,
-            fadeAt(local, lengthOf(piece), piece.fadeIn, piece.fadeOut),
-          );
-        } else {
-          context.globalAlpha = 1;
-          context.filter = 'none';
-          context.fillStyle = '#000';
-          context.fillRect(0, 0, width, height);
-        }
+        await drawFrame(
+          context,
+          pictures,
+          clipMap,
+          edit,
+          t,
+          width,
+          height,
+          options.fit,
+        );
         await video.add(t, 1 / fps);
         options.onProgress?.(Math.min(0.99, (frame + 1) / totalFrames));
       }
     }
-    await frames.close();
+    await pictures.close();
     await output.finalize();
   } catch (error) {
-    await frames.close();
+    await pictures.close();
     await output.cancel().catch(() => undefined);
     throw error;
   }

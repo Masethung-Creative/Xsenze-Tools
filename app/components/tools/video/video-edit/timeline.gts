@@ -3,22 +3,30 @@ import { tracked } from '@glimmer/tracking';
 import { htmlSafe } from '@ember/template';
 import { modifier } from 'ember-modifier';
 import { formatTimestamp } from 'xsenze-tools/lib/subtitles/subtitles';
+import { IconSvg } from 'xsenze-tools/components/icon';
+import { SHAPES } from 'xsenze-tools/lib/video/edit/layers';
 import type { WaveformPeaks } from 'xsenze-tools/lib/audio/audio';
 import {
   LANES,
+  LAYER_LANES,
   editLength,
   endOf,
+  layerEnd,
+  layerRows,
   lengthOf,
+  overlapOf,
   starts,
   total,
   type AudioItem,
   type Clip,
   type Edit,
   type Lane,
+  type Layer,
+  type LayerLane,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import './timeline.css';
 
-export type ItemKind = 'video' | 'audio';
+export type ItemKind = 'video' | 'audio' | 'layer';
 
 export interface Selection {
   kind: ItemKind;
@@ -45,6 +53,10 @@ interface TimelineSignature {
     onMove: (id: string, index: number) => void;
     onAudioTrim: (id: string, inPoint: number, outPoint: number) => void;
     onAudioMove: (id: string, start: number, lane: Lane) => void;
+    onLayerTrim: (id: string, start: number, end: number) => void;
+    onLayerMove: (id: string, start: number) => void;
+    /** A join's transition mark was pressed: the piece after it. */
+    onJoin: (id: string) => void;
   };
   Element: HTMLDivElement;
 }
@@ -57,6 +69,20 @@ const snapPx = 8;
 const videoLaneHeight = 64;
 
 const LANE_NAMES: Record<Lane, string> = { music: 'Music', voice: 'Voice' };
+const LAYER_NAMES: Record<LayerLane, string> = {
+  text: 'Text',
+  overlay: 'Overlay',
+};
+/** One row of a text or overlay layer, px. */
+const layerRow = 26;
+const rowGap = 2;
+const LAYER_ICONS: Record<Layer['kind'], string> = {
+  text: 'type',
+  picture: 'image',
+  video: 'film',
+  shape: 'shapes',
+  emoji: 'smile',
+};
 
 /** 0:05, 1:30, 1:02:00; with tenths when marks are under a second apart. */
 function rulerTime(t: number, tenths: boolean): string {
@@ -118,7 +144,7 @@ const wave = modifier(
 );
 
 interface Drag {
-  kind: 'scrub' | 'piece' | 'sound' | 'in' | 'out';
+  kind: 'scrub' | 'piece' | 'sound' | 'layer' | 'in' | 'out';
   item?: ItemKind;
   id?: string;
   x: number;
@@ -144,6 +170,8 @@ export default class Timeline extends Component<TimelineSignature> {
   @tracked dragId: string | null = null;
   /** A sound being dragged, where it would land. */
   @tracked ghost: { id: string; start: number; lane: Lane } | null = null;
+  /** A layer being dragged, where it would start. */
+  @tracked layerGhost: { id: string; start: number } | null = null;
 
   #drag: Drag | null = null;
 
@@ -156,12 +184,6 @@ export default class Timeline extends Component<TimelineSignature> {
     const fit =
       this.length > 0 ? Math.max(this.width - 2, 1) / this.length : 50;
     return fit * Math.max(1, this.args.zoom);
-  }
-
-  get trackStyle() {
-    return htmlSafe(
-      `width: ${Math.max(this.length * this.pps, this.width - 2)}px`,
-    );
   }
 
   #isSelected(kind: ItemKind, id: string) {
@@ -253,6 +275,85 @@ export default class Timeline extends Component<TimelineSignature> {
     };
   }
 
+  /** The Text and Overlay lanes, each with as many rows as its overlaps need. */
+  get layerLanes() {
+    const pps = this.pps;
+    const layers = this.args.edit.layers;
+    const ghost = this.layerGhost;
+    return LAYER_LANES.map((lane) => {
+      const { rows, count } = layerRows(layers, lane);
+      return {
+        lane,
+        name: LAYER_NAMES[lane],
+        count,
+        items: layers
+          .filter((layer) => layer.lane === lane)
+          .map((layer) => {
+            const start = ghost?.id === layer.id ? ghost.start : layer.start;
+            const row = rows.get(layer.id) ?? 0;
+            const clip = this.args.clips.get(layer.clip ?? '');
+            return {
+              layer,
+              icon: LAYER_ICONS[layer.kind],
+              name: this.#layerName(layer, clip),
+              thumb: clip?.frames[0] ?? null,
+              selected: this.#isSelected('layer', layer.id),
+              dragging: ghost?.id === layer.id,
+              style: htmlSafe(
+                `left: ${start * pps}px; width: ${layer.length * pps}px; top: ${row * (layerRow + rowGap)}px; height: ${layerRow}px`,
+              ),
+            };
+          }),
+      };
+    });
+  }
+
+  #layerName(layer: Layer, clip: Clip | undefined) {
+    if (layer.kind === 'text') return layer.text.split('\n')[0] || 'Text';
+    if (layer.kind === 'emoji') return layer.emoji;
+    if (layer.kind === 'shape') return SHAPES[layer.shape];
+    return clip?.name ?? 'Picture';
+  }
+
+  /** Row heights: ruler, Text, Overlay, Video, Music, Voice. */
+  get #rows() {
+    const [text, overlay] = this.layerLanes.map(
+      (lane) => lane.count * layerRow + (lane.count - 1) * rowGap,
+    );
+    return `grid-template-rows: 1.5rem ${text}px ${overlay}px 4rem 2.5rem 2.5rem`;
+  }
+
+  get rowsStyle() {
+    return htmlSafe(this.#rows);
+  }
+
+  get trackStyle() {
+    return htmlSafe(
+      `width: ${Math.max(this.length * this.pps, this.width - 2)}px; ${this.#rows}`,
+    );
+  }
+
+  /** Marks on the joins that have a transition. */
+  get joins() {
+    const pieces = this.args.edit.pieces;
+    const begins = starts(pieces);
+    const pps = this.pps;
+    return pieces
+      .map((piece, index) => ({
+        piece,
+        index,
+        overlap: overlapOf(pieces, index),
+      }))
+      .filter((join) => join.overlap > 0)
+      .map(({ piece, index, overlap }) => ({
+        id: piece.id,
+        label: `Transition into clip ${index + 1}`,
+        style: htmlSafe(
+          `left: ${begins[index]! * pps}px; width: ${Math.max(overlap * pps, 16)}px`,
+        ),
+      }));
+  }
+
   get ticks() {
     const every = tickEvery(this.pps);
     const marks = [];
@@ -300,6 +401,8 @@ export default class Timeline extends Component<TimelineSignature> {
     if (except) marks.push(this.args.time);
     for (const item of this.args.edit.audio)
       if (item.id !== except) marks.push(item.start, endOf(item));
+    for (const layer of this.args.edit.layers)
+      if (layer.id !== except) marks.push(layer.start, layerEnd(layer));
     return marks;
   }
 
@@ -350,8 +453,17 @@ export default class Timeline extends Component<TimelineSignature> {
       const block = target.closest<HTMLElement>('[data-item]');
       const id = (handle ?? block)?.dataset['item'];
       const item = (handle ?? block)?.dataset['kind'] as ItemKind | undefined;
+      const join = target.closest<HTMLElement>('[data-join]')?.dataset['join'];
+      if (join) {
+        this.args.onJoin(join);
+        return;
+      }
       track.setPointerCapture(event.pointerId);
       if (handle && id && item) {
+        const layer =
+          item === 'layer'
+            ? this.args.edit.layers.find((l) => l.id === id)
+            : undefined;
         const found =
           item === 'video'
             ? this.args.edit.pieces.find((p) => p.id === id)
@@ -362,7 +474,11 @@ export default class Timeline extends Component<TimelineSignature> {
           id,
           x: event.clientX,
           moved: false,
-          from: found ? [found.in, found.out] : undefined,
+          from: layer
+            ? [layer.start, layerEnd(layer)]
+            : found
+              ? [found.in, found.out]
+              : undefined,
         };
         this.args.onTrimStart();
         event.preventDefault();
@@ -385,6 +501,18 @@ export default class Timeline extends Component<TimelineSignature> {
           lane: sound?.lane ?? 'music',
         };
         this.args.onSelect({ kind: 'audio', id });
+        return;
+      }
+      if (block && id && item === 'layer') {
+        const layer = this.args.edit.layers.find((l) => l.id === id);
+        this.#drag = {
+          kind: 'layer',
+          id,
+          x: event.clientX,
+          moved: false,
+          start: layer?.start ?? 0,
+        };
+        this.args.onSelect({ kind: 'layer', id });
         return;
       }
       if (target.closest('[data-lane]')) this.args.onSelect(null);
@@ -416,6 +544,21 @@ export default class Timeline extends Component<TimelineSignature> {
           ),
           lane: under ?? this.ghost?.lane ?? drag.lane ?? 'music',
         };
+      } else if (drag.kind === 'layer' && drag.id) {
+        this.layerGhost = {
+          id: drag.id,
+          start: Math.max(
+            0,
+            this.#snap((drag.start ?? 0) + dx / this.pps, drag.id),
+          ),
+        };
+      } else if (drag.from && drag.id && drag.item === 'layer') {
+        const [a, b] = drag.from;
+        const seconds = dx / this.pps;
+        if (drag.kind === 'in')
+          this.args.onLayerTrim(drag.id, this.#snap(a + seconds, drag.id), b);
+        else
+          this.args.onLayerTrim(drag.id, a, this.#snap(b + seconds, drag.id));
       } else if (drag.from && drag.id) {
         const [a, b] = drag.from;
         // a handle moves in clip seconds: a faster piece moves further
@@ -443,6 +586,9 @@ export default class Timeline extends Component<TimelineSignature> {
       }
       if (drag?.kind === 'sound' && drag.moved && drag.id && this.ghost)
         this.args.onAudioMove(drag.id, this.ghost.start, this.ghost.lane);
+      if (drag?.kind === 'layer' && drag.moved && drag.id && this.layerGhost)
+        this.args.onLayerMove(drag.id, this.layerGhost.start);
+      this.layerGhost = null;
       this.dragId = null;
       this.dropIndex = null;
       this.ghost = null;
@@ -462,8 +608,11 @@ export default class Timeline extends Component<TimelineSignature> {
 
   <template>
     <div class="ve-timeline" ...attributes>
-      <div class="ve-labels" aria-hidden="true">
+      <div class="ve-labels" style={{this.rowsStyle}} aria-hidden="true">
         <span></span>
+        {{#each this.layerLanes as |lane|}}
+          <span>{{lane.name}}</span>
+        {{/each}}
         <span>Video</span>
         {{#each this.lanes as |lane|}}
           <span>{{lane.name}}</span>
@@ -481,6 +630,43 @@ export default class Timeline extends Component<TimelineSignature> {
               <span class="ve-tick" style={{tick.style}}>{{tick.text}}</span>
             {{/each}}
           </div>
+
+          {{#each this.layerLanes as |lane|}}
+            <div class="ve-lane ve-lane--layer" data-lane={{lane.lane}}>
+              {{#each lane.items key="layer.id" as |block|}}
+                <div
+                  class="ve-item ve-layer ve-layer--{{lane.lane}}
+                    {{if block.selected 've-item--selected'}}
+                    {{if block.dragging 've-item--dragging'}}"
+                  style={{block.style}}
+                  data-item={{block.layer.id}}
+                  data-kind="layer"
+                  title={{block.name}}
+                >
+                  {{#if block.thumb}}
+                    <img class="ve-layer__thumb" src={{block.thumb}} alt="" />
+                  {{else}}
+                    <IconSvg @name={{block.icon}} />
+                  {{/if}}
+                  <span class="ve-layer__name">{{block.name}}</span>
+                  {{#if block.selected}}
+                    <span
+                      class="ve-handle ve-handle--in"
+                      data-edge="in"
+                      data-kind="layer"
+                      data-item={{block.layer.id}}
+                    ></span>
+                    <span
+                      class="ve-handle ve-handle--out"
+                      data-edge="out"
+                      data-kind="layer"
+                      data-item={{block.layer.id}}
+                    ></span>
+                  {{/if}}
+                </div>
+              {{/each}}
+            </div>
+          {{/each}}
 
           <div class="ve-lane ve-lane--video" data-lane="video">
             {{#each this.pieces key="piece.id" as |block|}}
@@ -529,6 +715,16 @@ export default class Timeline extends Component<TimelineSignature> {
                   ></span>
                 {{/if}}
               </div>
+            {{/each}}
+            {{#each this.joins as |join|}}
+              <button
+                type="button"
+                class="ve-join"
+                style={{join.style}}
+                data-join={{join.id}}
+                aria-label={{join.label}}
+                title={{join.label}}
+              ><IconSvg @name="arrow-left-right" /></button>
             {{/each}}
           </div>
 

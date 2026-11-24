@@ -7,10 +7,12 @@ import type {
   Background,
   Filter,
   Look,
+  TransitionKind,
 } from 'xsenze-tools/lib/video/edit/timeline';
 
 export type Fit = 'contain' | 'cover';
-type Context2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+export type Context2D =
+  CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 /** A picture to draw, in its stored orientation. */
 export interface Picture {
@@ -187,5 +189,124 @@ export function drawPicture(
     ctx.fillRect(0, 0, W, H);
   }
   place(ctx, picture, look, box, filter);
+  ctx.restore();
+}
+
+// ----- transitions -----
+
+/** One piece's picture as it should look now. */
+export interface Shot {
+  picture: Picture | null;
+  look: Look;
+  /** Its fade towards black, 1 for none. */
+  fade: number;
+}
+
+/** The transitions, as the editor lists them. */
+export const TRANSITIONS: Record<TransitionKind, string> = {
+  none: 'None',
+  dissolve: 'Dissolve',
+  black: 'Through black',
+  white: 'Through white',
+  wipe: 'Wipe',
+  slide: 'Slide',
+  circle: 'Circle',
+};
+
+const scratch: (OffscreenCanvas | null)[] = [null, null];
+
+function scratchCanvas(slot: 0 | 1, W: number, H: number) {
+  let canvas = scratch[slot];
+  if (!canvas) canvas = scratch[slot] = new OffscreenCanvas(W, H);
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  return canvas;
+}
+
+/** Slow at both ends. */
+const smooth = (p: number) => {
+  const x = Math.max(0, Math.min(1, p));
+  return x * x * (3 - 2 * x);
+};
+
+/**
+ * Fills the frame with one shot, or with two mid-transition: `a` going out,
+ * `b` coming in, `p` of the way through.
+ */
+export function drawShots(
+  ctx: Context2D,
+  a: Shot,
+  b: Shot | null,
+  kind: TransitionKind,
+  p: number,
+  W: number,
+  H: number,
+  fit: Fit,
+  background: Background,
+) {
+  if (!b || kind === 'none') {
+    const shot = b && p >= 0.5 ? b : a;
+    drawPicture(ctx, shot.picture, shot.look, W, H, fit, background, shot.fade);
+    return;
+  }
+  const e = smooth(p);
+  const A = scratchCanvas(0, W, H);
+  const B = scratchCanvas(1, W, H);
+  drawPicture(
+    A.getContext('2d')!,
+    a.picture,
+    a.look,
+    W,
+    H,
+    fit,
+    background,
+    a.fade,
+  );
+  drawPicture(
+    B.getContext('2d')!,
+    b.picture,
+    b.look,
+    W,
+    H,
+    fit,
+    background,
+    b.fade,
+  );
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.filter = 'none';
+  switch (kind) {
+    case 'dissolve':
+      ctx.drawImage(A, 0, 0);
+      ctx.globalAlpha = e;
+      ctx.drawImage(B, 0, 0);
+      break;
+    case 'black':
+    case 'white':
+      // the first half fades out to the colour, the second fades in from it
+      ctx.drawImage(e < 0.5 ? A : B, 0, 0);
+      ctx.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2;
+      ctx.fillStyle = kind === 'black' ? '#000' : '#fff';
+      ctx.fillRect(0, 0, W, H);
+      break;
+    case 'wipe':
+      ctx.drawImage(A, 0, 0);
+      ctx.beginPath();
+      ctx.rect(0, 0, W * e, H);
+      ctx.clip();
+      ctx.drawImage(B, 0, 0);
+      break;
+    case 'slide':
+      ctx.drawImage(A, -W * e, 0);
+      ctx.drawImage(B, W * (1 - e), 0);
+      break;
+    case 'circle':
+      ctx.drawImage(A, 0, 0);
+      ctx.beginPath();
+      ctx.arc(W / 2, H / 2, (Math.hypot(W, H) / 2) * e, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(B, 0, 0);
+      break;
+  }
   ctx.restore();
 }

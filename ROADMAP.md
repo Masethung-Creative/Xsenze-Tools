@@ -57,17 +57,28 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Editor layout: tool rail (Media, Text, Overlay, Audio, Canvas), closable panel, centred preview with play bar, Edit/Adjust/Audio tabs, full-width timeline, Export dialog | ✅     |
 | **Batch 1**                                                                                                                                                               |        |
 | Photos as clips, with a duration                                                                                                                                          | ✅     |
-| Text titles: font, size, colour, background, position, time                                                                                                               | 📋     |
-| Overlay: logo, watermark or small video, dragged and resized on the preview, opacity                                                                                      | 📋     |
 | Speed 0.25–4× with the pitch kept                                                                                                                                         | ✅     |
 | Crop, rotate 90°, flip                                                                                                                                                    | ✅     |
 | Adjust (brightness, contrast, saturation) and filter presets                                                                                                              | ✅     |
-| Transitions: fade, dissolve, wipe                                                                                                                                         | 📋     |
 | Background colour or blur behind clips of another shape                                                                                                                   | ✅     |
-| **Batch 2**                                                                                                                                                               |        |
-| Shapes and emoji, text animations                                                                                                                                         | 📋     |
-| Save and open a project file                                                                                                                                              | 📋     |
-| Record voice, screen or camera in the editor                                                                                                                              | 📋     |
+| **Phase 1: content on the picture**                                                                                                                                       |        |
+| Text titles: preset styles, font, size, colour, bold, italic, alignment, outline, background box, place, time                                                             | ✅     |
+| Text animations: fade, slide up, slide in, pop, typewriter; in and out                                                                                                    | ✅     |
+| Overlay: logo, picture or small video (picture in picture), dragged and resized on the preview, opacity, round corners, turn                                              | ✅     |
+| Shapes (box, circle, arrow, star) and emoji                                                                                                                               | ✅     |
+| Transitions between clips: dissolve, through black, through white, wipe, slide, circle                                                                                    | ✅     |
+| Presets for where it is posted: YouTube, Shorts, Reels, TikTok, Instagram, Facebook, X                                                                                    | ✅     |
+| **Phase 2: sound and speech**                                                                                                                                             |        |
+| Record a voice-over onto the Voice layer                                                                                                                                  | 📋     |
+| Auto subtitles with Whisper onto the Text layer                                                                                                                           | 📋     |
+| Ducking: music lowers under speech                                                                                                                                        | 📋     |
+| Detach a video’s sound onto its own layer                                                                                                                                 | 📋     |
+| Noise reduction on voice clips                                                                                                                                            | 📋     |
+| **Phase 3: effects and finishing**                                                                                                                                        |        |
+| Vignette and blur effects; green screen for overlay videos                                                                                                                | 📋     |
+| Reverse a clip, freeze a frame, zoom and pan on photos                                                                                                                    | 📋     |
+| Export 4K, GIF, or sound only (MP3/WAV)                                                                                                                                   | 📋     |
+| Save and open a project file; save the current frame as PNG                                                                                                               | 📋     |
 
 ## Image
 
