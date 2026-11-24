@@ -52,7 +52,9 @@ import iEye from 'lucide-static/icons/eye.svg?raw';
 import iFile from 'lucide-static/icons/file.svg?raw';
 import iFileAudio from 'lucide-static/icons/file-audio.svg?raw';
 import iFileMusic from 'lucide-static/icons/file-music.svg?raw';
+import iFilePlus from 'lucide-static/icons/file-plus.svg?raw';
 import iFileText from 'lucide-static/icons/file-text.svg?raw';
+import iFiles from 'lucide-static/icons/files.svg?raw';
 import iFilm from 'lucide-static/icons/film.svg?raw';
 import iFlame from 'lucide-static/icons/flame.svg?raw';
 import iFlipHorizontal2 from 'lucide-static/icons/flip-horizontal-2.svg?raw';
@@ -215,7 +217,9 @@ export const icons: Record<string, string> = {
   file: iFile,
   'file-audio': iFileAudio,
   'file-music': iFileMusic,
+  'file-plus': iFilePlus,
   'file-text': iFileText,
+  files: iFiles,
   film: iFilm,
   flame: iFlame,
   'flip-horizontal-2': iFlipHorizontal2,

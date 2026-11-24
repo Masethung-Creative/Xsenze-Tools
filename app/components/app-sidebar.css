@@ -64,6 +64,24 @@
   height: 1.25rem;
 }
 
+/* folded, a tool's beta label shrinks to a dot on the icon's corner */
+.app-sidebar.xz-sidebar--rail .xz-sidebar__link .xz-badge {
+  inset-block-start: 8px;
+  inset-inline-end: 10px;
+  inline-size: 8px;
+  block-size: 8px;
+  min-block-size: 0;
+  min-inline-size: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--xz-accent-2);
+  box-shadow: 0 0 0 2px var(--xz-surface);
+  font-size: 0;
+  line-height: 0;
+}
+
 /* the drawer on small screens never folds */
 .xz-drawer .app-sidebar__fold {
   display: none;

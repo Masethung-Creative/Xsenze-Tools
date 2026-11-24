@@ -28,6 +28,16 @@ import './timeline.css';
 
 export type ItemKind = 'video' | 'audio' | 'layer';
 
+/** The drag type a Media row sets: its file's kind is in the name, as a drag over cannot read the data. */
+export const CLIP_DRAG = 'application/x-ve-clip-';
+
+/** The layers a kind of file can be dropped on. */
+const DROPS: Record<string, string[]> = {
+  video: ['video', 'overlay'],
+  image: ['video', 'overlay'],
+  audio: ['music', 'voice'],
+};
+
 export interface Selection {
   kind: ItemKind;
   id: string;
@@ -57,6 +67,11 @@ interface TimelineSignature {
     onLayerMove: (id: string, start: number) => void;
     /** A join's transition mark was pressed: the piece after it. */
     onJoin: (id: string) => void;
+    /**
+     * A file dragged in from Media was dropped: on the video track at
+     * `index`, or on a layer at timeline second `at`.
+     */
+    onDropClip: (clip: string, lane: string, at: number, index: number) => void;
   };
   Element: HTMLDivElement;
 }
@@ -170,6 +185,8 @@ export default class Timeline extends Component<TimelineSignature> {
   @tracked dragId: string | null = null;
   /** A sound being dragged, where it would land. */
   @tracked ghost: { id: string; start: number; lane: Lane } | null = null;
+  /** Where a file dragged in from Media would land. */
+  @tracked dropAt: { lane: string; at: number } | null = null;
   /** A layer being dragged, where it would start. */
   @tracked layerGhost: { id: string; start: number } | null = null;
 
@@ -381,6 +398,75 @@ export default class Timeline extends Component<TimelineSignature> {
     const pieces = this.args.edit.pieces;
     const begins = [...starts(pieces), total(pieces)];
     return htmlSafe(`left: ${(begins[this.dropIndex] ?? 0) * this.pps}px`);
+  }
+
+  get dropAtStyle() {
+    const drop = this.dropAt;
+    if (!drop || drop.lane === 'video') return null;
+    return htmlSafe(`left: ${drop.at * this.pps}px`);
+  }
+
+  /** The kind of Media file being dragged, from the drag's types. */
+  #dragKind(event: DragEvent) {
+    const type = [...(event.dataTransfer?.types ?? [])].find((t) =>
+      t.startsWith(CLIP_DRAG),
+    );
+    return type ? type.slice(CLIP_DRAG.length) : null;
+  }
+
+  /** Files from Media dragged over the layers: where they would land. */
+  dropping = modifier((track: HTMLElement) => {
+    const target = (event: DragEvent) => {
+      const kind = this.#dragKind(event);
+      if (!kind) return null;
+      const lane = (event.target as HTMLElement).closest<HTMLElement>(
+        '[data-lane]',
+      )?.dataset['lane'];
+      if (!lane || !DROPS[kind]?.includes(lane)) return null;
+      return { lane, at: this.#snap(this.#timeAt(track, event.clientX)) };
+    };
+    const over = (event: DragEvent) => {
+      const spot = target(event);
+      if (!spot) {
+        if (this.#dragKind(event)) this.#clearDrop();
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer!.dropEffect = 'copy';
+      this.dropAt = spot;
+      this.dropIndex =
+        spot.lane === 'video' ? this.#landing(track, event.clientX) : null;
+    };
+    const drop = (event: DragEvent) => {
+      const spot = target(event);
+      const id = [...(event.dataTransfer?.types ?? [])]
+        .filter((t) => t.startsWith(CLIP_DRAG))
+        .map((t) => event.dataTransfer!.getData(t))[0];
+      const index = this.dropIndex ?? this.args.edit.pieces.length;
+      this.#clearDrop();
+      if (!spot || !id) return;
+      event.preventDefault();
+      // the editor's own drop is for files from outside
+      event.stopPropagation();
+      this.args.onDropClip(id, spot.lane, spot.at, index);
+    };
+    const leave = (event: DragEvent) => {
+      if (!track.contains(event.relatedTarget as Node | null))
+        this.#clearDrop();
+    };
+    track.addEventListener('dragover', over);
+    track.addEventListener('drop', drop);
+    track.addEventListener('dragleave', leave);
+    return () => {
+      track.removeEventListener('dragover', over);
+      track.removeEventListener('drop', drop);
+      track.removeEventListener('dragleave', leave);
+    };
+  });
+
+  #clearDrop() {
+    this.dropAt = null;
+    this.dropIndex = null;
   }
 
   get hasItems() {
@@ -624,6 +710,7 @@ export default class Timeline extends Component<TimelineSignature> {
           style={{this.trackStyle}}
           role="presentation"
           {{this.pointer}}
+          {{this.dropping}}
         >
           <div class="ve-ruler" aria-hidden="true">
             {{#each this.ticks as |tick|}}
@@ -778,6 +865,9 @@ export default class Timeline extends Component<TimelineSignature> {
           {{/if}}
           {{#if this.dropStyle}}
             <div class="ve-drop" style={{this.dropStyle}}></div>
+          {{/if}}
+          {{#if this.dropAtStyle}}
+            <div class="ve-drop ve-drop--at" style={{this.dropAtStyle}}></div>
           {{/if}}
           {{#if this.hasItems}}
             <div class="ve-playhead" style={{this.playheadStyle}}></div>

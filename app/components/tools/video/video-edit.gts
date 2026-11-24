@@ -41,6 +41,7 @@ import { formatTimestamp } from 'xsenze-tools/lib/subtitles/subtitles';
 import {
   AUDIO_ACCEPT,
   IMAGE_ACCEPT,
+  SUBTITLE_ACCEPT,
   VIDEO_ACCEPT,
   acceptAttr,
 } from 'xsenze-tools/lib/tools';
@@ -112,7 +113,22 @@ import {
   type TransitionKind,
 } from 'xsenze-tools/lib/video/edit/timeline';
 import Job from 'xsenze-tools/components/tools/shared/media/job';
+import type { StreamTargetChunk } from 'mediabunny';
 import { downloadBlob } from 'xsenze-tools/lib/download';
+import { service } from '@ember/service';
+import type XzToastService from 'xsenze-tools/services/xz-toast';
+import OpenIn from 'xsenze-tools/components/tools/shared/media/open-in';
+import { parseSubtitles } from 'xsenze-tools/lib/subtitles/subtitles';
+import {
+  clearProject,
+  dropFile,
+  keepClip,
+  loadProject,
+  saveFile,
+  saveState,
+  type Saved,
+} from 'xsenze-tools/lib/video/edit/store';
+import { CLIP_DRAG } from 'xsenze-tools/components/tools/video/video-edit/timeline';
 import { formatBytes } from 'xsenze-tools/lib/format';
 import {
   CONTAINER_CODECS,
@@ -246,6 +262,20 @@ const PRESETS: { label: string; shape: number }[] = [
   { label: 'X', shape: 1 },
 ];
 const PRESET_LABELS = PRESETS.map((p) => p.label);
+const CAPTION_ACCEPT = acceptAttr([...SUBTITLE_ACCEPT]);
+const CaptionsIcon = <template><IconSvg @name="captions" /></template>;
+/** Above this, an export is written to a file as it renders, where the browser can. */
+const diskBytes = 500e6;
+/** Milliseconds after a change before the edit is kept in the browser. */
+const keepDelay = 500;
+
+type SaveFilePicker = (options: {
+  suggestedName?: string;
+  types?: { description: string; accept: Record<string, string[]> }[];
+}) => Promise<{
+  createWritable(): Promise<WritableStream<StreamTargetChunk>>;
+  getFile(): Promise<File>;
+}>;
 
 /** 0:05.20, 1:02:03.40: minutes, seconds and hundredths. */
 function clock(seconds: number): string {
@@ -328,15 +358,142 @@ export default class VideoEdit extends Component {
   #abort: AbortController | null = null;
   #job = 0;
 
+  @service('xz-toast') declare toast: XzToastService;
+
   constructor(owner: Owner, args: object) {
     super(owner, args);
     void exportCodecs(1920, 1080).then((set) => {
       if (this.#live) this.encoders = set;
     });
+    void this.#restore();
   }
+
+  // ----- kept in the browser -----
+
+  /** False until the kept edit has been read, so nothing overwrites it first. */
+  #restored = false;
+  #keepTimer = 0;
+  /** Set when the browser had no room for a file. */
+  #full = false;
+  @tracked newOpen = false;
+
+  /** The settings kept with the edit. */
+  get #settings(): Saved['settings'] {
+    return {
+      formatIndex: this.formatIndex,
+      shapeIndex: this.shapeIndex,
+      fitIndex: this.fitIndex,
+      sizeIndex: this.sizeIndex,
+      rateIndex: this.rateIndex,
+      qualityIndex: this.qualityIndex,
+      keepSound: this.keepSound,
+      presetIndex: this.presetIndex,
+    };
+  }
+
+  async #restore() {
+    const kept = await loadProject().catch(() => null);
+    if (!this.#live) return;
+    // files added while it was reading win; the kept edit waits for next time
+    if (!kept || this.clips.length) {
+      this.#restored = true;
+      return;
+    }
+    const { saved, files } = kept;
+    const clips: Clip[] = saved.clips.map((clip) => {
+      const file = files.get(clip.id)!;
+      const url = URL.createObjectURL(file);
+      return {
+        ...clip,
+        file,
+        url,
+        frames: clip.kind === 'image' ? [url] : [],
+        peaks: null,
+      };
+    });
+    const set = saved.settings;
+    const num = (key: string, fallback: number) =>
+      typeof set[key] === 'number' ? set[key] : fallback;
+    this.formatIndex = num('formatIndex', 0);
+    this.shapeIndex = num('shapeIndex', 0);
+    this.fitIndex = num('fitIndex', 0);
+    this.sizeIndex = num('sizeIndex', -1);
+    this.rateIndex = num('rateIndex', 0);
+    this.qualityIndex = num('qualityIndex', 1);
+    this.presetIndex = num('presetIndex', -1);
+    this.keepSound = set['keepSound'] !== false;
+    this.clips = clips;
+    this.#restored = true;
+    this.#commit(saved.edit, false);
+    for (const clip of clips) void this.#describe(clip);
+    this.toast.show('Your last edit is back');
+  }
+
+  /** Keeps the edit and settings soon after a change. */
+  #keep() {
+    if (!this.#restored) return;
+    window.clearTimeout(this.#keepTimer);
+    this.#keepTimer = window.setTimeout(() => {
+      if (!this.#live) return;
+      if (!this.clips.length) {
+        void clearProject();
+        return;
+      }
+      void saveState({
+        version: 1,
+        clips: this.clips.map(keepClip),
+        edit: this.edit,
+        settings: this.#settings,
+        savedAt: Date.now(),
+      }).catch(() => this.#noRoom());
+    }, keepDelay);
+  }
+
+  #keepFile(clip: Clip) {
+    saveFile(clip.id, clip.file).catch(() => this.#noRoom());
+  }
+
+  #noRoom() {
+    if (this.#full) return;
+    this.#full = true;
+    this.toast.show(
+      'This browser has no room to keep the edit. Export it before you close the tab.',
+    );
+  }
+
+  openNew = () => (this.newOpen = true);
+  closeNew = () => (this.newOpen = false);
+
+  /** Starts over: every file and the kept edit go. */
+  startOver = () => {
+    this.newOpen = false;
+    this.player.stop();
+    for (const clip of this.clips) {
+      URL.revokeObjectURL(clip.url);
+      release(clip.frames);
+    }
+    this.clips = [];
+    this.selected = null;
+    this.clearMarks();
+    this.history.clear();
+    this.#commit(emptyEdit(), false);
+    void clearProject();
+    this.#full = false;
+  };
 
   willDestroy() {
     super.willDestroy();
+    // what changed in the last moment is kept now
+    if (this.#restored && this.clips.length) {
+      window.clearTimeout(this.#keepTimer);
+      void saveState({
+        version: 1,
+        clips: this.clips.map(keepClip),
+        edit: this.edit,
+        settings: this.#settings,
+        savedAt: Date.now(),
+      }).catch(() => undefined);
+    }
     this.#live = false;
     this.#abort?.abort();
     if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
@@ -948,6 +1105,7 @@ export default class VideoEdit extends Component {
     this.#stale();
     this.player.shape(this.outAspect, this.fit);
     this.player.load(this.clips, next);
+    this.#keep();
   }
 
   // ----- export -----
@@ -1033,13 +1191,39 @@ export default class VideoEdit extends Component {
     return Math.round(Math.min(40e6, Math.max(300e3, bits)));
   }
 
+  get estimateBytes() {
+    return (
+      ((this.bitrate + (this.keepSound ? SOUND_BITS : 0)) * this.length) / 8
+    );
+  }
+
   get estimate() {
     if (!this.hasItems) return DASH;
-    const bits =
-      (this.bitrate + (this.keepSound ? SOUND_BITS : 0)) * this.length;
     const { width, height } = this.outSize;
-    return `About ${formatBytes(bits / 8)} · ${width} × ${height} · ${this.outFps} fps`;
+    return `About ${formatBytes(this.estimateBytes)} · ${width} × ${height} · ${this.outFps} fps`;
   }
+
+  /** Whether this browser can write a file as it renders (Chrome, Edge). */
+  get canWriteToDisk() {
+    return typeof window !== 'undefined' && 'showSaveFilePicker' in window;
+  }
+
+  /** The user's pick; null leaves it to the size. */
+  @tracked toDiskChoice: boolean | null = null;
+
+  get toDisk() {
+    return (
+      this.canWriteToDisk &&
+      (this.toDiskChoice ?? this.estimateBytes > diskBytes)
+    );
+  }
+
+  pickToDisk = (on: boolean) => (this.toDiskChoice = on);
+
+  /** The exported file: in memory, or read back from where it was written. */
+  @tracked resultFile: File | null = null;
+  /** The export went straight to a file the user picked. */
+  @tracked savedToDisk = false;
 
   get cannotExport() {
     return this.busy || !this.hasItems || !this.codec;
@@ -1055,7 +1239,7 @@ export default class VideoEdit extends Component {
     if (!r) return null;
     return {
       name: `${this.exportName}.${r.ext}`,
-      detail: `${r.ext.toUpperCase()} · ${formatBytes(r.blob.size)} · ${tc(this.length)}`,
+      detail: `${r.ext.toUpperCase()} · ${formatBytes(this.resultFile?.size ?? 0)} · ${tc(this.length)}${this.savedToDisk ? ' · saved' : ''}`,
     };
   }
 
@@ -1066,10 +1250,13 @@ export default class VideoEdit extends Component {
     if (this.resultUrl) URL.revokeObjectURL(this.resultUrl);
     this.resultUrl = '';
     this.result = null;
+    this.resultFile = null;
+    this.savedToDisk = false;
   }
 
   #setting(apply: () => void) {
     apply();
+    this.#keep();
     this.#stale();
     this.player.shape(this.outAspect, this.fit);
   }
@@ -1100,8 +1287,26 @@ export default class VideoEdit extends Component {
     this.player.pause();
     const abort = new AbortController();
     this.#abort = abort;
+    const ext = this.container === 'webm' ? 'webm' : 'mp4';
+    const name = `${this.exportName}.${ext}`;
     try {
+      // the file is picked first, while the click still counts
+      const handle = this.toDisk
+        ? await (
+            window as unknown as { showSaveFilePicker: SaveFilePicker }
+          ).showSaveFilePicker({
+            suggestedName: name,
+            types: [
+              {
+                description: ext.toUpperCase(),
+                accept: { [`video/${ext}`]: [`.${ext}`] },
+              },
+            ],
+          })
+        : null;
+      const writable = handle ? await handle.createWritable() : undefined;
       const result = await exportEdit(this.clips, this.edit, {
+        writable,
         container: this.container,
         codec,
         ...this.outSize,
@@ -1115,8 +1320,15 @@ export default class VideoEdit extends Component {
         },
       });
       if (job !== this.#job) return;
+      const file =
+        handle && !result.blob
+          ? await handle.getFile()
+          : new File([result.blob!], name, { type: `video/${ext}` });
+      if (job !== this.#job) return;
       this.result = result;
-      this.resultUrl = URL.createObjectURL(result.blob);
+      this.resultFile = file;
+      this.savedToDisk = !!handle;
+      this.resultUrl = URL.createObjectURL(file);
     } catch (error) {
       if (job !== this.#job || (error as Error).name === 'AbortError') return;
       console.error('Export failed:', error);
@@ -1136,8 +1348,10 @@ export default class VideoEdit extends Component {
   };
 
   saveExport = () => {
-    const r = this.result;
-    if (r) downloadBlob(r.blob, `${this.exportName}.${r.ext}`);
+    const file = this.resultFile;
+    if (!file) return;
+    if (this.savedToDisk) this.toast.show(`Already saved as ${file.name}`);
+    else downloadBlob(file, file.name);
   };
 
   previewExport = () => {
@@ -1183,6 +1397,7 @@ export default class VideoEdit extends Component {
       ];
     if (!added.length) return;
     this.clips = [...this.clips, ...added];
+    for (const clip of added) this.#keepFile(clip);
     let audio = this.edit.audio;
     for (const clip of added.filter((c) => c.kind === 'audio')) {
       audio = [
@@ -1224,6 +1439,7 @@ export default class VideoEdit extends Component {
   removeClip = (id: string) => {
     const clip = this.clipMap.get(id);
     if (!clip) return;
+    void dropFile(id);
     this.clips = this.clips.filter((c) => c.id !== id);
     // items of a gone file cannot come back
     this.history.clear();
@@ -1241,6 +1457,60 @@ export default class VideoEdit extends Component {
   addVideoAgain = (id: string) => {
     const clip = this.clipMap.get(id);
     if (clip) this.#change({ pieces: [...this.pieces, pieceFor(clip)] });
+  };
+
+  /** A Media row starts a drag onto the timeline. */
+  dragClip = (clip: Clip, event: DragEvent) => {
+    event.dataTransfer?.setData(`${CLIP_DRAG}${clip.kind}`, clip.id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
+  };
+
+  /** A Media file dropped on the timeline: where it lands is what it becomes. */
+  dropClip = (id: string, lane: string, at: number, index: number) => {
+    const clip = this.clipMap.get(id);
+    if (!clip) return;
+    if (lane === 'video' && clip.kind !== 'audio') {
+      const piece = pieceFor(clip);
+      const pieces = [...this.pieces];
+      pieces.splice(Math.min(index, pieces.length), 0, piece);
+      this.#change({ pieces });
+      this.selected = { kind: 'video', id: piece.id };
+    } else if (lane === 'overlay' && clip.kind !== 'audio') {
+      this.#addLayer(mediaLayer(clip, at), 'style');
+    } else if (
+      (lane === 'music' || lane === 'voice') &&
+      clip.kind === 'audio'
+    ) {
+      const item = audioFor(clip, lane, at, this.edit.audio);
+      this.#change({ audio: [...this.edit.audio, item] });
+      this.selected = { kind: 'audio', id: item.id };
+    }
+  };
+
+  /** Each line of a subtitle file becomes a caption on the Text layer. */
+  addCaptions = async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+    const cues = parseSubtitles(await file.text()).filter(
+      (cue) => cue.end > cue.start && cue.text.trim(),
+    );
+    if (!this.#live) return;
+    if (!cues.length) {
+      this.toast.show(`No captions found in ${file.name}`);
+      return;
+    }
+    const layers = cues.map((cue) => ({
+      ...textLayer('caption', cue.start / 1000),
+      text: cue.text.trim(),
+      length: Math.max(minimumPiece, (cue.end - cue.start) / 1000),
+    }));
+    this.#change({ layers: [...this.edit.layers, ...layers] });
+    this.selected = { kind: 'layer', id: layers[0]!.id };
+    this.tab = 'style';
+    this.player.scrub(layers[0]!.start);
+    this.toast.show(
+      `${layers.length} caption${layers.length === 1 ? '' : 's'} added`,
+    );
   };
 
   /** A sound goes onto a layer at the playhead. */
@@ -1862,6 +2132,14 @@ export default class VideoEdit extends Component {
     <PageTools>
       <button
         type="button"
+        class="xz-btn xz-btn--ghost xz-btn--icon ve-new"
+        aria-label="Start a new edit"
+        title="Start a new edit"
+        disabled={{this.empty}}
+        {{on "click" this.openNew}}
+      ><IconSvg @name="file-plus" /></button>
+      <button
+        type="button"
         class="xz-btn xz-btn--ghost xz-btn--icon"
         aria-label="Undo"
         title="Undo (Ctrl Z)"
@@ -1941,7 +2219,12 @@ export default class VideoEdit extends Component {
               {{#if this.clipRows.length}}
                 <ul class="ve-media">
                   {{#each this.clipRows as |row|}}
-                    <li class="ve-clip">
+                    <li
+                      class="ve-clip"
+                      draggable="true"
+                      title="Drag onto the timeline"
+                      {{on "dragstart" (fn this.dragClip row.clip)}}
+                    >
                       <div
                         class="ve-clip__thumb
                           {{if row.isVideo '' 've-clip__thumb--sound'}}"
@@ -2008,6 +2291,13 @@ export default class VideoEdit extends Component {
             {{else if this.toolIsText}}
               <p class="ve-hint">A title goes in at the playhead. Change its
                 words, look and animation under Selected.</p>
+              <XzDropZone
+                class="ve-drop-zone ve-captions-drop"
+                @prompt="Drop an SRT or VTT file: each line becomes a caption"
+                @icon={{CaptionsIcon}}
+                @accept={{CAPTION_ACCEPT}}
+                @onFiles={{this.addCaptions}}
+              />
               <XzGrid @columns={{2}}>
                 {{#each TEXT_PRESETS as |preset|}}
                   <button
@@ -2663,6 +2953,7 @@ export default class VideoEdit extends Component {
               @onLayerTrim={{this.trimLayerTo}}
               @onLayerMove={{this.moveLayerTo}}
               @onJoin={{this.openJoin}}
+              @onDropClip={{this.dropClip}}
             />
           {{else}}
             <p class="ve-timeline-empty">Add videos, photos and sounds in Media
@@ -2723,6 +3014,19 @@ export default class VideoEdit extends Component {
           />
         </XzRow>
         <XzRow class="ve-estimate" @title="File" @detail={{this.estimate}} />
+        {{#if this.canWriteToDisk}}
+          <XzRow
+            @title="Save as it renders"
+            @detail="Asks where first; best for long videos"
+          >
+            <XzSwitch
+              class="ve-to-disk"
+              @on={{this.toDisk}}
+              @onChange={{this.pickToDisk}}
+              aria-label="Save as it renders"
+            />
+          </XzRow>
+        {{/if}}
         <Job
           @title="Export"
           @icon={{ExportIcon}}
@@ -2738,6 +3042,36 @@ export default class VideoEdit extends Component {
           @onPreview={{this.previewExport}}
         />
       </XzRows>
+      {{#if this.resultFile}}
+        <OpenIn
+          class="ve-open-in"
+          @file={{this.resultFile}}
+          @self="video-edit"
+        />
+      {{/if}}
+    </XzDialog>
+
+    <XzDialog
+      class="ve-new-dialog"
+      @open={{this.newOpen}}
+      @title="Start a new edit?"
+      @onClose={{this.closeNew}}
+    >
+      <p class="ve-hint">Every clip, title and setting in this edit goes, and it
+        can't be undone. Export first to keep it.</p>
+      <XzGrid>
+        <XzButton
+          class="ve-new-keep"
+          @text="Keep editing"
+          @onClick={{this.closeNew}}
+        />
+        <XzButton
+          class="ve-new-start"
+          @text="Start over"
+          @kind="primary"
+          @onClick={{this.startOver}}
+        />
+      </XzGrid>
     </XzDialog>
   </template>
 }

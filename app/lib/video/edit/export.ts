@@ -6,6 +6,7 @@
  * fades into 48 kHz stereo. Both are made in windows of a few seconds, so
  * memory stays low and the two tracks are written side by side.
  */
+import type { StreamTargetChunk } from 'mediabunny';
 import { loadMediabunny, openInput } from 'xsenze-tools/lib/video/media-probe';
 import { stretchBuffer } from 'xsenze-tools/lib/audio/stretch';
 import {
@@ -45,10 +46,16 @@ export interface ExportOptions {
   sound: boolean;
   onProgress?: (fraction: number) => void;
   signal?: AbortSignal;
+  /**
+   * Writes the file here as it renders, so a long video never sits whole
+   * in memory; the result then has no blob.
+   */
+  writable?: WritableStream<StreamTargetChunk>;
 }
 
 export interface ExportResult {
-  blob: Blob;
+  /** The file, or null when it went straight to `writable`. */
+  blob: Blob | null;
   ext: string;
 }
 
@@ -511,11 +518,16 @@ export async function exportEdit(
   if (length <= 0) throw new Error('export-empty');
   const { width, height, fps, signal } = options;
   await fontsReady(edit);
+  const direct = options.writable;
   const format =
     options.container === 'webm'
       ? new m.WebMOutputFormat()
-      : new m.Mp4OutputFormat({ fastStart: 'in-memory' });
-  const output = new m.Output({ format, target: new m.BufferTarget() });
+      : // written to disk, the index goes at the end: nothing waits in memory
+        new m.Mp4OutputFormat({ fastStart: direct ? false : 'in-memory' });
+  const target = direct
+    ? new m.StreamTarget(direct, { chunked: true })
+    : new m.BufferTarget();
+  const output = new m.Output({ format, target });
 
   const canvas = new OffscreenCanvas(width, height);
   const context = canvas.getContext('2d', { alpha: false })!;
@@ -572,11 +584,10 @@ export async function exportEdit(
     await output.cancel().catch(() => undefined);
     throw error;
   }
-  const buffer = output.target.buffer;
-  if (!buffer) throw new Error('export-empty');
   options.onProgress?.(1);
-  return {
-    blob: new Blob([buffer], { type: format.mimeType }),
-    ext: format.fileExtension.replace(/^\./, ''),
-  };
+  const ext = format.fileExtension.replace(/^\./, '');
+  if (direct) return { blob: null, ext };
+  const buffer = (target as InstanceType<Mediabunny['BufferTarget']>).buffer;
+  if (!buffer) throw new Error('export-empty');
+  return { blob: new Blob([buffer], { type: format.mimeType }), ext };
 }

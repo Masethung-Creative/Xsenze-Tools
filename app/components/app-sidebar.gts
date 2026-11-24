@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
+import { concat } from '@ember/helper';
 import { on } from '@ember/modifier';
 import { service } from '@ember/service';
 import { LinkTo } from '@ember/routing';
@@ -175,7 +176,11 @@ export default class AppSidebar extends Component<Signature> {
                       @route="tools.tool"
                       @model={{tool.id}}
                       class="xz-sidebar__link"
-                      title={{if @rail tool.name tool.description}}
+                      title={{if
+                        @rail
+                        (if tool.beta (concat tool.name " (beta)") tool.name)
+                        tool.description
+                      }}
                       aria-current={{this.current tool.id}}
                       {{on "click" this.navigated}}
                     >

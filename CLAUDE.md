@@ -98,7 +98,10 @@ their `soon` line from `lib/tools.ts`):
   show, and `drawShots` in `draw.ts` blends them. Text, pictures, small videos, shapes and emoji
   are `layers` on the Text and Overlay rows, drawn over the picture by `lib/video/edit/layers.ts`
   (sizes, animations, fonts; the export waits for the fonts); `video-edit/frame-box.gts` drags and
-  sizes them on the preview. A modifier must not read
+  sizes them on the preview. The edit, its settings and its files are kept in IndexedDB by
+  `lib/video/edit/store.ts` and come back on the next visit; New edit clears them. Where
+  `showSaveFilePicker` exists, an export can go straight to a file through mediabunny's
+  `StreamTarget` (MP4 without fast start), so long videos never sit whole in memory. A modifier must not read
   tracked state it does not mean to follow: the canvas modifier once reread the playhead every
   frame and re-sought the video.
 - After adding icons by name run `npm run gen-icons`; after changing the logo `npm run gen-brand`.

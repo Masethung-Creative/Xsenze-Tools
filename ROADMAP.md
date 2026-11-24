@@ -68,6 +68,12 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Shapes (box, circle, arrow, star) and emoji                                                                                                                               | ✅     |
 | Transitions between clips: dissolve, through black, through white, wipe, slide, circle                                                                                    | ✅     |
 | Presets for where it is posted: YouTube, Shorts, Reels, TikTok, Instagram, Facebook, X                                                                                    | ✅     |
+| **Phase 1.5: keep work safe, link the site**                                                                                                                              |        |
+| Autosave in the browser (edit, settings and files); New edit starts over                                                                                                  | ✅     |
+| Export written straight to a file as it renders (Chrome, Edge), for long videos                                                                                           | ✅     |
+| Drag files from Media onto the video, Overlay, Music or Voice row                                                                                                         | ✅     |
+| SRT and VTT files become captions on the Text row                                                                                                                         | ✅     |
+| Open in another tool after export                                                                                                                                         | ✅     |
 | **Phase 2: sound and speech**                                                                                                                                             |        |
 | Record a voice-over onto the Voice layer                                                                                                                                  | 📋     |
 | Auto subtitles with Whisper onto the Text layer                                                                                                                           | 📋     |
