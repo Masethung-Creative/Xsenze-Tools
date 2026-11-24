@@ -15,7 +15,6 @@ import XzHeading from 'xsenze-tools/components/xz/heading';
 import XzRow from 'xsenze-tools/components/xz/row';
 import XzRows from 'xsenze-tools/components/xz/rows';
 import XzSegmented from 'xsenze-tools/components/xz/segmented';
-import XzSlider from 'xsenze-tools/components/xz/slider';
 import XzStatus from 'xsenze-tools/components/xz/status';
 import XzSwitch from 'xsenze-tools/components/xz/switch';
 import { IconSvg } from 'xsenze-tools/components/icon';
@@ -25,6 +24,7 @@ import {
   release,
   thumbnails,
 } from 'xsenze-tools/components/tools/shared/media/frames';
+import PropSlider from 'xsenze-tools/components/tools/video/video-edit/prop-slider';
 import Timeline, {
   type Selection,
 } from 'xsenze-tools/components/tools/video/video-edit/timeline';
@@ -1056,6 +1056,13 @@ export default class VideoEdit extends Component {
   };
 
   setMuted = (muted: boolean) => this.#patch({ muted });
+
+  /** The selected item's sound switch: on is not muted. */
+  get chosenSoundOn() {
+    return !this.chosen?.muted;
+  }
+
+  setSoundOn = (on: boolean) => this.#patch({ muted: !on });
   setFadeIn = (fadeIn: number) => this.#patch({ fadeIn });
   setFadeOut = (fadeOut: number) => this.#patch({ fadeOut });
 
@@ -1591,22 +1598,19 @@ export default class VideoEdit extends Component {
                 own volume too, under Selected › Audio.</p>
               <XzRows @framed={{true}}>
                 {{#each this.mixRows as |row|}}
-                  <div class="ve-level ve-level--{{row.key}}">
-                    <span class="ve-level__name">{{row.title}}</span>
-                    <XzSlider
-                      @value={{row.level.volume}}
-                      @max={{2}}
-                      @step={{0.01}}
-                      @readout={{percent}}
-                      @label="{{row.title}} volume"
-                      @onChange={{fn this.levelVolume row.key}}
-                    />
-                    <XzSwitch
-                      @on={{if row.level.muted false true}}
-                      @onChange={{fn this.levelOn row.key}}
-                      aria-label="{{row.title}} on"
-                    />
-                  </div>
+                  <PropSlider
+                    class="ve-level ve-level--{{row.key}}"
+                    @label={{row.title}}
+                    @value={{row.level.volume}}
+                    @max={{2}}
+                    @step={{0.01}}
+                    @nudge={{0.05}}
+                    @readout={{percent}}
+                    @onChange={{fn this.levelVolume row.key}}
+                    @on={{if row.level.muted false true}}
+                    @onToggle={{fn this.levelOn row.key}}
+                    @toggleLabel="{{row.title}} on"
+                  />
                 {{/each}}
               </XzRows>
             {{else if this.toolIsCanvas}}
@@ -1841,18 +1845,16 @@ export default class VideoEdit extends Component {
                   </XzGrid>
                   <XzHeading @text="Crop" />
                   {{#each this.cropRows as |row|}}
-                    <div class="ve-slide">
-                      <span>{{row.label}}</span>
-                      <XzSlider
-                        class="ve-crop-{{row.side}}"
-                        @value={{row.value}}
-                        @max={{0.45}}
-                        @step={{0.01}}
-                        @readout={{cropReadout}}
-                        @label="Crop {{row.label}}"
-                        @onChange={{fn this.setCrop row.side}}
-                      />
-                    </div>
+                    <PropSlider
+                      class="ve-crop-{{row.side}}"
+                      @label={{row.label}}
+                      @value={{row.value}}
+                      @max={{0.45}}
+                      @step={{0.01}}
+                      @nudge={{0.01}}
+                      @readout={{cropReadout}}
+                      @onChange={{fn this.setCrop row.side}}
+                    />
                   {{/each}}
                   <XzGrid>
                     <XzButton
@@ -1875,18 +1877,16 @@ export default class VideoEdit extends Component {
             {{else if this.tabIsAdjust}}
               <XzRows @framed={{true}}>
                 {{#each this.adjustRows as |row|}}
-                  <div class="ve-slide">
-                    <span>{{row.label}}</span>
-                    <XzSlider
-                      class="ve-{{row.key}}"
-                      @value={{row.value}}
-                      @max={{2}}
-                      @step={{0.01}}
-                      @readout={{percent}}
-                      @label={{row.label}}
-                      @onChange={{fn this.setAdjust row.key}}
-                    />
-                  </div>
+                  <PropSlider
+                    class="ve-{{row.key}}"
+                    @label={{row.label}}
+                    @value={{row.value}}
+                    @max={{2}}
+                    @step={{0.01}}
+                    @nudge={{0.05}}
+                    @readout={{percent}}
+                    @onChange={{fn this.setAdjust row.key}}
+                  />
                 {{/each}}
                 <XzHeading @text="Filter" />
                 <XzSegmented
@@ -1908,26 +1908,19 @@ export default class VideoEdit extends Component {
               </XzRows>
             {{else}}
               <XzRows @framed={{true}}>
-                <div class="ve-slide">
-                  <span>Volume</span>
-                  <XzSlider
-                    class="ve-volume"
-                    @value={{this.chosen.volume}}
-                    @max={{2}}
-                    @step={{0.01}}
-                    @readout={{percent}}
-                    @label="Volume"
-                    @onChange={{this.setVolume}}
-                  />
-                </div>
-                <XzRow @title="Mute">
-                  <XzSwitch
-                    class="ve-mute"
-                    @on={{this.chosen.muted}}
-                    @onChange={{this.setMuted}}
-                    aria-label="Mute"
-                  />
-                </XzRow>
+                <PropSlider
+                  class="ve-volume"
+                  @label="Volume"
+                  @value={{this.chosen.volume}}
+                  @max={{2}}
+                  @step={{0.01}}
+                  @nudge={{0.05}}
+                  @readout={{percent}}
+                  @onChange={{this.setVolume}}
+                  @on={{this.chosenSoundOn}}
+                  @onToggle={{this.setSoundOn}}
+                  @toggleLabel="Sound on"
+                />
                 <XzRow
                   @title="Fade in"
                   @detail={{if

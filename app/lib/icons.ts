@@ -79,6 +79,7 @@ import iMenu from 'lucide-static/icons/menu.svg?raw';
 import iMerge from 'lucide-static/icons/merge.svg?raw';
 import iMic from 'lucide-static/icons/mic.svg?raw';
 import iMicVocal from 'lucide-static/icons/mic-vocal.svg?raw';
+import iMinus from 'lucide-static/icons/minus.svg?raw';
 import iMonitorUp from 'lucide-static/icons/monitor-up.svg?raw';
 import iMoon from 'lucide-static/icons/moon.svg?raw';
 import iMousePointerClick from 'lucide-static/icons/mouse-pointer-click.svg?raw';
@@ -90,6 +91,7 @@ import iPause from 'lucide-static/icons/pause.svg?raw';
 import iPencil from 'lucide-static/icons/pencil.svg?raw';
 import iPictureInPicture2 from 'lucide-static/icons/picture-in-picture-2.svg?raw';
 import iPlay from 'lucide-static/icons/play.svg?raw';
+import iPlus from 'lucide-static/icons/plus.svg?raw';
 import iPodcast from 'lucide-static/icons/podcast.svg?raw';
 import iRadio from 'lucide-static/icons/radio.svg?raw';
 import iRedo2 from 'lucide-static/icons/redo-2.svg?raw';
@@ -220,6 +222,7 @@ export const icons: Record<string, string> = {
   merge: iMerge,
   mic: iMic,
   'mic-vocal': iMicVocal,
+  minus: iMinus,
   'monitor-up': iMonitorUp,
   moon: iMoon,
   'mouse-pointer-click': iMousePointerClick,
@@ -231,6 +234,7 @@ export const icons: Record<string, string> = {
   pencil: iPencil,
   'picture-in-picture-2': iPictureInPicture2,
   play: iPlay,
+  plus: iPlus,
   podcast: iPodcast,
   radio: iRadio,
   'redo-2': iRedo2,

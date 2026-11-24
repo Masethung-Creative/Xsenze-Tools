@@ -231,41 +231,6 @@
   gap: 2px;
 }
 
-/* ---------- compact slider rows: label, fader, value ---------- */
-.ve-slide,
-.ve-level {
-  display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: var(--xz-space-2);
-  min-block-size: 2.75rem;
-  padding: 4px var(--ve-gutter);
-  background: var(--xz-surface);
-  font-size: var(--xz-font-size-xs);
-  font-weight: var(--xz-font-weight-medium);
-}
-
-.ve-level {
-  grid-template-columns: 5rem minmax(0, 1fr) auto;
-}
-
-.ve-slide .xz-slider,
-.ve-level .xz-slider {
-  height: 1.75rem;
-}
-
-.ve-slide .xz-slider-cell__readout,
-.ve-level .xz-slider-cell__readout {
-  min-inline-size: 2.75rem;
-  font-size: var(--xz-font-size-xs);
-}
-
-/* rows inside a framed panel get hairlines between them */
-.ve .xz-panel > .ve-slide + .ve-slide,
-.ve .xz-panel > .ve-level + .ve-level {
-  border-block-start: 1px solid var(--xz-border);
-}
-
 /* ---------- tabs ---------- */
 .ve-tabs {
   display: grid;

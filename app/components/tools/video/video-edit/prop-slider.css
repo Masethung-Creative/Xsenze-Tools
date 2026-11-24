@@ -1,0 +1,46 @@
+/* name and switch on one line; − slider value + under them */
+.ve-prop {
+  display: grid;
+  gap: 6px;
+  padding: 10px var(--ve-gutter, var(--xz-space-3));
+  background: var(--xz-surface);
+}
+
+.ve .xz-panel > .ve-prop + .ve-prop {
+  border-block-start: 1px solid var(--xz-border);
+}
+
+.ve-prop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xz-space-2);
+  min-block-size: 1.5rem;
+}
+
+.ve-prop__name {
+  font-size: var(--xz-font-size-xs);
+  font-weight: var(--xz-font-weight-semibold);
+}
+
+.ve-prop__control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.ve-prop__control .xz-slider {
+  height: 1.75rem;
+}
+
+.ve-prop__control .xz-slider-cell__readout {
+  min-inline-size: 2.75rem;
+  font-size: var(--xz-font-size-xs);
+  text-align: end;
+}
+
+.ve-prop__step svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
