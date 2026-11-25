@@ -15,6 +15,7 @@ const loaders: Record<string, Loader> = {
     import('xsenze-tools/components/tools/video/subtitle-translator'),
   'timecode-calc': () =>
     import('xsenze-tools/components/tools/video/timecode-calc'),
+  transcript: () => import('xsenze-tools/components/tools/video/transcript'),
   'auto-subtitle': () =>
     import('xsenze-tools/components/tools/video/auto-subtitle'),
   'subtitle-studio': () =>

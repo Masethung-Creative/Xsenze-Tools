@@ -103,4 +103,8 @@ their `soon` line from `lib/tools.ts`):
   at a bitrate it works out from a Quality preset or a target size; `compressVideo` in
   `lib/video/media-convert.ts`), image-compressor (jSquash WASM codecs: MozJPEG, WebP, AVIF, OxiPNG, plus
   image-q palettes for PNG, in `lib/image/image-compress.worker.ts`; shrinks with Lanczos3 from `@jsquash/resize`; Target size searches quality; both
-  compressors take many files and share `shared/media/work-banner.gts` for progress and time left), subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js).
+  compressors take many files and share `shared/media/work-banner.gts` for progress and time left), subtitle-translator (browser Translator API, falls back to NLLB-200 via Transformers.js), transcript
+  (subtitle files only, no speech: SRT/VTT/ASS/LRC read by `lib/subtitles/transcript.ts` into
+  paragraphs; any mix of TXT, Word, MD, PDF, CSV, JSON, HTML; Word and PDF are made in
+  `transcript-files.ts`, loaded on demand: a minimal DOCX zip, and a PDF of canvas-drawn A4 pages
+  so every script prints; Download all or one Zip through `shared/media/download-all.gts`).

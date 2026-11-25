@@ -283,6 +283,25 @@ export const toolCategories: ToolCategory[] = [
         ],
       },
       {
+        id: 'transcript',
+        name: 'Transcript',
+        description:
+          'Turn subtitle files into transcripts: TXT, Word, PDF and more',
+        icon: 'file-text',
+        accepts: ['.srt', '.vtt', '.ass', '.ssa', '.lrc'],
+        produces: ['.txt', '.docx', '.md', '.pdf', '.csv', '.json', '.html'],
+        keywords: [
+          'transcript',
+          'srt to text',
+          'vtt to text',
+          'subtitles to text',
+          'docx',
+          'word',
+          'pdf',
+          'zip',
+        ],
+      },
+      {
         id: 'video-atlas',
         name: 'Video Atlas',
         description: 'Everything about one video file',

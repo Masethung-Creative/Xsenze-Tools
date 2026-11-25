@@ -37,6 +37,7 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 | Subtitle Studio     | ✅     | Burn subtitles in                          |
 | Subtitle Translator | ✅     | Browser Translator API, else NLLB-200      |
 | Timecode Calculator | ✅     |                                            |
+| Transcript          | ✅     | SRT, VTT, ASS, LRC to TXT, Word, PDF, more |
 | Video Atlas         | ✅     |                                            |
 | Video Compressor    | ✅     |                                            |
 | Video Muter         | ✅     |                                            |

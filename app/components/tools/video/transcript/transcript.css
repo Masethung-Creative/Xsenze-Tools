@@ -1,0 +1,50 @@
+/* the banner at rest: the word count and what it covers */
+.tr-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xz-space-1, 4px);
+  justify-content: center;
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-inline: var(--xz-panel-pad, var(--xz-space-4));
+}
+
+.tr-banner-label {
+  overflow: hidden;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr-file .xz-panel__key {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr-file--on {
+  box-shadow: inset 3px 0 0 var(--xz-accent-2);
+}
+
+.tr-preview {
+  padding: var(--xz-panel-pad, var(--xz-space-4));
+  font-size: var(--xz-font-size-sm);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.tr-para {
+  margin: 0;
+}
+
+.tr-para + .tr-para {
+  margin-block-start: 0.9em;
+}
+
+.tr-stamp {
+  margin-inline-end: 0.4em;
+  color: var(--xz-text-muted);
+  font-size: var(--xz-font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
