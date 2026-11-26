@@ -30,7 +30,7 @@ Status: ✅ done and live · 🧪 built, dev builds only · 🚧 in progress · 
 
 | Tool                | Status | Notes                                      |
 | ------------------- | ------ | ------------------------------------------ |
-| Auto Subtitle       | ✅     | Whisper on the device                      |
+| Auto Subtitle       | ✅     | Whisper on the device; saves movie.en.srt  |
 | Frame Extractor     | ✅     |                                            |
 | Screen Recorder     | ✅     |                                            |
 | Subtitle Converter  | ✅     |                                            |

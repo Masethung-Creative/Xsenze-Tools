@@ -105,9 +105,14 @@ export function stats(cues: Cue[]): string {
   return `${cues.length} cues · ${formatTimestamp(last.end, '.')}`;
 }
 
-export function outputName(fileName: string, target: ExportFormat) {
+/** movie.ta.srt with the language known, else movie.srt. */
+export function outputName(
+  fileName: string,
+  target: ExportFormat,
+  language?: string,
+) {
   const base = fileName.replace(/\.[^.]+$/, '') || 'subtitles';
-  return `${base}.${target}`;
+  return language ? `${base}.${language}.${target}` : `${base}.${target}`;
 }
 
 export function failure(error: unknown): Failure {

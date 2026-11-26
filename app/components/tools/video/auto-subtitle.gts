@@ -35,6 +35,7 @@ import {
   type Failure,
 } from 'xsenze-tools/components/tools/video/auto-subtitle/result';
 import filePaste, { matchesAccept } from 'xsenze-tools/modifiers/file-paste';
+import { guessLanguage } from 'xsenze-tools/lib/subtitles/guess-language';
 import {
   audioContext,
   channelsOf,
@@ -373,11 +374,16 @@ export default class AutoSubtitleTool extends Component {
 
   copy = () => void this.toast.copy(this.output);
 
+  /** The picked language, else one guessed from the words heard. */
+  get languageTag() {
+    return this.language || guessLanguage(this.cues);
+  }
+
   download = () => {
     if (!this.output) return;
     downloadText(
       this.output,
-      outputName(this.fileName, this.target),
+      outputName(this.fileName, this.target, this.languageTag),
       MIME[this.target],
     );
   };
